@@ -197,7 +197,21 @@
       if (selected.length>0) sendFd.set('recipients', selected.join(','));
     }
     const rr = await fetch('/AlertsCrud/Send', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: sendFd });
-    showToast(rr.ok? 'Alerte envoyée' : 'Erreur envoi', rr.ok);
+    let msg = 'Erreur envoi';
+    if (rr.ok){
+      try{
+        const data = await rr.json();
+        if (data && typeof data.emailSent !== 'undefined'){
+          msg = `Alerte envoyée — emails : ${data.emailSent}/${data.emailAttempts}`;
+          console.log('Send result', data);
+        } else {
+          msg = 'Alerte envoyée (email/notif en cours...)';
+        }
+      }catch{
+        msg = 'Alerte envoyée (email/notif en cours...)';
+      }
+    }
+    showToast(msg, rr.ok);
   });
 
   loadQuick();

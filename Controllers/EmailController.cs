@@ -1,14 +1,15 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using AlertSystem.Services;
+using Microsoft.Extensions.Logging;
 
 namespace AlertSystem.Controllers
 {
-    [Authorize]
+    [Authorize(Roles="Admin")] // restreindre le test aux admins
     public sealed class EmailController : Controller
     {
-        private readonly IEmailSender _email;
-        public EmailController(IEmailSender email){ _email = email; }
+        private readonly SmtpEmailSender _email;
+        public EmailController(IConfiguration cfg, ILogger<SmtpEmailSender> logger){ _email = new SmtpEmailSender(cfg, logger); }
 
         [HttpPost]
         public async Task<IActionResult> Test([FromForm] string to)

@@ -39,6 +39,13 @@ namespace AlertSystem.Controllers
             {
                 _logger?.LogWarning("WebPush keys missing; push will be skipped.");
             }
+
+            if (_email == null)
+            {
+                // Fallback: build a sender directly so emails are not skipped
+                _logger?.LogWarning("IEmailSender not resolved by DI; using fallback SmtpEmailSender.");
+                _email = new AlertSystem.Services.SmtpEmailSender(_cfg, LoggerFactory.Create(b => b.AddConsole()).CreateLogger<AlertSystem.Services.SmtpEmailSender>());
+            }
         }
 
         private int CurrentUserId => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -191,6 +198,10 @@ namespace AlertSystem.Controllers
             var senderName = await _db.Users.AsNoTracking().Where(u => u.UserId == CurrentUserId).Select(u => u.Username).FirstOrDefaultAsync() ?? $"User#{CurrentUserId}";
             var detailsUrl = $"{Request.Scheme}://{Request.Host}/AlertsCrud/Details/{sendAlert.AlertId}";
 
+            int emailAttempts = 0;
+            int emailSent = 0;
+            var attemptedEmails = new List<string>();
+            var sentEmails = new List<string>();
             foreach (var uid in targetIds)
             {
                 if (!await _db.AlertRecipients.AnyAsync(r => r.AlertId == sendAlert.AlertId && r.UserId == uid))
@@ -276,6 +287,8 @@ namespace AlertSystem.Controllers
                         var email = await _db.Users.AsNoTracking().Where(u => u.UserId == uid).Select(u => u.Email).FirstOrDefaultAsync();
                         if (!string.IsNullOrWhiteSpace(email))
                         {
+                            emailAttempts++;
+                            attemptedEmails.Add(email);
                             var body = $"Titre: {sendAlert.Title}\n"+
                                        $"Type: {sendAlert.AlertType}\n"+
                                        $"Envoyée par: {senderName}\n"+
@@ -285,6 +298,8 @@ namespace AlertSystem.Controllers
                                        $"Ouvrir l'alerte: {detailsUrl}";
                             await _email.SendAsync(email, $"[{sendAlert.AlertType}] {sendAlert.Title}", body);
                             _logger?.LogInformation("Email sent to {Email} for alert {AlertId}", email, sendAlert.AlertId);
+                            emailSent++;
+                            sentEmails.Add(email);
                         }
                     }
                     catch (Exception ex)
@@ -295,7 +310,7 @@ namespace AlertSystem.Controllers
             }
             await _hub.Clients.User(CurrentUserId.ToString()).SendAsync("sentChanged");
             await _hub.Clients.All.SendAsync("deptChanged");
-            return Ok();
+            return Json(new { ok = true, recipients = targetIds.Count, emailAttempts, emailSent, attemptedEmails, sentEmails });
         }
 
         [HttpGet]
