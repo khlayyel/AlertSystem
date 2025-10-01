@@ -13,6 +13,7 @@ namespace AlertSystem.Data
         public DbSet<Department> Departments => Set<Department>();
         public DbSet<Alert> Alerts => Set<Alert>();
         public DbSet<AlertRecipient> AlertRecipients => Set<AlertRecipient>();
+        public DbSet<WebPushSubscription> WebPushSubscriptions => Set<WebPushSubscription>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -65,6 +66,16 @@ namespace AlertSystem.Data
                     .WithMany(u => u.AlertRecipients)
                     .HasForeignKey(x => x.UserId)
                     .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<WebPushSubscription>(b =>
+            {
+                b.ToTable("WebPushSubscriptions");
+                b.HasKey(x => x.WebPushSubscriptionId);
+                b.HasIndex(x => new { x.UserId, x.Endpoint }).IsUnique();
+                b.Property(x => x.Endpoint).IsRequired();
+                b.Property(x => x.P256dh).IsRequired();
+                b.Property(x => x.Auth).IsRequired();
             });
         }
     }

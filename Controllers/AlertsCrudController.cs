@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.SignalR;
 using AlertSystem.Hubs;
+using Lib.Net.Http.WebPush;
+using Lib.Net.Http.WebPush.Authentication;
+using Microsoft.Extensions.Logging;
 
 namespace AlertSystem.Controllers
 {
@@ -14,7 +17,29 @@ namespace AlertSystem.Controllers
     {
         private readonly ApplicationDbContext _db;
         private readonly IHubContext<NotificationsHub> _hub;
-        public AlertsCrudController(ApplicationDbContext db, IHubContext<NotificationsHub> hub){ _db = db; _hub = hub; }
+        private readonly IConfiguration _cfg;
+        private readonly PushServiceClient? _pushClient;
+        private readonly AlertSystem.Services.IEmailSender? _email;
+        private readonly ILogger<AlertsCrudController>? _logger;
+        public AlertsCrudController(ApplicationDbContext db, IHubContext<NotificationsHub> hub, IConfiguration cfg, AlertSystem.Services.IEmailSender? email = null, ILogger<AlertsCrudController>? logger = null)
+        {
+            _db = db; _hub = hub; _cfg = cfg; _email = email; _logger = logger;
+            var pub = _cfg["WebPush:PublicKey"];
+            var priv = _cfg["WebPush:PrivateKey"];
+            var subject = _cfg["WebPush:Subject"];
+            if (!string.IsNullOrWhiteSpace(pub) && !string.IsNullOrWhiteSpace(priv))
+            {
+                _pushClient = new PushServiceClient
+                {
+                    DefaultAuthentication = new VapidAuthentication(pub, priv) { Subject = subject }
+                };
+                _logger?.LogInformation("WebPush client initialized with VAPID subject {Subject}", subject);
+            }
+            else
+            {
+                _logger?.LogWarning("WebPush keys missing; push will be skipped.");
+            }
+        }
 
         private int CurrentUserId => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         private string CurrentRole => User.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
@@ -162,6 +187,10 @@ namespace AlertSystem.Controllers
             // exclude sender
             targetIds = targetIds.Where(id => id != CurrentUserId).ToList();
 
+            // Resolve sender display name once
+            var senderName = await _db.Users.AsNoTracking().Where(u => u.UserId == CurrentUserId).Select(u => u.Username).FirstOrDefaultAsync() ?? $"User#{CurrentUserId}";
+            var detailsUrl = $"{Request.Scheme}://{Request.Host}/AlertsCrud/Details/{sendAlert.AlertId}";
+
             foreach (var uid in targetIds)
             {
                 if (!await _db.AlertRecipients.AnyAsync(r => r.AlertId == sendAlert.AlertId && r.UserId == uid))
@@ -202,10 +231,67 @@ namespace AlertSystem.Controllers
             }
 
             // Push temps réel: notifier destinataires, expéditeur et vues département
+            _logger?.LogInformation("Sending alert {AlertId} to {Count} recipients in department {DepartmentId}", sendAlert.AlertId, targetIds.Count, depId);
+
             foreach (var uid in targetIds)
             {
                 await _hub.Clients.User(uid.ToString()).SendAsync("historyChanged");
                 await _hub.Clients.User(uid.ToString()).SendAsync("badgeChanged");
+                await _hub.Clients.User(uid.ToString()).SendAsync("newAlert", new {
+                    title = sendAlert.Title,
+                    message = sendAlert.Message,
+                    alertType = sendAlert.AlertType,
+                    alertId = sendAlert.AlertId
+                });
+
+                // Send Web Push (to recipients only)
+                if (_pushClient != null)
+                {
+                    var subs = await _db.WebPushSubscriptions.AsNoTracking().Where(s => s.UserId == uid).ToListAsync();
+                    foreach (var s in subs)
+                    {
+                        try
+                        {
+                            var subscription = new PushSubscription
+                            {
+                                Endpoint = s.Endpoint,
+                                Keys = new Dictionary<string, string>{{"p256dh", s.P256dh},{"auth", s.Auth}}
+                            };
+                            var payload = System.Text.Json.JsonSerializer.Serialize(new { title = sendAlert.Title, message = sendAlert.Message, url = $"/AlertsCrud/Details/{sendAlert.AlertId}" });
+                            await _pushClient.RequestPushMessageDeliveryAsync(subscription, new PushMessage(payload) { Topic = "alert" });
+                            _logger?.LogInformation("WebPush sent to user {UserId}", uid);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger?.LogError(ex, "WebPush failed for user {UserId}", uid);
+                        }
+                    }
+                }
+
+                // Email notification (best-effort)
+                if (_email != null)
+                {
+                    try
+                    {
+                        var email = await _db.Users.AsNoTracking().Where(u => u.UserId == uid).Select(u => u.Email).FirstOrDefaultAsync();
+                        if (!string.IsNullOrWhiteSpace(email))
+                        {
+                            var body = $"Titre: {sendAlert.Title}\n"+
+                                       $"Type: {sendAlert.AlertType}\n"+
+                                       $"Envoyée par: {senderName}\n"+
+                                       $"Département: {(sendAlert.DepartmentId?.ToString() ?? "-")}\n"+
+                                       $"Date: {sendAlert.CreatedAt:yyyy-MM-dd HH:mm}\n\n"+
+                                       $"Message:\n{sendAlert.Message}\n\n"+
+                                       $"Ouvrir l'alerte: {detailsUrl}";
+                            await _email.SendAsync(email, $"[{sendAlert.AlertType}] {sendAlert.Title}", body);
+                            _logger?.LogInformation("Email sent to {Email} for alert {AlertId}", email, sendAlert.AlertId);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger?.LogError(ex, "Email send failed to user {UserId}", uid);
+                    }
+                }
             }
             await _hub.Clients.User(CurrentUserId.ToString()).SendAsync("sentChanged");
             await _hub.Clients.All.SendAsync("deptChanged");

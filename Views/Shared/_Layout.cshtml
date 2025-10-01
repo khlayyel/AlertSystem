@@ -7,6 +7,7 @@
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="manifest" href="/manifest.json">
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/AlertSystem.styles.css" asp-append-version="true" />
 </head>
@@ -71,6 +72,8 @@
     <script src="~/lib/microsoft/signalr/dist/browser/signalr.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script>
+      // Ask notification permission on first load
+      (async ()=>{ try{ if ("Notification" in window && Notification.permission === 'default'){ await Notification.requestPermission(); } }catch{} })();
       async function loadBadge(){
         try {
           const r = await fetch('/Alerts/UnreadCount', { cache:'no-store' });
@@ -87,6 +90,28 @@
         conn.on('historyChanged', ()=> loadBadge());
         conn.on('sentChanged', ()=> loadBadge());
         conn.on('deptChanged', ()=> loadBadge());
+        conn.on('newAlert', (payload)=>{
+          try{
+            if (Notification.permission === 'granted' && navigator.serviceWorker?.controller){
+              navigator.serviceWorker.controller.postMessage({
+                type:'SHOW_ALERT_NOTIFICATION',
+                title: payload?.title || 'Nouvelle alerte',
+                message: payload?.message || '',
+                alertId: payload?.alertId
+              });
+            } else if (Notification.permission === 'granted') {
+              const title = payload?.title || 'Nouvelle alerte';
+              const body = payload?.message || '';
+              const icon = '/favicon.ico';
+              const n = new Notification(title, { body, icon });
+              n.onclick = () => {
+                try{ window.focus(); }catch{}
+                const id = payload?.alertId;
+                if (id) window.location.href = `/AlertsCrud/Details/${id}`;
+              };
+            }
+          }catch{}
+        });
         conn.start();
       }
       // Safeguard: periodic refresh in case of missed events
