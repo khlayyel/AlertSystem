@@ -1,0 +1,182 @@
+@model IEnumerable<AlertSystem.Models.Entities.Alert>
+@{
+    ViewData["Title"] = "Alertes";
+}
+<div class="container py-3">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h3>Alertes</h3>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-3">
+          <label class="form-label">Alerte rapide</label>
+          <select id="quickSelect" class="form-select">
+            <option value="">-- Sélectionner --</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Titre</label>
+          <input id="fTitle" class="form-control" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Type</label>
+          <select id="fType" class="form-select">
+            <option value="Information">Information</option>
+            <option value="Obligatoire">Obligatoire</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Département</label>
+          <select id="fDept" class="form-select d-none" disabled>
+            <option value="">-- Choisir --</option>
+            @if (ViewBag.Departments is List<AlertSystem.Models.Entities.Department> depts)
+            {
+                foreach (var d in depts) { <option value="@d.DepartmentId">@d.Name</option> }
+            }
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Destinataires (du département)</label>
+          <input id="fRecipientsSearch" class="form-control mb-2" placeholder="Rechercher un destinataire..." />
+          <select id="fRecipients" multiple class="form-select" size="8"></select>
+          <div class="form-text">Laisser vide pour envoyer à tous (sauf vous).</div>
+        </div>
+        <div class="col-12">
+          <label class="form-label">Message</label>
+          <textarea id="fMessage" class="form-control" rows="3"></textarea>
+        </div>
+        <div class="col-12 d-flex gap-2">
+          <button id="btnQuickSave" class="btn btn-outline-secondary" type="button">Enregistrer alerte</button>
+          <button id="btnSend" class="btn btn-primary" type="button">Envoyer l'alerte</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <form method="get" class="row g-2 mb-3">
+    <div class="col-auto">
+      <select name="type" class="form-select">
+        <option value="">Tous types</option>
+        <option value="Information">Information</option>
+        <option value="Obligatoire">Obligatoire</option>
+      </select>
+    </div>
+    <div class="col-auto">
+      <select name="departmentId" class="form-select">
+        <option value="">Tous départements</option>
+        @if (ViewBag.Departments is List<AlertSystem.Models.Entities.Department> depts)
+        {
+            foreach (var d in depts) { <option value="@d.DepartmentId">@d.Name</option> }
+        }
+      </select>
+    </div>
+    <div class="col-auto"><input type="date" name="from" class="form-control" /></div>
+    <div class="col-auto"><input type="date" name="to" class="form-control" /></div>
+    <div class="col-auto"><button class="btn btn-outline-secondary" type="submit">Filtrer</button></div>
+  </form>
+
+  <table class="table table-sm align-middle">
+    <thead><tr><th>Date</th><th>Type</th><th>Titre</th><th>Département</th><th class="text-end"></th></tr></thead>
+    <tbody>
+    @foreach (var a in Model)
+    {
+      <tr>
+        <td>@a.CreatedAt</td>
+        <td>@a.AlertType</td>
+        <td><a asp-action="Details" asp-route-id="@a.AlertId">@a.Title</a></td>
+        <td>@a.DepartmentId</td>
+        <td class="text-end">
+          <a class="btn btn-sm btn-outline-primary" asp-action="Edit" asp-route-id="@a.AlertId">Modifier</a>
+          <form class="d-inline" asp-action="Delete" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@a.AlertId" />
+            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Supprimer ?')">Supprimer</button>
+          </form>
+        </td>
+      </tr>
+    }
+    </tbody>
+  </table>
+</div>
+
+@section Scripts {
+<script>
+  async function loadQuick(){
+    const res = await fetch('/AlertsCrud/QuickList'); const items = await res.json();
+    const sel = document.getElementById('quickSelect');
+    items.forEach(x=>{
+      const o = document.createElement('option');
+      o.value = x.alertId; o.textContent = x.title;
+      o.dataset.message = x.message; o.dataset.type = x.alertType; o.dataset.departmentId = x.departmentId ?? '';
+      sel.appendChild(o);
+    });
+  }
+
+  document.getElementById('quickSelect').addEventListener('change', (e)=>{
+    const opt = e.target.selectedOptions[0]; if (!opt || !opt.value) return;
+    document.getElementById('fTitle').value = opt.textContent;
+    document.getElementById('fMessage').value = opt.dataset.message || '';
+    document.getElementById('fType').value = opt.dataset.type || 'Information';
+    const d = opt.dataset.departmentId || '';
+    const deptSel = document.getElementById('fDept'); if (deptSel) deptSel.value = d;
+  });
+
+  async function loadDeptUsers(){
+    const r = await fetch('/AlertsCrud/DeptUsers'); const users = await r.json();
+    const sel = document.getElementById('fRecipients'); sel.innerHTML = '';
+    users.forEach(u=>{ const o=document.createElement('option'); o.value=u.userId; o.textContent=`${u.username} (${u.email})`; sel.appendChild(o); });
+  }
+
+  document.getElementById('btnQuickSave').addEventListener('click', async ()=>{
+    const fd = new URLSearchParams();
+    fd.set('title', document.getElementById('fTitle').value);
+    fd.set('message', document.getElementById('fMessage').value);
+    fd.set('alertType', document.getElementById('fType').value);
+    const deptSel = document.getElementById('fDept'); if (deptSel) fd.set('departmentId', deptSel.value);
+    await fetch('/AlertsCrud/QuickSave', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: fd });
+    document.getElementById('quickSelect').innerHTML = '<option value="">-- Sélectionner --</option>';
+    loadQuick();
+  });
+
+  document.getElementById('btnSend').addEventListener('click', async ()=>{
+    let alertId = document.getElementById('quickSelect').value;
+    if (!alertId){
+      const fd = new URLSearchParams();
+      fd.set('title', document.getElementById('fTitle').value);
+      fd.set('message', document.getElementById('fMessage').value);
+      fd.set('alertType', document.getElementById('fType').value);
+      const deptSel = document.getElementById('fDept'); if (deptSel) fd.set('departmentId', deptSel.value);
+      const res = await fetch('/AlertsCrud/QuickSave', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: fd });
+      const data = await res.json(); alertId = data.alertId;
+      document.getElementById('quickSelect').innerHTML = '<option value="">-- Sélectionner --</option>';
+      await loadQuick();
+      document.getElementById('quickSelect').value = alertId;
+    }
+    const sendFd = new URLSearchParams(); sendFd.set('alertId', alertId);
+    const recSel = document.getElementById('fRecipients');
+    if (recSel){
+      const selected = Array.from(recSel.selectedOptions).map(o=>o.value).filter(Boolean);
+      if (selected.length>0) sendFd.set('recipients', selected.join(','));
+    }
+    await fetch('/AlertsCrud/Send', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: sendFd });
+    alert('Alerte envoyée');
+  });
+
+  loadQuick();
+  loadDeptUsers();
+
+  // Filtre rapide des destinataires (client-side)
+  document.getElementById('fRecipientsSearch').addEventListener('input', (e)=>{
+    const q = (e.target.value || '').toLowerCase();
+    const sel = document.getElementById('fRecipients');
+    Array.from(sel.options).forEach(o => {
+      const txt = o.textContent.toLowerCase();
+      o.hidden = q && !txt.includes(q);
+    });
+  });
+</script>
+}
+
+

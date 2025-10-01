@@ -1,0 +1,86 @@
+@model AlertSystem.Models.Entities.User
+@{
+    ViewData["Title"] = "Modifier utilisateur";
+    var departments = ViewBag.Departments as List<AlertSystem.Models.Entities.Department>;
+    var allowedRoles = ViewBag.AllowedRoles as IReadOnlyList<string> ?? new List<string>{"User"};
+}
+<div class="container py-3">
+  <h3>Modifier utilisateur</h3>
+  <form asp-action="Edit" method="post" class="mt-3">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="UserId" />
+
+    <div class="mb-3">
+      <label class="form-label">Username</label>
+      <input asp-for="Username" class="form-control" />
+      <span asp-validation-for="Username" class="text-danger small"></span>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Email</label>
+      <input asp-for="Email" class="form-control" />
+      <span asp-validation-for="Email" class="text-danger small"></span>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Téléphone</label>
+      <input asp-for="PhoneNumber" class="form-control" />
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Nouveau mot de passe (laisser vide pour conserver)</label>
+      <input asp-for="PasswordHash" class="form-control" />
+    </div>
+    <div class="row g-3">
+      <div class="col-sm-6">
+        <label class="form-label">Rôle</label>
+        <select asp-for="Role" class="form-select">
+          @foreach (var r in allowedRoles)
+          {
+              if (string.Equals(Model.Role, r, System.StringComparison.OrdinalIgnoreCase)) {
+                  <option selected value="@r">@r</option>
+              } else {
+                  <option value="@r">@r</option>
+              }
+          }
+        </select>
+      </div>
+      <div class="col-sm-6">
+        <label class="form-label">Département</label>
+        @if (User.IsInRole("Admin"))
+        {
+            <select asp-for="DepartmentId" class="form-select">
+              <option value="">-- Aucun --</option>
+              @if (departments != null)
+              {
+                  foreach (var d in departments)
+                  {
+                      if (Model.DepartmentId == d.DepartmentId) {
+                          <option selected value="@d.DepartmentId">@d.Name</option>
+                      } else {
+                          <option value="@d.DepartmentId">@d.Name</option>
+                      }
+                  }
+              }
+            </select>
+        }
+        else
+        {
+            <select class="form-select" disabled>
+              @{ var dep = departments?.FirstOrDefault(x => x.DepartmentId == (Model.DepartmentId ?? 0)); }
+              <option>@(dep?.Name ?? "")</option>
+            </select>
+            <input type="hidden" asp-for="DepartmentId" />
+        }
+      </div>
+    </div>
+
+    <div class="mt-3 d-flex gap-2">
+      <button class="btn btn-primary" type="submit">Enregistrer</button>
+      <a class="btn btn-secondary" asp-action="Index">Annuler</a>
+    </div>
+  </form>
+</div>
+
+@section Scripts {
+  <partial name="_ValidationScriptsPartial" />
+}
+
+

@@ -1,0 +1,135 @@
+@model AlertSystem.Models.ViewModels.UserListViewModel
+@{
+    ViewData["Title"] = "Gestion des utilisateurs";
+    var departments = Model.Departments;
+}
+<div class="container py-3">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h3>Utilisateurs</h3>
+    <a class="btn btn-primary" asp-action="Create">Nouveau</a>
+  </div>
+
+  <form class="row g-2 mb-3">
+    @if (!User.IsInRole("SuperUser"))
+    {
+      <div class="col-auto">
+        <select name="role" class="form-select">
+          <option value="">Tous rôles</option>
+          @if (Model.Role == "Admin") { <option value="Admin" selected>Admin</option> } else { <option value="Admin">Admin</option> }
+          @if (Model.Role == "SuperUser") { <option value="SuperUser" selected>SuperUser</option> } else { <option value="SuperUser">SuperUser</option> }
+          @if (Model.Role == "User") { <option value="User" selected>User</option> } else { <option value="User">User</option> }
+        </select>
+      </div>
+      <div class="col-auto">
+        <select name="departmentId" class="form-select">
+          <option value="">Tous départements</option>
+          @foreach (var d in departments) {
+              if (Model.DepartmentId == d.DepartmentId) { <option value="@d.DepartmentId" selected>@d.Name</option>; } else { <option value="@d.DepartmentId">@d.Name</option>; }
+          }
+        </select>
+      </div>
+    }
+    <div class="col-auto">
+      <input name="q" value="@Model.Query" class="form-control" placeholder="Recherche (nom/email)" />
+    </div>
+    <div class="col-auto">
+      <button class="btn btn-outline-secondary" type="submit">Filtrer</button>
+    </div>
+  </form>
+
+  <table class="table table-sm align-middle" id="usersTable">
+    <thead>
+      <tr>
+        <th><a asp-route-sortBy="Username" asp-route-desc="@(Model.SortBy=="Username"?!Model.Desc:false)">Username</a></th>
+        <th><a asp-route-sortBy="Email" asp-route-desc="@(Model.SortBy=="Email"?!Model.Desc:false)">Email</a></th>
+        <th><a asp-route-sortBy="Role" asp-route-desc="@(Model.SortBy=="Role"?!Model.Desc:false)">Rôle</a></th>
+        <th>Département</th>
+        <th class="text-end"></th>
+      </tr>
+    </thead>
+    <tbody>
+      @foreach (var u in Model.Items) {
+        <tr>
+          <td>@u.Username</td>
+          <td>@u.Email</td>
+          <td>@u.Role</td>
+          <td>
+            @{ var dep = departments.FirstOrDefault(d => d.DepartmentId == (u.DepartmentId ?? 0)); }
+            @(dep?.Name ?? "")
+          </td>
+          <td class="text-end">
+            <a class="btn btn-sm btn-outline-primary" asp-action="Edit" asp-route-id="@u.UserId">Modifier</a>
+            <form class="d-inline" asp-action="Delete" method="post">
+              <input type="hidden" name="id" value="@u.UserId" />
+              @Html.AntiForgeryToken()
+              <button class="btn btn-sm btn-outline-danger" type="submit" onclick="return confirm('Supprimer ?')">Supprimer</button>
+            </form>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+
+  <nav id="pager">
+    <ul class="pagination">
+      @{
+          var pages = Math.Max(1, (int)Math.Ceiling((double)Model.TotalCount / Math.Max(1, Model.Size)));
+          for (int i=1;i<=pages;i++)
+          {
+              <li class="page-item @(i==Model.Page?"active":null)">
+                <a class="page-link" asp-route-page="@i" asp-route-size="@Model.Size" asp-route-role="@Model.Role" asp-route-departmentId="@Model.DepartmentId" asp-route-q="@Model.Query" asp-route-sortBy="@Model.SortBy" asp-route-desc="@Model.Desc">@i</a>
+              </li>
+          }
+      }
+    </ul>
+  </nav>
+</div>
+
+@section Scripts {
+<script>
+  const form = document.querySelector('form');
+  form.addEventListener('submit', (e)=>{ e.preventDefault(); fetchPage(1); });
+
+  async function fetchPage(p){
+    const params = new URLSearchParams(new FormData(form));
+    params.append('page', p); params.append('size', '@Model.Size');
+    const res = await fetch(`/Users/Search?${params.toString()}`, { cache:'no-store' });
+    const data = await res.json();
+    renderTable(data.items);
+    renderPager(data.totalCount, data.page, data.size);
+  }
+
+  function renderTable(items){
+    const tbody = document.querySelector('#usersTable tbody');
+    tbody.innerHTML = items.map(u => `
+      <tr>
+        <td>${u.username}</td>
+        <td>${u.email}</td>
+        <td>${u.role}</td>
+        <td>${u.departmentId ?? ''}</td>
+        <td class="text-end">
+          <a class="btn btn-sm btn-outline-primary" href="/Users/Edit/${u.userId}">Modifier</a>
+          <form class="d-inline" action="/Users/Delete" method="post">
+            <input type="hidden" name="id" value="${u.userId}" />
+            <button class="btn btn-sm btn-outline-danger" type="submit" onclick="return confirm('Supprimer ?')">Supprimer</button>
+          </form>
+        </td>
+      </tr>`).join('');
+  }
+
+  function renderPager(total, page, size){
+    const pages = Math.max(1, Math.ceil(total/size));
+    const ul = document.querySelector('#pager ul');
+    ul.innerHTML = '';
+    for(let i=1;i<=pages;i++){
+      const li = document.createElement('li');
+      li.className = `page-item ${i===page?'active':''}`;
+      li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+      li.onclick = (e)=>{ e.preventDefault(); fetchPage(i); };
+      ul.appendChild(li);
+    }
+  }
+</script>
+}
+
+

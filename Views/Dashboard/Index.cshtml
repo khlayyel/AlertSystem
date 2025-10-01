@@ -1,0 +1,162 @@
+@{
+    ViewData["Title"] = "Dashboard";
+    var role = (string?)ViewBag.Role ?? "";
+    var departments = ViewBag.Departments as List<AlertSystem.Models.Entities.Department>;
+}
+<div class="container py-3">
+  <div class="mb-3">
+    <h3>Alert Dashboard</h3>
+    <div class="text-muted">Bienvenue @ViewBag.DisplayName — Rôle: @role</div>
+  </div>
+
+  <ul class="nav nav-tabs" id="tabs" role="tablist">
+    <li class="nav-item" role="presentation"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#inbox" type="button">Boîte de réception</button></li>
+    @if (string.Equals(role, "SuperUser", StringComparison.OrdinalIgnoreCase)) {
+      <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#sent" type="button">Envoyées</button></li>
+      <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#dept" type="button">Historique des alertes du département</button></li>
+    }
+    @if (string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase)) {
+      <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#all" type="button">Tous (admin)</button></li>
+    }
+  </ul>
+  <div class="tab-content border border-top-0 p-3">
+    <div class="tab-pane fade show active" id="inbox">
+      <div id="inboxList">Chargement...</div>
+    </div>
+    @if (string.Equals(role, "SuperUser", StringComparison.OrdinalIgnoreCase)) {
+    <div class="tab-pane fade" id="sent">
+      <div id="sentList">Chargement...</div>
+    </div>
+    <div class="tab-pane fade" id="dept">
+      <form class="row g-2 mb-2" id="deptFilters">
+        <div class="col-auto">
+          <select name="type" class="form-select">
+            <option value="">Tous types</option>
+            <option value="Information">Information</option>
+            <option value="Obligatoire">Obligatoire</option>
+          </select>
+        </div>
+        <div class="col-auto">
+          <select name="status" class="form-select">
+            <option value="all">Tous statuts</option>
+            <option value="unread">Non lus</option>
+            <option value="confirmed">Lu</option>
+          </select>
+        </div>
+        <div class="col-auto"><input type="date" name="from" class="form-control" /></div>
+        <div class="col-auto"><input type="date" name="to" class="form-control" /></div>
+        <div class="col-auto"><button class="btn btn-outline-secondary" type="submit">Filtrer</button></div>
+      </form>
+      <div id="deptList">Chargement...</div>
+    </div>
+    }
+    @if (string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase)) {
+    <div class="tab-pane fade" id="all">
+      <form class="row g-2 mb-2" id="allFilters">
+        <div class="col-auto">
+          <select name="departmentId" class="form-select">
+            <option value="">Tous départements</option>
+            @foreach (var d in departments!) { <option value="@d.DepartmentId">@d.Name</option> }
+          </select>
+        </div>
+        <div class="col-auto">
+          <select name="type" class="form-select">
+            <option value="">Tous types</option>
+            <option value="Information">Information</option>
+            <option value="Obligatoire">Obligatoire</option>
+          </select>
+        </div>
+        <div class="col-auto"><input type="date" name="from" class="form-control" /></div>
+        <div class="col-auto"><input type="date" name="to" class="form-control" /></div>
+        <div class="col-auto"><button class="btn btn-outline-secondary" type="submit">Filtrer</button></div>
+      </form>
+      <div class="d-flex justify-content-end mb-2">
+        <a id="exportCsvBtn" class="btn btn-sm btn-outline-primary" href="#">Exporter CSV</a>
+      </div>
+      <div id="allList">Chargement...</div>
+    </div>
+    }
+  </div>
+</div>
+
+@section Scripts {
+<script>
+async function fetchJson(url){ const r = await fetch(url, { cache:'no-store' }); return await r.json(); }
+
+async function loadInbox(){
+  const data = await fetchJson('/Alerts/HistoryData?status=unread&page=1&size=10');
+  renderList('inboxList', data, true);
+}
+async function loadSent(){
+  const data = await fetchJson('/Alerts/SentData?page=1&size=10');
+  renderListCustom('sentList', data);
+}
+async function loadDept(){
+  const params = new URLSearchParams(new FormData(document.getElementById('deptFilters')));
+  const data = await fetchJson('/Alerts/DeptData?' + params.toString() + '&page=1&size=10');
+  renderListCustom('deptList', data);
+}
+async function loadAll(){
+  const params = new URLSearchParams(new FormData(document.getElementById('allFilters')));
+  const r = await fetch(`/Alerts/HistoryData?${params.toString()}&page=1&size=20`);
+  const data = await r.json();
+  renderList('allList', data, false, true);
+  document.getElementById('exportCsvBtn').setAttribute('href', `/Alerts/ExportCsv?${params.toString()}`);
+}
+
+function renderList(targetId, data, canConfirm, adminView=false){
+  const el = document.getElementById(targetId);
+  if (!data.items || data.items.length===0){ el.innerHTML = '<div class="text-muted">Aucune alerte</div>'; return; }
+  el.innerHTML = `
+    <table class="table table-sm align-middle">
+      <thead><tr><th>Date</th><th>Type</th><th>Titre</th><th>Statut</th>${adminView?'':'<th></th>'}</tr></thead>
+      <tbody>
+      ${data.items.map(x => `
+        <tr>
+          <td>${new Date(x.createdAt).toLocaleString()}</td>
+          <td>${x.alertType}</td>
+          <td>${x.title}</td>
+          <td>${x.alertType==='Obligatoire' ? (x.isRead ? 'Lu' : 'Non lu') : ''}</td>
+          ${adminView?'':`<td class="text-end">
+            ${x.alertType==='Obligatoire' && !x.isRead && canConfirm ? `<button class="btn btn-outline-secondary btn-sm" onclick="markRead(${x.alertRecipientId})">Marquer lu</button>` : ''}
+          </td>`}
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+function renderListCustom(targetId, data){
+  const el = document.getElementById(targetId);
+  if (!data.items || data.items.length===0){ el.innerHTML = '<div class="text-muted">Aucune alerte</div>'; return; }
+  el.innerHTML = `
+    <table class="table table-sm align-middle">
+      <thead><tr><th>Date</th><th>Type</th><th>Titre</th><th>Expéditeur</th><th>Destinataire</th><th>Statut</th><th>Heure de réception</th></tr></thead>
+      <tbody>
+      ${data.items.map(x => `
+        <tr>
+          <td>${new Date(x.createdAt).toLocaleString()}</td>
+          <td>${x.alertType}</td>
+          <td>${x.title}</td>
+          <td>${x.sender}</td>
+          <td>${x.recipient}</td>
+          <td>${x.alertType==='Obligatoire' ? (x.isRead ? 'Lu' : 'Non lu') : ''}</td>
+          <td>${x.isRead && x.confirmedAt ? new Date(x.confirmedAt).toLocaleString() : ''}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+document.getElementById('allFilters')?.addEventListener('submit', (e)=>{ e.preventDefault(); loadAll(); });
+document.getElementById('deptFilters')?.addEventListener('submit', (e)=>{ e.preventDefault(); loadDept(); });
+
+async function confirmAlert(id){ await fetch('/Alerts/Confirm', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:`alertRecipientId=${id}` }); loadInbox(); loadMine(); }
+async function markRead(id){ await fetch('/Alerts/MarkRead', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:`alertRecipientId=${id}` }); loadInbox(); loadMine(); }
+
+loadInbox();
+if (document.getElementById('sentList')) loadSent();
+if (document.getElementById('deptList')) loadDept();
+if (document.getElementById('allFilters')) { loadAll(); }
+</script>
+}
+
+
