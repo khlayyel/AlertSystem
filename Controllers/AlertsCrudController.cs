@@ -4,6 +4,8 @@ using AlertSystem.Models.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.SignalR;
+using AlertSystem.Hubs;
 
 namespace AlertSystem.Controllers
 {
@@ -11,7 +13,8 @@ namespace AlertSystem.Controllers
     public sealed class AlertsCrudController : Controller
     {
         private readonly ApplicationDbContext _db;
-        public AlertsCrudController(ApplicationDbContext db){ _db = db; }
+        private readonly IHubContext<NotificationsHub> _hub;
+        public AlertsCrudController(ApplicationDbContext db, IHubContext<NotificationsHub> hub){ _db = db; _hub = hub; }
 
         private int CurrentUserId => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         private string CurrentRole => User.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
@@ -197,6 +200,15 @@ namespace AlertSystem.Controllers
                 }
                 await _db.SaveChangesAsync();
             }
+
+            // Push temps réel: notifier destinataires, expéditeur et vues département
+            foreach (var uid in targetIds)
+            {
+                await _hub.Clients.User(uid.ToString()).SendAsync("historyChanged");
+                await _hub.Clients.User(uid.ToString()).SendAsync("badgeChanged");
+            }
+            await _hub.Clients.User(CurrentUserId.ToString()).SendAsync("sentChanged");
+            await _hub.Clients.All.SendAsync("deptChanged");
             return Ok();
         }
 

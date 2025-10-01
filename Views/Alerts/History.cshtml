@@ -42,6 +42,7 @@
 <script>
   const isAdmin = @(User.IsInRole("Admin").ToString().ToLower());
   let page = 1, size = 10;
+  function fmtPlus1(dateIso){ const d = new Date(dateIso); return new Date(d.getTime()+3600000).toLocaleString(); }
 
   function token(){ return document.querySelector('input[name="__RequestVerificationToken"]').value; }
 
@@ -68,7 +69,7 @@
         <tbody>
         ${data.items.map(x => `
           <tr>
-            <td>${new Date(x.createdAt).toLocaleString()}</td>
+            <td>${fmtPlus1(x.createdAt)}</td>
             <td>${x.alertType}</td>
             <td>${x.title}</td>
             <td>${x.alertType==='Obligatoire' ? (x.isRead ? 'Lu' : 'Non lu') : ''}</td>

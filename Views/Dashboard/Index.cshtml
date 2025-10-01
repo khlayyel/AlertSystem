@@ -5,23 +5,65 @@
 }
 <div class="container py-3">
   <div class="mb-3">
-    <h3>Alert Dashboard</h3>
+    <h3 class="mb-1">Tableau de bord</h3>
     <div class="text-muted">Bienvenue @ViewBag.DisplayName — Rôle: @role</div>
   </div>
 
+  <div class="row g-3 mb-3" id="kpiRow">
+    <div class="col-12 col-md-6 col-lg-3">
+      <div class="card shadow-sm kpi-card">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div class="kpi-label">Alertes du jour</div>
+              <div class="kpi-value" id="kpiToday">—</div>
+            </div>
+            <span class="kpi-dot bg-primary"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-md-6 col-lg-3">
+      <div class="card shadow-sm kpi-card">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div class="kpi-label">Obligatoires en attente</div>
+              <div class="kpi-value" id="kpiPending">—</div>
+            </div>
+            <span class="kpi-dot bg-warning"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-md-6 col-lg-3">
+      <div class="card shadow-sm kpi-card">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div class="kpi-label">Obligatoires confirmées</div>
+              <div class="kpi-value" id="kpiConfirmedMandatory">—</div>
+            </div>
+            <span class="kpi-dot bg-success"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <ul class="nav nav-tabs" id="tabs" role="tablist">
-    <li class="nav-item" role="presentation"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#inbox" type="button">Boîte de réception</button></li>
+    <li class="nav-item" role="presentation"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#inbox" type="button"><span class="me-1" aria-hidden="true">📥</span> Boîte de réception</button></li>
     @if (string.Equals(role, "SuperUser", StringComparison.OrdinalIgnoreCase) || string.Equals(role, "User", StringComparison.OrdinalIgnoreCase) || string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase)) {
-      <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#sent" type="button">Envoyées</button></li>
+      <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#sent" type="button"><span class="me-1" aria-hidden="true">📤</span> Envoyées</button></li>
     }
     @if (string.Equals(role, "SuperUser", StringComparison.OrdinalIgnoreCase)) {
-      <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#dept" type="button">Historique des alertes du département</button></li>
+      <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#dept" type="button"><span class="me-1" aria-hidden="true">🏢</span> Historique département</button></li>
     }
     @if (string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase)) {
-      <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#all" type="button">Tous (admin)</button></li>
+      <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#all" type="button"><span class="me-1" aria-hidden="true">🗂️</span> Tous (admin)</button></li>
     }
   </ul>
-  <div class="tab-content border border-top-0 p-3">
+  <div class="tab-content card shadow-sm border-0 p-3">
     <div class="tab-pane fade show active" id="inbox">
       <div id="inboxList">Chargement...</div>
     </div>
@@ -84,11 +126,14 @@
 @section Scripts {
 <script>
 async function fetchJson(url){ const r = await fetch(url, { cache:'no-store' }); return await r.json(); }
+function fmtPlus1(dateIso){ const d = new Date(dateIso); return new Date(d.getTime()+3600000).toLocaleString(); }
 
 async function loadInbox(){
   // Afficher toutes les alertes (lues et non lues) avec leur statut
   const data = await fetchJson('/Alerts/HistoryData?status=all&page=1&size=10');
   renderList('inboxList', data, true);
+  updateKpisFromData(data);
+  updateUnreadKpi();
 }
 async function loadSent(){
   const data = await fetchJson('/Alerts/SentData?page=1&size=10');
@@ -105,6 +150,8 @@ async function loadAll(){
   const data = await r.json();
   renderList('allList', data, false, true);
   document.getElementById('exportCsvBtn').setAttribute('href', `/Alerts/ExportCsv?${params.toString()}`);
+  updateKpisFromData(data);
+  updateUnreadKpi();
 }
 
 function renderList(targetId, data, canConfirm, adminView=false){
@@ -112,16 +159,18 @@ function renderList(targetId, data, canConfirm, adminView=false){
   if (!data.items || data.items.length===0){ el.innerHTML = '<div class="text-muted">Aucune alerte</div>'; return; }
   el.innerHTML = `
     <table class="table table-sm align-middle">
-      <thead><tr><th>Date</th><th>Type</th><th>Titre</th><th>Statut</th><th class="text-end">Actions</th></tr></thead>
+      <thead><tr><th scope="col">Date</th><th scope="col">Type</th><th scope="col">Titre</th><th scope="col">Statut</th><th scope="col" class="text-end">Actions</th></tr></thead>
       <tbody>
       ${data.items.map(x => `
         <tr>
-          <td>${new Date(x.createdAt).toLocaleString()}</td>
-          <td>${x.alertType}</td>
+          <td>${fmtPlus1(x.createdAt)}</td>
+          <td>
+            ${x.alertType==='Obligatoire' ? '<span class="badge badge-type-obl">Obligatoire</span>' : '<span class="badge badge-type-info">Information</span>'}
+          </td>
           <td>${x.title}</td>
-          <td>${x.alertType==='Obligatoire' ? (x.isRead ? 'Lu' : 'Non lu') : ''}</td>
+          <td>${x.alertType==='Obligatoire' ? (x.isRead ? '<span class="badge badge-status-lu">Lu</span>' : '<span class="badge badge-status-nonlu">Non lu</span>') : ''}</td>
           <td class="text-end">
-            ${(!adminView && x.alertType==='Obligatoire' && !x.isRead && canConfirm) ? `<button class="btn btn-outline-secondary btn-sm me-2" onclick="markRead(${x.alertRecipientId})">Marquer lu</button>` : ''}
+            ${(!adminView && x.alertType==='Obligatoire' && !x.isRead && canConfirm) ? `<button class="btn btn-outline-secondary btn-sm me-2" onclick="markRead(${x.alertRecipientId})" aria-label="Marquer l'alerte comme lue">Marquer lu</button>` : ''}
             <a class="btn btn-primary btn-sm" href="/AlertsCrud/Details/${x.alertId}">Accéder</a>
           </td>
         </tr>`).join('')}
@@ -134,32 +183,92 @@ function renderListCustom(targetId, data){
   if (!data.items || data.items.length===0){ el.innerHTML = '<div class="text-muted">Aucune alerte</div>'; return; }
   el.innerHTML = `
     <table class="table table-sm align-middle">
-      <thead><tr><th>Date</th><th>Type</th><th>Titre</th><th>Expéditeur</th><th>Destinataire</th><th>Statut</th><th>Heure de réception</th></tr></thead>
+      <thead><tr><th scope="col">Date</th><th scope="col">Type</th><th scope="col">Titre</th><th scope="col">Expéditeur</th><th scope="col">Destinataire</th><th scope="col">Statut</th><th scope="col">Heure de réception</th></tr></thead>
       <tbody>
       ${data.items.map(x => `
         <tr>
-          <td>${new Date(x.createdAt).toLocaleString()}</td>
+          <td>${fmtPlus1(x.createdAt)}</td>
           <td>${x.alertType}</td>
           <td>${x.title}</td>
           <td>${x.sender}</td>
           <td>${x.recipient}</td>
           <td>${x.alertType==='Obligatoire' ? (x.isRead ? 'Lu' : 'Non lu') : ''}</td>
-          <td>${x.isRead && x.confirmedAt ? new Date(x.confirmedAt).toLocaleString() : ''}</td>
+          <td>${x.isRead && x.confirmedAt ? fmtPlus1(x.confirmedAt) : ''}</td>
         </tr>`).join('')}
       </tbody>
     </table>`;
 }
 
+function updateKpisFromData(data){
+  try{
+    const items = Array.isArray(data?.items) ? data.items : [];
+    // This is page-scoped; authoritative unread is fetched via updateUnreadKpi()
+    const unreadCount = items.filter(x => x.alertType === 'Obligatoire' && !x.isRead).length;
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const todayCount = items.filter(x => { const d = new Date(x.createdAt); return d >= today; }).length;
+    const pendingCount = unreadCount;
+    const confirmedMandatory = items.filter(x => x.alertType === 'Obligatoire' && x.isRead).length;
+    const setText = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = String(val); };
+    setText('kpiToday', todayCount);
+    setText('kpiPending', pendingCount);
+    setText('kpiConfirmedMandatory', confirmedMandatory);
+  }catch{}
+}
+
+async function updateUnreadKpi(){
+  try{
+    const r = await fetch('/Alerts/UnreadCount', { cache:'no-store' });
+    if(!r.ok) return;
+    const { count } = await r.json();
+    const set = (id,v)=>{ const el=document.getElementById(id); if(el) el.textContent = String(v); };
+    set('kpiPending', count);
+  }catch{}
+}
+
+async function updateConfirmedMandatoryKpi(){
+  try{
+    const r = await fetch('/Alerts/ConfirmedMandatoryCount', { cache:'no-store' });
+    if(!r.ok) return;
+    const { count } = await r.json();
+    const el = document.getElementById('kpiConfirmedMandatory');
+    if(el) el.textContent = String(count);
+  }catch{}
+}
+
+async function updateTodayKpi(){
+  try{
+    const r = await fetch('/Alerts/TodayCount', { cache:'no-store' });
+    if(!r.ok) return;
+    const { count } = await r.json();
+    const el = document.getElementById('kpiToday');
+    if(el) el.textContent = String(count);
+  }catch{}
+}
+
 document.getElementById('allFilters')?.addEventListener('submit', (e)=>{ e.preventDefault(); loadAll(); });
 document.getElementById('deptFilters')?.addEventListener('submit', (e)=>{ e.preventDefault(); loadDept(); });
 
-async function confirmAlert(id){ await fetch('/Alerts/Confirm', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:`alertRecipientId=${id}` }); loadInbox(); loadMine(); }
-async function markRead(id){ await fetch('/Alerts/MarkRead', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:`alertRecipientId=${id}` }); loadInbox(); loadMine(); }
+async function confirmAlert(id){ await fetch('/Alerts/Confirm', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:`alertRecipientId=${id}` }); loadInbox(); loadMine(); updateUnreadKpi(); }
+async function markRead(id){ await fetch('/Alerts/MarkRead', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:`alertRecipientId=${id}` }); loadInbox(); loadMine(); updateUnreadKpi(); }
 
 loadInbox();
+updateUnreadKpi();
+updateConfirmedMandatoryKpi();
+updateTodayKpi();
 if (document.getElementById('sentList')) loadSent();
 if (document.getElementById('deptList')) loadDept();
 if (document.getElementById('allFilters')) { loadAll(); }
+
+// Temps réel via SignalR
+if (window.signalR){
+  const connection = new signalR.HubConnectionBuilder().withUrl('/hubs/notifications').withAutomaticReconnect().build();
+  connection.on('historyChanged', ()=> loadInbox());
+  connection.on('sentChanged', ()=> { if (document.getElementById('sentList')) loadSent(); });
+  connection.on('deptChanged', ()=> { if (document.getElementById('deptList')) loadDept(); });
+  connection.on('badgeChanged', ()=> { updateUnreadKpi(); updateConfirmedMandatoryKpi(); updateTodayKpi(); /* badge côté layout déjà branché au besoin */});
+  connection.start();
+}
 </script>
 }
 

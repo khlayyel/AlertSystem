@@ -4,6 +4,8 @@ using AlertSystem.Models.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using AlertSystem.Services;
+using Microsoft.AspNetCore.SignalR;
+using AlertSystem.Hubs;
 using Microsoft.AspNetCore.Authorization;
 using BCrypt.Net;
 
@@ -15,11 +17,13 @@ namespace AlertSystem.Controllers
     {
         private readonly ApplicationDbContext _db;
         private readonly ICurrentUserAccessor _current;
+        private readonly IHubContext<NotificationsHub> _hub;
 
-        public UsersController(ApplicationDbContext db, ICurrentUserAccessor current)
+        public UsersController(ApplicationDbContext db, ICurrentUserAccessor current, IHubContext<NotificationsHub> hub)
         {
             _db = db;
             _current = current;
+            _hub = hub;
         }
 
         // GET: /Users
@@ -164,6 +168,7 @@ namespace AlertSystem.Controllers
             }
             _db.Users.Add(model);
             await _db.SaveChangesAsync();
+            await _hub.Clients.All.SendAsync("usersChanged");
             return RedirectToAction(nameof(Index));
         }
 
@@ -224,6 +229,7 @@ namespace AlertSystem.Controllers
             }
             _db.Entry(model).State = EntityState.Modified;
             await _db.SaveChangesAsync();
+            await _hub.Clients.All.SendAsync("usersChanged");
             return RedirectToAction(nameof(Index));
         }
 
@@ -244,6 +250,7 @@ namespace AlertSystem.Controllers
             }
             _db.Users.Remove(user);
             await _db.SaveChangesAsync();
+            await _hub.Clients.All.SendAsync("usersChanged");
             return RedirectToAction(nameof(Index));
         }
 

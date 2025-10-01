@@ -6,14 +6,20 @@
     <title>@ViewData["Title"] - AlertSystem</title>
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/AlertSystem.styles.css" asp-append-version="true" />
 </head>
 <body>
+    <a class="visually-hidden-focusable" href="#main-content">Aller au contenu</a>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-dark border-bottom box-shadow mb-3">
             <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Dashboard" asp-action="Index">Alert Dashboard</a>
+                <a class="navbar-brand d-flex align-items-center" asp-area="" asp-controller="Dashboard" asp-action="Index">
+                    <span class="me-2 d-inline-block" style="width:10px;height:10px;border-radius:2px;background:#0d6efd"></span>
+                    Alert Dashboard
+                    <span id="badge-unread" class="badge rounded-pill bg-danger ms-2" style="display:none">0</span>
+                </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
@@ -22,29 +28,27 @@
                     <ul class="navbar-nav flex-grow-1">
                     
                     <li class="nav-item">
-                        <a class="nav-link text-dark" asp-area="" asp-controller="AlertsCrud" asp-action="Index">Gestion alertes</a>
+                        <a class="nav-link text-light @(ViewContext.RouteData.Values["Controller"]?.ToString()=="AlertsCrud"?"active":null)" asp-area="" asp-controller="AlertsCrud" asp-action="Index">Gestion alertes</a>
                     </li>
                     @if (User.IsInRole("Admin") || User.IsInRole("SuperUser"))
                     {
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Users" asp-action="Index">Users</a>
+                            <a class="nav-link text-light @(ViewContext.RouteData.Values["Controller"]?.ToString()=="Users"?"active":null)" asp-area="" asp-controller="Users" asp-action="Index">Users</a>
                         </li>
                     }
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
+                        
                     </ul>
                     <div class="d-flex">
                         @if (User?.Identity?.IsAuthenticated ?? false)
                         {
                             <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
                                 @Html.AntiForgeryToken()
-                                <button type="submit" class="btn btn-link nav-link">Logout</button>
+                                <button type="submit" class="btn btn-link nav-link text-light">Logout</button>
                             </form>
                         }
                         else
                         {
-                            <a class="nav-link" asp-controller="Account" asp-action="Login">Login</a>
+                            <a class="nav-link text-light" asp-controller="Account" asp-action="Login">Login</a>
                         }
                     </div>
                 </div>
@@ -59,14 +63,15 @@
 
     <footer class="border-top footer text-muted">
         <div class="container">
-            &copy; 2025 - AlertSystem - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            &copy; 2025 - AlertSystem
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script>
-      (async function(){
+      async function loadBadge(){
         try {
           const r = await fetch('/Alerts/UnreadCount', { cache:'no-store' });
           if(!r.ok) return;
@@ -74,7 +79,18 @@
           const el = document.getElementById('badge-unread');
           if(el){ el.style.display = count>0?'inline-block':'none'; el.textContent = count; }
         } catch {}
-      })();
+      }
+      loadBadge();
+      if (window.signalR){
+        const conn = new signalR.HubConnectionBuilder().withUrl('/hubs/notifications').withAutomaticReconnect().build();
+        conn.on('badgeChanged', ()=> loadBadge());
+        conn.on('historyChanged', ()=> loadBadge());
+        conn.on('sentChanged', ()=> loadBadge());
+        conn.on('deptChanged', ()=> loadBadge());
+        conn.start();
+      }
+      // Safeguard: periodic refresh in case of missed events
+      setInterval(loadBadge, 3000);
     </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

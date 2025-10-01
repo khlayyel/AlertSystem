@@ -126,12 +126,41 @@ namespace AlertSystem.Controllers
         [HttpGet]
         public async Task<IActionResult> UnreadCount()
         {
+            // Count ONLY mandatory (Obligatoire) alerts that are not read
             int userId = await ResolveUserIdAsync();
             if (userId == 0) return Json(new { count = 0 });
-            var count = await _db.AlertRecipients
-                .AsNoTracking()
-                .Where(x => x.UserId == userId && !x.IsRead)
-                .CountAsync();
+            var count = await (from ar in _db.AlertRecipients.AsNoTracking()
+                               join a in _db.Alerts.AsNoTracking() on ar.AlertId equals a.AlertId
+                               where ar.UserId == userId && !ar.IsRead && a.AlertType == "Obligatoire"
+                               select 1).CountAsync();
+            return Json(new { count });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ConfirmedMandatoryCount()
+        {
+            // Count mandatory (Obligatoire) alerts that are read/confirmed
+            int userId = await ResolveUserIdAsync();
+            if (userId == 0) return Json(new { count = 0 });
+            var count = await (from ar in _db.AlertRecipients.AsNoTracking()
+                               join a in _db.Alerts.AsNoTracking() on ar.AlertId equals a.AlertId
+                               where ar.UserId == userId && ar.IsRead && a.AlertType == "Obligatoire"
+                               select 1).CountAsync();
+            return Json(new { count });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> TodayCount()
+        {
+            // Count alerts received today by the current user (all types)
+            int userId = await ResolveUserIdAsync();
+            if (userId == 0) return Json(new { count = 0 });
+            var start = DateTime.UtcNow.Date;
+            var end = start.AddDays(1);
+            var count = await (from ar in _db.AlertRecipients.AsNoTracking()
+                               join a in _db.Alerts.AsNoTracking() on ar.AlertId equals a.AlertId
+                               where ar.UserId == userId && a.CreatedAt >= start && a.CreatedAt < end
+                               select 1).CountAsync();
             return Json(new { count });
         }
 

@@ -21,6 +21,54 @@ body {
   margin-bottom: 60px;
 }
 
+/* Badges helpers */
+.badge-type-info{background-color:#6c757d;} /* secondary */
+.badge-type-obl{background-color:#f7c948;color:#000;} /* warning */
+.badge-status-lu{background-color:#198754;} /* success */
+.badge-status-nonlu{background-color:#dc3545;} /* danger */
+
+/* Cards spacing */
+.card + .card{margin-top:1rem}
+
+/* KPI cards */
+.kpi-card .kpi-label{font-size:.9rem;color:#6c757d;margin-bottom:.25rem}
+.kpi-card .kpi-value{font-size:1.75rem;font-weight:600;letter-spacing:.3px}
+.kpi-dot{display:inline-block;width:10px;height:10px;border-radius:50%}
+
+/* Dashboard tabs within card */
+.tab-content.card{border-radius:.5rem}
+.nav-tabs .nav-link{color:#6c757d}
+.nav-tabs .nav-link.active{color:#0d6efd}
+.nav-tabs{border-bottom:1px solid rgba(0,0,0,.08)}
+.tab-content{background:#fff}
+
+/* Tables */
+.table thead th{white-space:nowrap}
+.table-hover tbody tr:hover{background-color:#f8f9fa}
+.table thead th, .table tbody td{vertical-align:middle}
+.table thead th{font-weight:600;color:#495057}
+
+/* Badges tone adjustments for better contrast on white */
+.badge-type-info{background-color:#6c757d;color:#fff}
+.badge-type-obl{background-color:#ffe08a;color:#000}
+.badge-status-lu{background-color:#198754;color:#fff}
+.badge-status-nonlu{background-color:#dc3545;color:#fff}
+
+/* Utilities */
+.text-muted-small{font-size:.9rem;color:#6c757d}
+.spinner-area{min-height:120px;display:flex;align-items:center;justify-content:center}
+
+/* Navbar dark theme refinements */
+.navbar.bg-dark{background-image:linear-gradient(180deg, #1f2937, #111827)}
+.navbar .nav-link{opacity:.9}
+.navbar .nav-link:hover{opacity:1}
+.navbar .nav-link.active{font-weight:600}
+
+/* Page shell spacing */
+main.pb-3{padding-bottom:2rem}
+footer.footer{background:#0f172a;color:#94a3b8}
+footer.footer a{color:#cbd5e1}
+
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
   color: var(--bs-secondary-color);
   text-align: end;
