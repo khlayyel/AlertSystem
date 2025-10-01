@@ -79,8 +79,9 @@ namespace AlertSystem.Controllers
             var depId = CurrentDepartmentId;
             if (!depId.HasValue) return Json(Array.Empty<object>());
             var users = await _db.Users.AsNoTracking()
-                .Where(u => u.DepartmentId == depId.Value && u.UserId != CurrentUserId)
-                .OrderBy(u => u.Username)
+                .Where(u => (u.DepartmentId == depId.Value || u.Role == "Admin") && u.UserId != CurrentUserId)
+                .OrderByDescending(u => u.Role == "Admin") // admins en haut
+                .ThenBy(u => u.Username)
                 .Select(u => new { u.UserId, u.Username, u.Email })
                 .ToListAsync();
             return Json(users);
@@ -110,15 +111,31 @@ namespace AlertSystem.Controllers
 
         // Send alert to selected recipients (within same department). If none provided, send to all except sender.
         [HttpPost]
-        public async Task<IActionResult> Send([FromForm] int alertId, [FromForm] string? recipients)
+        public async Task<IActionResult> Send([FromForm] int alertId, [FromForm] string? recipients, [FromForm] string? title, [FromForm] string? message, [FromForm] string? alertType, [FromForm] int? departmentId)
         {
-            var alert = await _db.Alerts.FirstOrDefaultAsync(a => a.AlertId == alertId);
-            if (alert == null) return NotFound();
+            var template = await _db.Alerts.AsNoTracking().FirstOrDefaultAsync(a => a.AlertId == alertId);
+            if (template == null) return NotFound();
 
-            int? depId = CurrentDepartmentId ?? alert.DepartmentId;
+            int? depId = CurrentDepartmentId ?? template.DepartmentId;
             if (!depId.HasValue) return BadRequest("Department required");
             // Scope: SuperUser can only send within own department
             if (CurrentRole.Equals("SuperUser", StringComparison.OrdinalIgnoreCase) && depId != CurrentDepartmentId) return Forbid();
+
+            // Créer une nouvelle alerte d'envoi (ne pas écraser le template)
+            var sendAlert = new Alert
+            {
+                Title = !string.IsNullOrWhiteSpace(title) ? title! : template.Title,
+                Message = !string.IsNullOrWhiteSpace(message) ? message! : template.Message,
+                AlertType = !string.IsNullOrWhiteSpace(alertType) ? alertType! : template.AlertType,
+                IsManual = true,
+                CreatedAt = DateTime.UtcNow,
+                CreatedBy = CurrentUserId,
+                DepartmentId = (CurrentRole.Equals("Admin", StringComparison.OrdinalIgnoreCase) && departmentId.HasValue)
+                    ? departmentId.Value
+                    : depId
+            };
+            _db.Alerts.Add(sendAlert);
+            await _db.SaveChangesAsync();
 
             List<int> targetIds;
             if (!string.IsNullOrWhiteSpace(recipients))
@@ -144,19 +161,51 @@ namespace AlertSystem.Controllers
 
             foreach (var uid in targetIds)
             {
-                if (!await _db.AlertRecipients.AnyAsync(r => r.AlertId == alert.AlertId && r.UserId == uid))
+                if (!await _db.AlertRecipients.AnyAsync(r => r.AlertId == sendAlert.AlertId && r.UserId == uid))
                 {
-                    _db.AlertRecipients.Add(new AlertRecipient { AlertId = alert.AlertId, UserId = uid, IsRead = false });
+                    _db.AlertRecipients.Add(new AlertRecipient { AlertId = sendAlert.AlertId, UserId = uid, IsRead = false });
                 }
             }
             await _db.SaveChangesAsync();
+
+            // Envoyer une copie d'information aux admins NON destinataires directs
+            var adminIds = await _db.Users.AsNoTracking()
+                .Where(u => u.Role == "Admin")
+                .Select(u => u.UserId)
+                .ToListAsync();
+            var adminCopyIds = adminIds.Except(targetIds).ToList();
+            if (adminCopyIds.Count > 0)
+            {
+                var adminAlert = new Alert
+                {
+                    Title = sendAlert.Title,
+                    Message = sendAlert.Message,
+                    AlertType = "Information",
+                    IsManual = true,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = CurrentUserId,
+                    DepartmentId = depId
+                };
+                _db.Alerts.Add(adminAlert);
+                await _db.SaveChangesAsync();
+                foreach (var aid in adminCopyIds)
+                {
+                    if (!await _db.AlertRecipients.AnyAsync(r => r.AlertId == adminAlert.AlertId && r.UserId == aid))
+                    {
+                        _db.AlertRecipients.Add(new AlertRecipient { AlertId = adminAlert.AlertId, UserId = aid, IsRead = false });
+                    }
+                }
+                await _db.SaveChangesAsync();
+            }
             return Ok();
         }
 
         [HttpGet]
         public async Task<IActionResult> Details(int id)
         {
-            var a = await _db.Alerts.AsNoTracking().FirstOrDefaultAsync(x => x.AlertId == id);
+            var a = await _db.Alerts.AsNoTracking()
+                .Include(x => x.Department)
+                .FirstOrDefaultAsync(x => x.AlertId == id);
             if (a == null || !CanSee(a)) return NotFound();
             return View(a);
         }
