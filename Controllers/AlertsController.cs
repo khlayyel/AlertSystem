@@ -33,6 +33,7 @@ namespace AlertSystem.Controllers
 
 			var query = from ar in _db.AlertRecipients.AsNoTracking()
 					    join a in _db.Alerts.AsNoTracking() on ar.AlertId equals a.AlertId
+					    join uSender in _db.Users.AsNoTracking() on a.CreatedBy equals uSender.UserId
 					    where ar.UserId == userId
 					    select new
 					    {
@@ -42,11 +43,14 @@ namespace AlertSystem.Controllers
 						    a.Message,
 						    a.AlertType,
 						    a.CreatedAt,
-						    ar.IsRead,
 						    ar.IsConfirmed,
 						    ar.ConfirmedAt,
 						    ar.LastSentAt,
-						    ar.NextReminderAt
+						    ar.NextReminderAt,
+						    ar.SendStatus,
+						    ar.DeliveryPlatforms,
+						    SenderEmail = uSender.Email,
+						    SenderName = uSender.Username
 					    };
 
 			if (!string.IsNullOrWhiteSpace(type))
@@ -57,7 +61,7 @@ namespace AlertSystem.Controllers
 			{
 				query = status switch
 				{
-					"unread" => query.Where(x => !x.IsRead),
+					"unread" => query.Where(x => !x.IsConfirmed),
 					"pending" => query.Where(x => !x.IsConfirmed),
 					"confirmed" => query.Where(x => x.IsConfirmed),
 					_ => query
@@ -93,7 +97,6 @@ namespace AlertSystem.Controllers
                             a.AlertType,
                             a.CreatedAt,
                             a.DepartmentId,
-                            ar.IsRead,
                             ar.IsConfirmed,
                             ar.ConfirmedAt,
                             u.Username,
@@ -106,7 +109,7 @@ namespace AlertSystem.Controllers
             {
                 query = status switch
                 {
-                    "unread" => query.Where(x => !x.IsRead),
+                    "unread" => query.Where(x => !x.IsConfirmed),
                     "pending" => query.Where(x => !x.IsConfirmed),
                     "confirmed" => query.Where(x => x.IsConfirmed),
                     _ => query
@@ -131,7 +134,7 @@ namespace AlertSystem.Controllers
             if (userId == 0) return Json(new { count = 0 });
             var count = await (from ar in _db.AlertRecipients.AsNoTracking()
                                join a in _db.Alerts.AsNoTracking() on ar.AlertId equals a.AlertId
-                               where ar.UserId == userId && !ar.IsRead && a.AlertType == "Obligatoire"
+                               where ar.UserId == userId && !ar.IsConfirmed && a.AlertType == "Obligatoire"
                                select 1).CountAsync();
             return Json(new { count });
         }
@@ -144,7 +147,7 @@ namespace AlertSystem.Controllers
             if (userId == 0) return Json(new { count = 0 });
             var count = await (from ar in _db.AlertRecipients.AsNoTracking()
                                join a in _db.Alerts.AsNoTracking() on ar.AlertId equals a.AlertId
-                               where ar.UserId == userId && ar.IsRead && a.AlertType == "Obligatoire"
+                               where ar.UserId == userId && ar.IsConfirmed && a.AlertType == "Obligatoire"
                                select 1).CountAsync();
             return Json(new { count });
         }
@@ -177,7 +180,6 @@ namespace AlertSystem.Controllers
                             a.CreatedAt,
                             a.AlertType,
                             a.Title,
-                            ar.IsRead,
                             ar.IsConfirmed,
                             ar.ConfirmedAt
                         };
@@ -187,7 +189,7 @@ namespace AlertSystem.Controllers
             {
                 query = status switch
                 {
-                    "unread" => query.Where(x => !x.IsRead),
+                    "unread" => query.Where(x => !x.IsConfirmed),
                     "pending" => query.Where(x => !x.IsConfirmed),
                     "confirmed" => query.Where(x => x.IsConfirmed),
                     _ => query
@@ -198,14 +200,13 @@ namespace AlertSystem.Controllers
 
             var rows = await query.OrderByDescending(x => x.CreatedAt).ToListAsync();
             var sb = new System.Text.StringBuilder();
-            sb.AppendLine("Date,Type,Titre,Lu,Confirmé,DateConfirmation");
+            sb.AppendLine("Date,Type,Titre,Confirmé,DateConfirmation");
             foreach (var r in rows)
             {
                 string line = string.Join(',', new string[] {
                     r.CreatedAt.ToString("s"),
                     Escape(r.AlertType),
                     Escape(r.Title),
-                    r.IsRead?"1":"0",
                     r.IsConfirmed?"1":"0",
                     r.ConfirmedAt.HasValue? r.ConfirmedAt.Value.ToString("s") : ""
                 });
@@ -239,7 +240,6 @@ namespace AlertSystem.Controllers
                             DepartmentId = a.DepartmentId,
                             u.Username,
                             u.Email,
-                            ar.IsRead,
                             ar.IsConfirmed,
                             ar.ConfirmedAt
                         };
@@ -250,7 +250,7 @@ namespace AlertSystem.Controllers
             {
                 query = status switch
                 {
-                    "unread" => query.Where(x => !x.IsRead),
+                    "unread" => query.Where(x => !x.IsConfirmed),
                     "pending" => query.Where(x => !x.IsConfirmed),
                     "confirmed" => query.Where(x => x.IsConfirmed),
                     _ => query
@@ -262,7 +262,7 @@ namespace AlertSystem.Controllers
             var rows = await query.OrderByDescending(x => x.CreatedAt).ToListAsync();
 
             var sb = new System.Text.StringBuilder();
-            sb.AppendLine("Date,Type,Titre,DepartmentId,UserName,Email,Lu,Confirmé,DateConfirmation");
+            sb.AppendLine("Date,Type,Titre,DepartmentId,UserName,Email,Confirmé,DateConfirmation");
             foreach (var r in rows)
             {
                 string line = string.Join(',', new string[] {
@@ -272,7 +272,6 @@ namespace AlertSystem.Controllers
                     (r.DepartmentId?.ToString() ?? ""),
                     Escape(r.Username),
                     Escape(r.Email),
-                    r.IsRead?"1":"0",
                     r.IsConfirmed?"1":"0",
                     r.ConfirmedAt.HasValue? r.ConfirmedAt.Value.ToString("s") : ""
                 });
@@ -298,7 +297,6 @@ namespace AlertSystem.Controllers
 			var row = await _db.AlertRecipients.FirstOrDefaultAsync(x => x.AlertRecipientId == alertRecipientId && x.UserId == userId);
 			if (row == null) return BadRequest();
 			row.IsConfirmed = true;
-			row.IsRead = true;
 			row.ConfirmedAt = DateTime.UtcNow;
 			await _db.SaveChangesAsync();
             // push updates: recipient and sender
@@ -320,7 +318,6 @@ namespace AlertSystem.Controllers
             int userId = await ResolveUserIdAsync();
 			var row = await _db.AlertRecipients.FirstOrDefaultAsync(x => x.AlertRecipientId == alertRecipientId && x.UserId == userId);
 			if (row == null) return BadRequest();
-            row.IsRead = true;
             row.IsConfirmed = true;
             if (!row.ConfirmedAt.HasValue)
             {
@@ -349,20 +346,30 @@ namespace AlertSystem.Controllers
         public async Task<IActionResult> SentData(int page = 1, int size = 10)
         {
             int userId = await ResolveUserIdAsync();
-            var q = from ar in _db.AlertRecipients.AsNoTracking()
-                    join a in _db.Alerts.AsNoTracking() on ar.AlertId equals a.AlertId
-                    join uDest in _db.Users.AsNoTracking() on ar.UserId equals uDest.UserId
+            
+            // Get all alerts created by the user with their recipients
+            var q = from a in _db.Alerts.AsNoTracking()
                     join uSrc in _db.Users.AsNoTracking() on a.CreatedBy equals uSrc.UserId
                     where a.CreatedBy == userId
                     select new
                     {
+                        a.AlertId,
                         a.CreatedAt,
                         a.AlertType,
                         a.Title,
                         Sender = uSrc.Username,
-                        Recipient = uDest.Username,
-                        ar.IsRead,
-                        ar.ConfirmedAt
+                        // Get recipient count for this alert
+                        RecipientCount = _db.AlertRecipients.Count(ar => ar.AlertId == a.AlertId),
+                        // Get confirmed count for this alert
+                        ConfirmedCount = _db.AlertRecipients.Count(ar => ar.AlertId == a.AlertId && ar.IsConfirmed),
+                        // Get recipient emails for this alert
+                        RecipientEmails = string.Join(", ", 
+                            _db.AlertRecipients
+                                .Where(ar => ar.AlertId == a.AlertId)
+                                .Join(_db.Users, ar => ar.UserId, u => u.UserId, (ar, u) => u.Email)
+                                .Where(email => !string.IsNullOrEmpty(email))
+                                .Take(3) // Limit to first 3 emails to avoid too long display
+                        )
                     };
 
             int total = await q.CountAsync();
@@ -391,7 +398,7 @@ namespace AlertSystem.Controllers
                         a.Title,
                         Sender = uSrc.Username,
                         Recipient = uDest.Username,
-                        ar.IsRead,
+                        ar.IsConfirmed,
                         ar.ConfirmedAt
                     };
 
@@ -400,9 +407,9 @@ namespace AlertSystem.Controllers
             {
                 q = status switch
                 {
-                    "unread" => q.Where(x => !x.IsRead),
-                    "pending" => q.Where(x => !x.IsRead),
-                    "confirmed" => q.Where(x => x.IsRead),
+                    "unread" => q.Where(x => !x.IsConfirmed),
+                    "pending" => q.Where(x => !x.IsConfirmed),
+                    "confirmed" => q.Where(x => x.IsConfirmed),
                     _ => q
                 };
             }

@@ -57,7 +57,10 @@ namespace AlertSystem.Data
             {
                 b.ToTable("AlertRecipients");
                 b.HasKey(x => x.AlertRecipientId);
-                b.HasIndex(x => new { x.UserId, x.IsRead, x.IsConfirmed });
+                b.HasIndex(x => new { x.UserId, x.IsConfirmed });
+                b.HasIndex(x => new { x.SendStatus, x.NextReminderAt });
+                b.Property(x => x.DeliveryPlatforms).IsRequired();
+                b.Property(x => x.SendStatus).IsRequired();
                 b.HasOne(x => x.Alert)
                     .WithMany(a => a.Recipients)
                     .HasForeignKey(x => x.AlertId)

@@ -33,7 +33,7 @@
           <option value="User" selected>User</option>
         </select>
       </div>
-      <div class="mb-3">
+      <div class="mb-3" id="deptField">
         <label class="form-label">Département</label>
         <select asp-for="DepartmentId" class="form-select">
           <option value="">-- Aucun --</option>
@@ -43,6 +43,7 @@
               }
           }
         </select>
+        <div class="form-text">Les Admins ont accès à tous les départements par défaut.</div>
       </div>
     }
     else
@@ -56,5 +57,23 @@
     </div>
   </form>
 </div>
+
+@section Scripts {
+<script>
+document.getElementById('Role').addEventListener('change', function() {
+  const deptField = document.getElementById('deptField');
+  const deptSelect = document.querySelector('select[name="DepartmentId"]');
+  if (this.value === 'Admin') {
+    deptField.style.display = 'none';
+    deptSelect.value = ''; // Admin n'appartient à aucun département spécifique
+  } else {
+    deptField.style.display = 'block';
+  }
+});
+
+// Trigger on page load
+document.getElementById('Role').dispatchEvent(new Event('change'));
+</script>
+}
 
 

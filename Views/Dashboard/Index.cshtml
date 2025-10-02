@@ -9,6 +9,20 @@
     <div class="text-muted">Bienvenue @ViewBag.DisplayName — Rôle: @role</div>
   </div>
 
+  <!-- Pending Alerts Section -->
+  <div class="row mb-3" id="pendingAlertsSection" style="display: none;">
+    <div class="col-12">
+      <div class="card border-warning">
+        <div class="card-header bg-warning text-dark">
+          <h5 class="mb-0">⏳ Alertes en cours d'envoi</h5>
+        </div>
+        <div class="card-body" id="pendingAlertsList">
+          <!-- Populated by JavaScript -->
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="row g-3 mb-3" id="kpiRow">
     <div class="col-12 col-md-6 col-lg-3">
       <div class="card shadow-sm kpi-card">
@@ -57,23 +71,24 @@
       <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#sent" type="button"><span class="me-1" aria-hidden="true">📤</span> Envoyées</button></li>
     }
     @if (string.Equals(role, "SuperUser", StringComparison.OrdinalIgnoreCase)) {
-      <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#dept" type="button"><span class="me-1" aria-hidden="true">🏢</span> Historique département</button></li>
+      <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#dept" type="button"><span class="me-1" aria-hidden="true">🏢</span> Mon département</button></li>
     }
     @if (string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase)) {
-      <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#all" type="button"><span class="me-1" aria-hidden="true">🗂️</span> Tous (admin)</button></li>
+      <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#all" type="button"><span class="me-1" aria-hidden="true">🗂️</span> Tous départements</button></li>
     }
   </ul>
   <div class="tab-content card shadow-sm border-0 p-3">
     <div class="tab-pane fade show active" id="inbox">
       <div id="inboxList">Chargement...</div>
     </div>
-    @if (string.Equals(role, "SuperUser", StringComparison.OrdinalIgnoreCase)) {
+    @if (string.Equals(role, "SuperUser", StringComparison.OrdinalIgnoreCase) || string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase)) {
     <div class="tab-pane fade" id="sent">
       <div id="sentList">Chargement...</div>
     </div>
     <div class="tab-pane fade" id="dept">
-      <form class="row g-2 mb-2" id="deptFilters">
+      <form class="row g-2 mb-2 align-items-end" id="deptFilters">
         <div class="col-auto">
+          <label class="form-label small">Type</label>
           <select name="type" class="form-select">
             <option value="">Tous types</option>
             <option value="Information">Information</option>
@@ -81,42 +96,61 @@
           </select>
         </div>
         <div class="col-auto">
+          <label class="form-label small">Statut</label>
           <select name="status" class="form-select">
             <option value="all">Tous statuts</option>
             <option value="unread">Non lus</option>
             <option value="confirmed">Lu</option>
           </select>
         </div>
-        <div class="col-auto"><input type="date" name="from" class="form-control" /></div>
-        <div class="col-auto"><input type="date" name="to" class="form-control" /></div>
-        <div class="col-auto"><button class="btn btn-outline-secondary" type="submit">Filtrer</button></div>
+        <div class="col-auto">
+          <label class="form-label small">Du</label>
+          <input type="date" name="from" class="form-control" />
+        </div>
+        <div class="col-auto">
+          <label class="form-label small">Au</label>
+          <input type="date" name="to" class="form-control" />
+        </div>
+        <div class="col-auto">
+          <button class="btn btn-outline-secondary" type="submit">Filtrer</button>
+        </div>
       </form>
       <div id="deptList">Chargement...</div>
     </div>
     }
     @if (string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase)) {
     <div class="tab-pane fade" id="all">
-      <form class="row g-2 mb-2" id="allFilters">
+      <form class="row g-2 mb-2 align-items-end" id="allFilters">
         <div class="col-auto">
+          <label class="form-label small">Département</label>
           <select name="departmentId" class="form-select">
             <option value="">Tous départements</option>
             @foreach (var d in departments!) { <option value="@d.DepartmentId">@d.Name</option> }
           </select>
         </div>
         <div class="col-auto">
+          <label class="form-label small">Type</label>
           <select name="type" class="form-select">
             <option value="">Tous types</option>
             <option value="Information">Information</option>
             <option value="Obligatoire">Obligatoire</option>
           </select>
         </div>
-        <div class="col-auto"><input type="date" name="from" class="form-control" /></div>
-        <div class="col-auto"><input type="date" name="to" class="form-control" /></div>
-        <div class="col-auto"><button class="btn btn-outline-secondary" type="submit">Filtrer</button></div>
+        <div class="col-auto">
+          <label class="form-label small">Du</label>
+          <input type="date" name="from" class="form-control" />
+        </div>
+        <div class="col-auto">
+          <label class="form-label small">Au</label>
+          <input type="date" name="to" class="form-control" />
+        </div>
+        <div class="col-auto">
+          <button class="btn btn-outline-secondary" type="submit">Filtrer</button>
+        </div>
+        <div class="col-auto ms-auto">
+          <a id="exportCsvBtn" class="btn btn-sm btn-outline-primary" href="#">Exporter CSV</a>
+        </div>
       </form>
-      <div class="d-flex justify-content-end mb-2">
-        <a id="exportCsvBtn" class="btn btn-sm btn-outline-primary" href="#">Exporter CSV</a>
-      </div>
       <div id="allList">Chargement...</div>
     </div>
     }
@@ -125,7 +159,16 @@
 
 @section Scripts {
 <script>
-async function fetchJson(url){ const r = await fetch(url, { cache:'no-store' }); return await r.json(); }
+async function fetchJson(url){ 
+  try {
+    const r = await fetch(url, { cache:'no-store' }); 
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return await r.json(); 
+  } catch (error) {
+    console.error('Failed to load alerts dynamically, falling back to page reload', error);
+    throw error;
+  }
+}
 function fmtPlus1(dateIso){ const d = new Date(dateIso); return new Date(d.getTime()+3600000).toLocaleString(); }
 
 async function loadInbox(){
@@ -140,16 +183,21 @@ async function loadSent(){
   renderListCustom('sentList', data);
 }
 async function loadDept(){
-  const params = new URLSearchParams(new FormData(document.getElementById('deptFilters')));
+  const formElement = document.getElementById('deptFilters');
+  if (!formElement) return;
+  const params = new URLSearchParams(new FormData(formElement));
   const data = await fetchJson('/Alerts/DeptData?' + params.toString() + '&page=1&size=10');
   renderListCustom('deptList', data);
 }
 async function loadAll(){
-  const params = new URLSearchParams(new FormData(document.getElementById('allFilters')));
+  const formElement = document.getElementById('allFilters');
+  if (!formElement) return;
+  const params = new URLSearchParams(new FormData(formElement));
   const r = await fetch(`/Alerts/HistoryData?${params.toString()}&page=1&size=20`);
   const data = await r.json();
   renderList('allList', data, false, true);
-  document.getElementById('exportCsvBtn').setAttribute('href', `/Alerts/ExportCsv?${params.toString()}`);
+  const exportBtn = document.getElementById('exportCsvBtn');
+  if (exportBtn) exportBtn.setAttribute('href', `/Alerts/ExportCsv?${params.toString()}`);
   updateKpisFromData(data);
   updateUnreadKpi();
 }
@@ -159,7 +207,7 @@ function renderList(targetId, data, canConfirm, adminView=false){
   if (!data.items || data.items.length===0){ el.innerHTML = '<div class="text-muted">Aucune alerte</div>'; return; }
   el.innerHTML = `
     <table class="table table-sm align-middle">
-      <thead><tr><th scope="col">Date</th><th scope="col">Type</th><th scope="col">Titre</th><th scope="col">Statut</th><th scope="col" class="text-end">Actions</th></tr></thead>
+      <thead><tr><th scope="col">Date</th><th scope="col">Type</th><th scope="col">Titre</th><th scope="col">Expéditeur</th><th scope="col">Statut</th><th scope="col" class="text-end">Actions</th></tr></thead>
       <tbody>
       ${data.items.map(x => `
         <tr>
@@ -168,9 +216,10 @@ function renderList(targetId, data, canConfirm, adminView=false){
             ${x.alertType==='Obligatoire' ? '<span class="badge badge-type-obl">Obligatoire</span>' : '<span class="badge badge-type-info">Information</span>'}
           </td>
           <td>${x.title}</td>
-          <td>${x.alertType==='Obligatoire' ? (x.isRead ? '<span class="badge badge-status-lu">Lu</span>' : '<span class="badge badge-status-nonlu">Non lu</span>') : ''}</td>
+          <td><small class="text-muted">${x.senderEmail || x.senderName || 'N/A'}</small></td>
+          <td>${x.alertType==='Obligatoire' ? (x.isConfirmed ? '<span class="badge badge-status-lu">Lu</span>' : '<span class="badge badge-status-nonlu">Non lu</span>') : ''}</td>
           <td class="text-end">
-            ${(!adminView && x.alertType==='Obligatoire' && !x.isRead && canConfirm) ? `<button class="btn btn-outline-secondary btn-sm me-2" onclick="markRead(${x.alertRecipientId})" aria-label="Marquer l'alerte comme lue">Marquer lu</button>` : ''}
+            ${(!adminView && x.alertType==='Obligatoire' && !x.isConfirmed && canConfirm) ? `<button class="btn btn-outline-secondary btn-sm me-2" onclick="markRead(${x.alertRecipientId})" aria-label="Marquer l'alerte comme lue">Marquer lu</button>` : ''}
             <a class="btn btn-primary btn-sm" href="/AlertsCrud/Details/${x.alertId}">Accéder</a>
           </td>
         </tr>`).join('')}
@@ -181,34 +230,58 @@ function renderList(targetId, data, canConfirm, adminView=false){
 function renderListCustom(targetId, data){
   const el = document.getElementById(targetId);
   if (!data.items || data.items.length===0){ el.innerHTML = '<div class="text-muted">Aucune alerte</div>'; return; }
-  el.innerHTML = `
-    <table class="table table-sm align-middle">
-      <thead><tr><th scope="col">Date</th><th scope="col">Type</th><th scope="col">Titre</th><th scope="col">Expéditeur</th><th scope="col">Destinataire</th><th scope="col">Statut</th><th scope="col">Heure de réception</th></tr></thead>
-      <tbody>
-      ${data.items.map(x => `
-        <tr>
-          <td>${fmtPlus1(x.createdAt)}</td>
-          <td>${x.alertType}</td>
-          <td>${x.title}</td>
-          <td>${x.sender}</td>
-          <td>${x.recipient}</td>
-          <td>${x.alertType==='Obligatoire' ? (x.isRead ? 'Lu' : 'Non lu') : ''}</td>
-          <td>${x.isRead && x.confirmedAt ? fmtPlus1(x.confirmedAt) : ''}</td>
-        </tr>`).join('')}
-      </tbody>
-    </table>`;
+  
+  // Check if this is sent data (has recipientCount) or dept data (has recipient)
+  const isSentData = data.items.length > 0 && data.items[0].hasOwnProperty('recipientCount');
+  
+  if (isSentData) {
+    // Render sent alerts (created by user)
+    el.innerHTML = `
+      <table class="table table-sm align-middle">
+        <thead><tr><th scope="col">Date</th><th scope="col">Type</th><th scope="col">Titre</th><th scope="col">Destinataires</th><th scope="col">Emails</th><th scope="col">Confirmées</th></tr></thead>
+        <tbody>
+        ${data.items.map(x => `
+          <tr>
+            <td>${fmtPlus1(x.createdAt)}</td>
+            <td><span class="badge ${x.alertType==='Obligatoire'?'bg-warning text-dark':'bg-info'}">${x.alertType}</span></td>
+            <td>${x.title}</td>
+            <td>${x.recipientCount}</td>
+            <td><small class="text-muted">${x.recipientEmails || 'N/A'}</small></td>
+            <td>${x.confirmedCount}/${x.recipientCount}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`;
+  } else {
+    // Render dept data (original format)
+    el.innerHTML = `
+      <table class="table table-sm align-middle">
+        <thead><tr><th scope="col">Date</th><th scope="col">Type</th><th scope="col">Titre</th><th scope="col">Expéditeur</th><th scope="col">Destinataire</th><th scope="col">Statut</th><th scope="col">Heure de réception</th></tr></thead>
+        <tbody>
+        ${data.items.map(x => `
+          <tr>
+            <td>${fmtPlus1(x.createdAt)}</td>
+            <td>${x.alertType}</td>
+            <td>${x.title}</td>
+            <td>${x.sender}</td>
+            <td>${x.recipient}</td>
+            <td>${x.alertType==='Obligatoire' ? (x.isConfirmed ? 'Lu' : 'Non lu') : ''}</td>
+            <td>${x.isConfirmed && x.confirmedAt ? fmtPlus1(x.confirmedAt) : ''}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`;
+  }
 }
 
 function updateKpisFromData(data){
   try{
     const items = Array.isArray(data?.items) ? data.items : [];
     // This is page-scoped; authoritative unread is fetched via updateUnreadKpi()
-    const unreadCount = items.filter(x => x.alertType === 'Obligatoire' && !x.isRead).length;
+    const unreadCount = items.filter(x => x.alertType === 'Obligatoire' && !x.isConfirmed).length;
     const today = new Date();
     today.setHours(0,0,0,0);
     const todayCount = items.filter(x => { const d = new Date(x.createdAt); return d >= today; }).length;
     const pendingCount = unreadCount;
-    const confirmedMandatory = items.filter(x => x.alertType === 'Obligatoire' && x.isRead).length;
+    const confirmedMandatory = items.filter(x => x.alertType === 'Obligatoire' && x.isConfirmed).length;
     const setText = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = String(val); };
     setText('kpiToday', todayCount);
     setText('kpiPending', pendingCount);
@@ -246,12 +319,34 @@ async function updateTodayKpi(){
   }catch{}
 }
 
+// Dynamic filters for all tabs
 document.getElementById('allFilters')?.addEventListener('submit', (e)=>{ e.preventDefault(); loadAll(); });
 document.getElementById('deptFilters')?.addEventListener('submit', (e)=>{ e.preventDefault(); loadDept(); });
+
+// Auto-filter on change for better UX
+document.querySelectorAll('#allFilters select, #allFilters input, #deptFilters select, #deptFilters input').forEach(el => {
+  el.addEventListener('change', () => {
+    const form = el.closest('form');
+    if (form.id === 'allFilters') loadAll();
+    else if (form.id === 'deptFilters') loadDept();
+  });
+  if (el.type === 'date' || el.type === 'text') {
+    let timeout;
+    el.addEventListener('input', () => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        const form = el.closest('form');
+        if (form.id === 'allFilters') loadAll();
+        else if (form.id === 'deptFilters') loadDept();
+      }, 500);
+    });
+  }
+});
 
 async function confirmAlert(id){ await fetch('/Alerts/Confirm', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:`alertRecipientId=${id}` }); loadInbox(); loadMine(); updateUnreadKpi(); }
 async function markRead(id){ await fetch('/Alerts/MarkRead', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:`alertRecipientId=${id}` }); loadInbox(); loadMine(); updateUnreadKpi(); }
 
+// Initial load
 loadInbox();
 updateUnreadKpi();
 updateConfirmedMandatoryKpi();
@@ -260,14 +355,172 @@ if (document.getElementById('sentList')) loadSent();
 if (document.getElementById('deptList')) loadDept();
 if (document.getElementById('allFilters')) { loadAll(); }
 
-// Temps réel via SignalR
-if (window.signalR){
+// Auto-refresh every 30 seconds for real-time updates
+setInterval(() => {
+  updateUnreadKpi();
+  updateConfirmedMandatoryKpi();
+  updateTodayKpi();
+  // Refresh active tab content
+  const activeTab = document.querySelector('.nav-link.active');
+  if (activeTab) {
+    const target = activeTab.getAttribute('data-bs-target');
+    if (target === '#inbox') loadInbox();
+    else if (target === '#sent' && document.getElementById('sentList')) loadSent();
+    else if (target === '#dept' && document.getElementById('deptList')) loadDept();
+    else if (target === '#all' && document.getElementById('allFilters')) loadAll();
+  }
+}, 30000);
+
+// Real-time updates via SignalR
+if (window.signalR && typeof signalR !== 'undefined'){
   const connection = new signalR.HubConnectionBuilder().withUrl('/hubs/notifications').withAutomaticReconnect().build();
-  connection.on('historyChanged', ()=> loadInbox());
-  connection.on('sentChanged', ()=> { if (document.getElementById('sentList')) loadSent(); });
-  connection.on('deptChanged', ()=> { if (document.getElementById('deptList')) loadDept(); });
-  connection.on('badgeChanged', ()=> { updateUnreadKpi(); updateConfirmedMandatoryKpi(); updateTodayKpi(); /* badge côté layout déjà branché au besoin */});
-  connection.start();
+  
+  connection.on('historyChanged', ()=> {
+    loadInbox();
+    updateUnreadKpi();
+    updateConfirmedMandatoryKpi();
+  });
+  
+  connection.on('sentChanged', ()=> { 
+    if (document.getElementById('sentList')) loadSent(); 
+  });
+  
+  connection.on('deptChanged', ()=> { 
+    if (document.getElementById('deptList')) loadDept(); 
+  });
+  
+  connection.on('newAlert', ()=> { 
+    loadInbox(); 
+    updateUnreadKpi(); 
+    updateConfirmedMandatoryKpi(); 
+    updateTodayKpi();
+    // Refresh active tab content
+    const activeTab = document.querySelector('.nav-link.active');
+    if (activeTab) {
+      const target = activeTab.getAttribute('data-bs-target');
+      if (target === '#sent' && document.getElementById('sentList')) loadSent();
+      else if (target === '#dept' && document.getElementById('deptList')) loadDept();
+      else if (target === '#all' && document.getElementById('allFilters')) loadAll();
+    }
+  });
+  
+  connection.on('alertsChanged', ()=> {
+    // Refresh all tabs and KPIs
+    loadInbox();
+    updateUnreadKpi();
+    updateConfirmedMandatoryKpi();
+    updateTodayKpi();
+    if (document.getElementById('sentList')) loadSent();
+    if (document.getElementById('deptList')) loadDept();
+    if (document.getElementById('allFilters')) loadAll();
+  });
+  
+  connection.on('badgeChanged', ()=> { 
+    updateUnreadKpi(); 
+    updateConfirmedMandatoryKpi(); 
+    updateTodayKpi(); 
+  });
+  
+  connection.start().catch(err => console.warn('SignalR connection failed:', err));
+}
+
+// Pending alerts management
+let pendingAlerts = new Map();
+
+function addPendingAlert(alertId, title, cancellationWindowSeconds = 5) {
+  const endTime = Date.now() + (cancellationWindowSeconds * 1000);
+  pendingAlerts.set(alertId, { title, endTime });
+  updatePendingAlertsDisplay();
+  
+  // Auto-remove after cancellation window
+  setTimeout(() => {
+    pendingAlerts.delete(alertId);
+    updatePendingAlertsDisplay();
+  }, cancellationWindowSeconds * 1000);
+}
+
+function cancelAlert(alertId) {
+  fetch(`/AlertsCrud/CancelAlert`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(alertId)
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      pendingAlerts.delete(alertId);
+      updatePendingAlertsDisplay();
+      showToast('Alerte annulée avec succès', 'success');
+    } else {
+      showToast('Impossible d\'annuler l\'alerte', 'error');
+    }
+  })
+  .catch(err => {
+    console.error('Cancel failed:', err);
+    showToast('Erreur lors de l\'annulation', 'error');
+  });
+}
+
+function updatePendingAlertsDisplay() {
+  const section = document.getElementById('pendingAlertsSection');
+  const list = document.getElementById('pendingAlertsList');
+  
+  if (pendingAlerts.size === 0) {
+    section.style.display = 'none';
+    return;
+  }
+  
+  section.style.display = 'block';
+  let html = '';
+  
+  for (const [alertId, alert] of pendingAlerts) {
+    const remainingSeconds = Math.max(0, Math.ceil((alert.endTime - Date.now()) / 1000));
+    html += `
+      <div class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
+        <div>
+          <strong>${alert.title}</strong>
+          <div class="text-muted small">Temps restant: ${remainingSeconds}s</div>
+        </div>
+        <button class="btn btn-sm btn-outline-danger" onclick="cancelAlert(${alertId})" ${remainingSeconds <= 0 ? 'disabled' : ''}>
+          Annuler
+        </button>
+      </div>
+    `;
+  }
+  
+  list.innerHTML = html;
+  
+  // Update countdown every second
+  setTimeout(updatePendingAlertsDisplay, 1000);
+}
+
+// Toast notification system
+function showToast(message, type = 'info') {
+  const toastContainer = document.getElementById('toastContainer') || createToastContainer();
+  const toast = document.createElement('div');
+  toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'info'} border-0`;
+  toast.setAttribute('role', 'alert');
+  toast.innerHTML = `
+    <div class="d-flex">
+      <div class="toast-body">${message}</div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  `;
+  
+  toastContainer.appendChild(toast);
+  const bsToast = new bootstrap.Toast(toast);
+  bsToast.show();
+  
+  toast.addEventListener('hidden.bs.toast', () => toast.remove());
+}
+
+function createToastContainer() {
+  const container = document.createElement('div');
+  container.id = 'toastContainer';
+  container.className = 'toast-container position-fixed top-0 end-0 p-3';
+  container.style.zIndex = '1055';
+  document.body.appendChild(container);
+  return container;
 }
 </script>
 }

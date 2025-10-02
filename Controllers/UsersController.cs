@@ -42,6 +42,7 @@ namespace AlertSystem.Controllers
                 departmentId = depId; // force le filtre département dans l'UI
                 role = "User";        // force le filtre rôle dans l'UI
             }
+            // Admin voit tous les utilisateurs de tous les départements (pas de restriction)
             if (!string.IsNullOrWhiteSpace(role)) query = query.Where(u => u.Role == role);
             if (departmentId.HasValue) query = query.Where(u => u.DepartmentId == departmentId.Value);
             if (!string.IsNullOrWhiteSpace(q))
@@ -92,6 +93,7 @@ namespace AlertSystem.Controllers
                 query = query.Where(u => u.DepartmentId == depId && u.Role == "User");
                 departmentId = depId; role = "User";
             }
+            // Admin voit tous les utilisateurs (pas de restriction)
 
             if (!string.IsNullOrWhiteSpace(role)) query = query.Where(u => u.Role == role);
             if (departmentId.HasValue) query = query.Where(u => u.DepartmentId == departmentId.Value);
@@ -159,6 +161,8 @@ namespace AlertSystem.Controllers
             {
                 // Admin: ne peut créer que des rôles valides
                 if (!GetAllowedRoles().Contains(model.Role)) model.Role = "User";
+                // Si Admin est sélectionné, forcer DepartmentId à null
+                if (model.Role == "Admin") model.DepartmentId = null;
             }
 
             // Hash mot de passe si non vide
@@ -168,7 +172,11 @@ namespace AlertSystem.Controllers
             }
             _db.Users.Add(model);
             await _db.SaveChangesAsync();
+            
+            // Notify all clients of user changes
             await _hub.Clients.All.SendAsync("usersChanged");
+            await _hub.Clients.All.SendAsync("userCreated");
+            
             return RedirectToAction(nameof(Index));
         }
 
@@ -220,6 +228,8 @@ namespace AlertSystem.Controllers
             else
             {
                 if (!GetAllowedRoles().Contains(model.Role)) model.Role = "User";
+                // Si Admin est sélectionné, forcer DepartmentId à null
+                if (model.Role == "Admin") model.DepartmentId = null;
             }
 
             // Si un nouveau mot de passe est fourni, on le re-hash
@@ -229,7 +239,11 @@ namespace AlertSystem.Controllers
             }
             _db.Entry(model).State = EntityState.Modified;
             await _db.SaveChangesAsync();
+            
+            // Notify all clients of user changes
             await _hub.Clients.All.SendAsync("usersChanged");
+            await _hub.Clients.All.SendAsync("userUpdated");
+            
             return RedirectToAction(nameof(Index));
         }
 
@@ -250,7 +264,11 @@ namespace AlertSystem.Controllers
             }
             _db.Users.Remove(user);
             await _db.SaveChangesAsync();
+            
+            // Notify all clients of user changes
             await _hub.Clients.All.SendAsync("usersChanged");
+            await _hub.Clients.All.SendAsync("userDeleted");
+            
             return RedirectToAction(nameof(Index));
         }
 

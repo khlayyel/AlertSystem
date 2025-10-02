@@ -10,6 +10,11 @@ namespace AlertSystem.Services
         private readonly ILogger<SmtpEmailSender> _logger;
         public SmtpEmailSender(IConfiguration cfg, ILogger<SmtpEmailSender> logger){ _cfg = cfg; _logger = logger; }
 
+        public async Task SendEmailAsync(string toEmail, string subject, string message)
+        {
+            await SendAsync(toEmail, subject, message);
+        }
+
         public async Task SendAsync(string toEmail, string subject, string textBody)
         {
             var message = new MimeMessage();

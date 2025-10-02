@@ -58,23 +58,34 @@
 
   <form method="get" class="row g-2 mb-3 align-items-end sticky-top bg-white pt-2 pb-2" style="top:60px;z-index:2;border-bottom:1px solid rgba(0,0,0,.05)">
     <div class="col-auto">
+      <label class="form-label small">Type</label>
       <select name="type" class="form-select">
         <option value="">Tous types</option>
         <option value="Information">Information</option>
         <option value="Obligatoire">Obligatoire</option>
       </select>
     </div>
+    @if (User.IsInRole("Admin"))
+    {
+      <div class="col-auto">
+        <label class="form-label small">Département</label>
+        <select name="departmentId" class="form-select">
+          <option value="">Tous départements</option>
+          @if (ViewBag.Departments is List<AlertSystem.Models.Entities.Department> depts)
+          {
+              foreach (var d in depts) { <option value="@d.DepartmentId">@d.Name</option> }
+          }
+        </select>
+      </div>
+    }
     <div class="col-auto">
-      <select name="departmentId" class="form-select">
-        <option value="">Tous départements</option>
-        @if (ViewBag.Departments is List<AlertSystem.Models.Entities.Department> depts)
-        {
-            foreach (var d in depts) { <option value="@d.DepartmentId">@d.Name</option> }
-        }
-      </select>
+      <label class="form-label small">Du</label>
+      <input type="date" name="from" class="form-control" />
     </div>
-    <div class="col-auto"><input type="date" name="from" class="form-control" /></div>
-    <div class="col-auto"><input type="date" name="to" class="form-control" /></div>
+    <div class="col-auto">
+      <label class="form-label small">Au</label>
+      <input type="date" name="to" class="form-control" />
+    </div>
     <div class="col-auto d-flex gap-2">
       <button class="btn btn-outline-secondary" type="submit">Filtrer</button>
       <a class="btn btn-outline-light border" asp-action="Index">Réinitialiser</a>
@@ -86,17 +97,19 @@
       <table class="table table-sm align-middle mb-0 table-hover">
         <thead>
           <tr>
-            <th scope="col" style="width:180px">Date</th>
+            <th scope="col" style="width:150px">Date</th>
             <th scope="col">Type</th>
             <th scope="col">Titre</th>
-            <th scope="col" style="width:220px">Département</th>
-            <th scope="col" class="text-end" style="width:180px">Actions</th>
+            <th scope="col" style="width:120px">Statut</th>
+            <th scope="col" style="width:120px">Plateformes</th>
+            <th scope="col" style="width:180px">Département</th>
+            <th scope="col" class="text-end" style="width:150px">Actions</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody id="alertsTableBody">
         @if (!Model.Any()) {
           <tr>
-            <td colspan="5">
+            <td colspan="7">
               <div class="empty-state text-center p-4">
                 <div class="mb-2">Aucune alerte trouvée</div>
                 <a class="btn btn-sm btn-primary" asp-action="Create">Créer une alerte</a>
@@ -145,14 +158,17 @@
     });
   }
 
-  document.getElementById('quickSelect').addEventListener('change', (e)=>{
-    const opt = e.target.selectedOptions[0]; if (!opt || !opt.value) return;
-    document.getElementById('fTitle').value = opt.textContent;
-    document.getElementById('fMessage').value = opt.dataset.message || '';
-    document.getElementById('fType').value = opt.dataset.type || 'Information';
-    const d = opt.dataset.departmentId || '';
-    const deptSel = document.getElementById('fDept'); if (deptSel) deptSel.value = d;
-  });
+  const quickSelect = document.getElementById('quickSelect');
+  if (quickSelect) {
+    quickSelect.addEventListener('change', (e)=>{
+      const opt = e.target.selectedOptions[0]; if (!opt || !opt.value) return;
+      document.getElementById('fTitle').value = opt.textContent;
+      document.getElementById('fMessage').value = opt.dataset.message || '';
+      document.getElementById('fType').value = opt.dataset.type || 'Information';
+      const d = opt.dataset.departmentId || '';
+      const deptSel = document.getElementById('fDept'); if (deptSel) deptSel.value = d;
+    });
+  }
 
   async function loadDeptUsers(){
     const r = await fetch('/AlertsCrud/DeptUsers'); const users = await r.json();
@@ -160,19 +176,24 @@
     users.forEach(u=>{ const o=document.createElement('option'); o.value=u.userId; o.textContent=`${u.username} (${u.email})`; sel.appendChild(o); });
   }
 
-  document.getElementById('btnQuickSave').addEventListener('click', async ()=>{
-    const fd = new URLSearchParams();
-    fd.set('title', document.getElementById('fTitle').value);
-    fd.set('message', document.getElementById('fMessage').value);
-    fd.set('alertType', document.getElementById('fType').value);
-    const deptSel = document.getElementById('fDept'); if (deptSel) fd.set('departmentId', deptSel.value);
-    const r = await fetch('/AlertsCrud/QuickSave', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: fd });
-    showToast(r.ok? 'Alerte enregistrée' : 'Erreur enregistrement', r.ok);
-    document.getElementById('quickSelect').innerHTML = '<option value="">-- Sélectionner --</option>';
-    loadQuick();
-  });
+  const btnQuickSave = document.getElementById('btnQuickSave');
+  if (btnQuickSave) {
+    btnQuickSave.addEventListener('click', async ()=>{
+      const fd = new URLSearchParams();
+      fd.set('title', document.getElementById('fTitle').value);
+      fd.set('message', document.getElementById('fMessage').value);
+      fd.set('alertType', document.getElementById('fType').value);
+      const deptSel = document.getElementById('fDept'); if (deptSel) fd.set('departmentId', deptSel.value);
+      const r = await fetch('/AlertsCrud/QuickSave', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: fd });
+      showToast(r.ok? 'Alerte enregistrée' : 'Erreur enregistrement', r.ok);
+      const qs = document.getElementById('quickSelect'); if (qs) qs.innerHTML = '<option value="">-- Sélectionner --</option>';
+      loadQuick();
+    });
+  }
 
-  document.getElementById('btnSend').addEventListener('click', async ()=>{
+  const btnSend = document.getElementById('btnSend');
+  if (btnSend) {
+    btnSend.addEventListener('click', async ()=>{
     let alertId = document.getElementById('quickSelect').value;
     if (!alertId){
       const fd = new URLSearchParams();
@@ -201,31 +222,135 @@
     if (rr.ok){
       try{
         const data = await rr.json();
-        if (data && typeof data.emailSent !== 'undefined'){
-          msg = `Alerte envoyée — emails : ${data.emailSent}/${data.emailAttempts}`;
+        if (data && data.alertId){
+          msg = `Alerte programmée — ${data.recipients} destinataires. Fenêtre d'annulation: ${data.cancellationWindowSeconds}s`;
           console.log('Send result', data);
+          
+          // Add to pending alerts for cancellation
+          if (typeof addPendingAlert === 'function') {
+            const title = document.getElementById('fTitle').value;
+            addPendingAlert(data.alertId, title, data.cancellationWindowSeconds);
+          }
+          
+          // Show detailed status
+          if (data.emailAttempts > 0) {
+            msg += ` | Emails: ${data.emailSent}/${data.emailAttempts}`;
+          }
         } else {
-          msg = 'Alerte envoyée (email/notif en cours...)';
+          msg = 'Alerte envoyée (statut en cours...)';
         }
       }catch{
-        msg = 'Alerte envoyée (email/notif en cours...)';
+        msg = 'Alerte envoyée (statut en cours...)';
       }
     }
     showToast(msg, rr.ok);
-  });
+    });
+  }
 
   loadQuick();
   loadDeptUsers();
 
+  // Filtres dynamiques des alertes
+  const alertsForm = document.getElementById('alertsFilterForm');
+  if (alertsForm) {
+    alertsForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      loadAlerts();
+    });
+  }
+
+  // Auto-filter on change
+  if (alertsForm) {
+    alertsForm.querySelectorAll('select, input[type="date"]').forEach(el => {
+      el.addEventListener('change', () => loadAlerts());
+    });
+  }
+
+  async function loadAlerts() {
+    try {
+      if (!alertsForm) {
+        console.warn('Alerts form not found, reloading page');
+        window.location.reload();
+        return;
+      }
+      const params = new URLSearchParams(new FormData(alertsForm));
+      const res = await fetch(`/AlertsCrud?${params.toString()}`, { 
+        headers: { 'Accept': 'application/json' }
+      });
+      if (res.headers.get('content-type')?.includes('application/json')) {
+        const data = await res.json();
+        renderAlertsTable(data.items || []);
+      }
+    } catch (e) {
+      console.warn('Failed to load alerts dynamically, falling back to page reload');
+      if (alertsForm) {
+        window.location.href = `/AlertsCrud?${new URLSearchParams(new FormData(alertsForm)).toString()}`;
+      } else {
+        window.location.reload();
+      }
+    }
+  }
+
+  function renderAlertsTable(alerts) {
+    const tbody = document.getElementById('alertsTableBody');
+    if (!alerts.length) {
+      tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state text-center p-4"><div class="mb-2">Aucune alerte trouvée</div><a class="btn btn-sm btn-primary" href="/AlertsCrud/Create">Créer une alerte</a></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = alerts.map(a => {
+      const sendStatus = a.sendStatus || 'Pending';
+      const platforms = a.deliveryPlatforms ? JSON.parse(a.deliveryPlatforms) : [];
+      const statusBadge = getStatusBadge(sendStatus);
+      const platformsBadges = platforms.map(p => `<span class="badge bg-secondary me-1">${p}</span>`).join('');
+      
+      return `
+      <tr>
+        <td>${new Date(a.createdAt).toLocaleString('fr-FR')}</td>
+        <td>${a.alertType === 'Obligatoire' ? '<span class="badge badge-type-obl">Obligatoire</span>' : '<span class="badge badge-type-info">Information</span>'}</td>
+        <td><a href="/AlertsCrud/Details/${a.alertId}">${a.title}</a></td>
+        <td>${statusBadge}</td>
+        <td>${platformsBadges || '-'}</td>
+        <td>${a.departmentName || '-'}</td>
+        <td class="text-end">
+          <a class="btn btn-sm btn-outline-primary" href="/AlertsCrud/Edit/${a.alertId}">Modifier</a>
+          <form class="d-inline" action="/AlertsCrud/Delete" method="post">
+            <input type="hidden" name="id" value="${a.alertId}" />
+            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Supprimer ?')">Supprimer</button>
+          </form>
+        </td>
+      </tr>
+      `;
+    }).join('');
+  }
+
+  function getStatusBadge(status) {
+    switch(status) {
+      case 'Pending': return '<span class="badge bg-warning text-dark">En attente</span>';
+      case 'Sending': return '<span class="badge bg-info">En cours</span>';
+      case 'Sent': return '<span class="badge bg-success">Envoyée</span>';
+      case 'Failed': return '<span class="badge bg-danger">Échec</span>';
+      case 'Cancelled': return '<span class="badge bg-secondary">Annulée</span>';
+      default: return '<span class="badge bg-light text-dark">Inconnu</span>';
+    }
+  }
+
+  function resetFilters() {
+    alertsForm.reset();
+    loadAlerts();
+  }
+
   // Filtre rapide des destinataires (client-side)
-  document.getElementById('fRecipientsSearch').addEventListener('input', (e)=>{
+  const fRecipientsSearch = document.getElementById('fRecipientsSearch');
+  if (fRecipientsSearch) {
+    fRecipientsSearch.addEventListener('input', (e)=>{
     const q = (e.target.value || '').toLowerCase();
     const sel = document.getElementById('fRecipients');
     Array.from(sel.options).forEach(o => {
       const txt = o.textContent.toLowerCase();
       o.hidden = q && !txt.includes(q);
     });
-  });
+    });
+  }
 
   function showToast(msg, ok){
     const zone=document.getElementById('toastZone');
@@ -236,6 +361,24 @@
     zone.appendChild(t);
     const toast = new bootstrap.Toast(t,{delay:2000}); toast.show();
     t.addEventListener('hidden.bs.toast', ()=> t.remove());
+  }
+
+  // Real-time updates via SignalR
+  if (window.signalR && typeof signalR !== 'undefined') {
+    const connection = new signalR.HubConnectionBuilder()
+      .withUrl('/hubs/notifications')
+      .withAutomaticReconnect()
+      .build();
+
+    connection.on('newAlert', () => {
+      loadAlerts(); // Refresh alerts list
+    });
+
+    connection.on('alertsChanged', () => {
+      loadAlerts(); // Refresh alerts list
+    });
+
+    connection.start().catch(err => console.warn('SignalR connection failed:', err));
   }
 </script>
 }

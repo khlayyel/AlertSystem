@@ -5,7 +5,7 @@ namespace AlertSystem.Models.Entities
         public int UserId { get; set; }
         public string Username { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
-        public int PhoneNumber { get; set; }
+        public string? PhoneNumber { get; set; }
         public string PasswordHash { get; set; } = string.Empty;
         public string Role { get; set; } = string.Empty; // Admin | SuperUser | User
         public int? DepartmentId { get; set; }

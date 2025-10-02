@@ -9,10 +9,11 @@
     <a class="btn btn-primary" asp-action="Create">Nouveau</a>
   </div>
 
-  <form class="row g-2 mb-3">
-    @if (!User.IsInRole("SuperUser"))
+  <form class="row g-2 mb-3 align-items-end">
+    @if (User.IsInRole("Admin"))
     {
       <div class="col-auto">
+        <label class="form-label small">Rôle</label>
         <select name="role" class="form-select">
           <option value="">Tous rôles</option>
           @if (Model.Role == "Admin") { <option value="Admin" selected>Admin</option> } else { <option value="Admin">Admin</option> }
@@ -21,6 +22,7 @@
         </select>
       </div>
       <div class="col-auto">
+        <label class="form-label small">Département</label>
         <select name="departmentId" class="form-select">
           <option value="">Tous départements</option>
           @foreach (var d in departments) {
@@ -29,8 +31,19 @@
         </select>
       </div>
     }
+    @if (User.IsInRole("SuperUser"))
+    {
+      <div class="col-auto">
+        <label class="form-label small">Rôle</label>
+        <select name="role" class="form-select" disabled>
+          <option value="User" selected>User (mon département)</option>
+        </select>
+        <input type="hidden" name="role" value="User" />
+      </div>
+    }
     <div class="col-auto">
-      <input name="q" value="@Model.Query" class="form-control" placeholder="Recherche (nom/email)" />
+      <label class="form-label small">Recherche</label>
+      <input name="q" value="@Model.Query" class="form-control" placeholder="Nom/email" />
     </div>
     <div class="col-auto">
       <button class="btn btn-outline-secondary" type="submit">Filtrer</button>
@@ -94,6 +107,18 @@
   const form = document.querySelector('form');
   form.addEventListener('submit', (e)=>{ e.preventDefault(); fetchPage(1); });
 
+  // Auto-filter on change for better UX
+  form.querySelectorAll('select, input').forEach(el => {
+    el.addEventListener('change', () => fetchPage(1));
+    if (el.type === 'text') {
+      let timeout;
+      el.addEventListener('input', () => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => fetchPage(1), 500); // Debounce search
+      });
+    }
+  });
+
   async function fetchPage(p){
     const params = new URLSearchParams(new FormData(form));
     params.append('page', p); params.append('size', '@Model.Size');
@@ -134,12 +159,32 @@
     }
   }
 
-  // Temps réel: recharger la liste quand usersChanged arrive
-  if (window.signalR){
-    const conn = new signalR.HubConnectionBuilder().withUrl('/hubs/notifications').withAutomaticReconnect().build();
-    conn.on('usersChanged', ()=> fetchPage(@Model.Page));
-    conn.start();
+  // Real-time updates via SignalR
+  if (window.signalR && typeof signalR !== 'undefined') {
+    const connection = new signalR.HubConnectionBuilder()
+      .withUrl('/hubs/notifications')
+      .withAutomaticReconnect()
+      .build();
+
+    connection.on('usersChanged', () => {
+      fetchPage(@Model.Page); // Refresh users list
+    });
+
+    connection.on('userCreated', () => {
+      fetchPage(1); // Go to first page for new users
+    });
+
+    connection.on('userUpdated', () => {
+      fetchPage(@Model.Page); // Refresh current page
+    });
+
+    connection.start().catch(err => console.warn('SignalR connection failed:', err));
   }
+
+  // Auto-refresh every 60 seconds as fallback
+  setInterval(() => {
+    fetchPage(@Model.Page);
+  }, 60000);
 </script>
 }
 

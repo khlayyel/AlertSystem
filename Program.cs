@@ -13,6 +13,24 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddSignalR();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserAccessor, CurrentUserAccessor>();
+builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<AlertAuditService>();
+builder.Services.AddSingleton<AlertCancellationService>();
+
+// Configuration des reminders
+var reminderConfig = new AlertSystem.Services.ReminderConfiguration();
+var reminderSettings = builder.Configuration.GetSection("ReminderSettings");
+if (reminderSettings.Exists())
+{
+    reminderConfig.FirstReminderDelay = TimeSpan.FromMinutes(reminderSettings.GetValue<int>("FirstReminderDelayMinutes", 30));
+    reminderConfig.SubsequentReminderInterval = TimeSpan.FromMinutes(reminderSettings.GetValue<int>("SubsequentReminderIntervalMinutes", 60));
+    reminderConfig.MaxReminders = reminderSettings.GetValue<int>("MaxReminders", 5);
+    reminderConfig.ServiceCheckInterval = TimeSpan.FromMinutes(reminderSettings.GetValue<int>("ServiceCheckIntervalMinutes", 5));
+    reminderConfig.EnableReminders = reminderSettings.GetValue<bool>("EnableReminders", true);
+}
+builder.Services.AddSingleton(reminderConfig);
+builder.Services.AddHostedService<ReminderService>();
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
