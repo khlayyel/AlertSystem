@@ -369,7 +369,12 @@ namespace AlertSystem.Controllers
                                 .Join(_db.Users, ar => ar.UserId, u => u.UserId, (ar, u) => u.Email)
                                 .Where(email => !string.IsNullOrEmpty(email))
                                 .Take(3) // Limit to first 3 emails to avoid too long display
-                        )
+                        ),
+                        // Get the overall send status for this alert
+                        SendStatus = _db.AlertRecipients
+                            .Where(ar => ar.AlertId == a.AlertId)
+                            .Select(ar => ar.SendStatus)
+                            .FirstOrDefault() ?? "Pending" // Default to "Pending" for new alerts
                     };
 
             int total = await q.CountAsync();

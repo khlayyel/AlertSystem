@@ -4,9 +4,14 @@
     var departments = ViewBag.Departments as List<AlertSystem.Models.Entities.Department>;
 }
 <div class="container py-3">
-  <div class="mb-3">
-    <h3 class="mb-1">Tableau de bord</h3>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h3 class="mb-1">Tableau de bord</h3>
     <div class="text-muted">Bienvenue @ViewBag.DisplayName — Rôle: @role</div>
+    </div>
+    <button type="button" class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#newAlertModal" style="font-size: 1.1rem;">
+      <i class="bi bi-plus-circle me-2"></i>Nouvelle alerte
+    </button>
   </div>
 
   <!-- Pending Alerts Section -->
@@ -157,6 +162,184 @@
   </div>
 </div>
 
+<!-- Modal Nouvelle Alerte -->
+<div class="modal fade" id="newAlertModal" tabindex="-1" aria-labelledby="newAlertModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h4 class="modal-title" id="newAlertModalLabel">
+          <i class="bi bi-bell me-2"></i>Nouvelle alerte
+        </h4>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Section Alertes rapides -->
+        <div class="card border-primary mb-4">
+          <div class="card-header bg-primary text-white">
+            <h6 class="mb-0"><i class="bi bi-lightning me-1"></i>Alertes rapides</h6>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-8">
+                <select id="modalQuickSelect" class="form-select">
+                  <option value="">-- Sélectionner une alerte rapide --</option>
+                </select>
+              </div>
+              <div class="col-md-4 text-end">
+                <small class="text-muted">Sélectionnez pour remplir automatiquement</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Formulaire principal -->
+        <form id="newAlertForm">
+          <div class="row g-3">
+            <!-- Titre -->
+            <div class="col-12">
+              <label class="form-label fw-bold">
+                <i class="bi bi-pencil me-1"></i>Titre de l'alerte *
+              </label>
+              <input id="modalTitle" class="form-control" required placeholder="Entrez le titre de l'alerte..." />
+            </div>
+            
+            <!-- Message -->
+            <div class="col-12">
+              <label class="form-label fw-bold">
+                <i class="bi bi-chat-text me-1"></i>Message
+              </label>
+              <textarea id="modalMessage" class="form-control" rows="4" placeholder="Entrez le message de l'alerte..."></textarea>
+            </div>
+            
+            <!-- Type et Département -->
+            <div class="col-md-6">
+              <label class="form-label fw-bold">
+                <i class="bi bi-tag me-1"></i>Type d'alerte
+              </label>
+              <select id="modalAlertType" class="form-select">
+                <option value="Information">📄 Information</option>
+                <option value="Obligatoire">⚠️ Obligatoire</option>
+              </select>
+            </div>
+            
+            @if (User.IsInRole("Admin"))
+            {
+              <div class="col-md-6">
+                <label class="form-label fw-bold">
+                  <i class="bi bi-building me-1"></i>Département
+                </label>
+                <select id="modalDepartment" class="form-select">
+                  <option value="">-- Tous les départements --</option>
+                  @if (departments != null)
+                  {
+                    @foreach (var dept in departments)
+                    {
+                      <option value="@dept.DepartmentId">@dept.Name</option>
+                    }
+                  }
+                </select>
+              </div>
+            }
+            else
+            {
+              <div class="col-md-6">
+                <label class="form-label fw-bold">
+                  <i class="bi bi-building me-1"></i>Département
+                </label>
+                <input class="form-control" value="@ViewBag.DepartmentName" disabled />
+              </div>
+            }
+          </div>
+          
+          <!-- Section Destinataires -->
+                   <div class="card border-info mt-4">
+                     <div class="card-header bg-info text-white">
+                       <h6 class="mb-0"><i class="bi bi-people me-1"></i>Destinataires</h6>
+                     </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <label class="form-label">Rechercher un destinataire</label>
+                  <input id="modalRecipientsSearch" class="form-control mb-2" placeholder="Tapez le nom ou email..." />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Sélection rapide</label>
+                  <div class="btn-group w-100" role="group">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="selectAllRecipients()">Tous</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearAllRecipients()">Aucun</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="selectByDepartment()">Par département</button>
+                  </div>
+                </div>
+              </div>
+              <div class="mt-3">
+                <div class="border rounded p-3" style="max-height: 300px; overflow-y: auto; background-color: #f8f9fa;">
+                  <div id="modalRecipients"></div>
+                </div>
+                <div class="form-text mt-2 d-flex justify-content-between">
+                  <span>
+                    <i class="bi bi-info-circle me-1"></i>
+                    Cochez les destinataires de votre choix. Laisser vide pour envoyer à tous (sauf vous).
+                  </span>
+                  <span id="recipientCount" class="badge bg-primary">0 sélectionné(s)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Section Plateformes d'envoi -->
+          <div class="card border-success mt-4">
+            <div class="card-header bg-success text-white">
+              <h6 class="mb-0"><i class="bi bi-send me-1"></i>Plateformes d'envoi</h6>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-12">
+                  <label class="form-label fw-bold">Sélectionnez les moyens d'envoi :</label>
+                  <div class="mt-2">
+                    <div class="form-check form-check-inline">
+                      <input class="form-check-input" type="checkbox" id="platformEmail" value="email" checked>
+                      <label class="form-check-label" for="platformEmail">
+                        <i class="bi bi-envelope me-1 text-primary"></i>Email
+                      </label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                      <input class="form-check-input" type="checkbox" id="platformWhatsApp" value="whatsapp">
+                      <label class="form-check-label" for="platformWhatsApp">
+                        <i class="bi bi-whatsapp me-1 text-success"></i>WhatsApp
+                      </label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                      <input class="form-check-input" type="checkbox" id="platformDesktop" value="desktop" checked>
+                      <label class="form-check-label" for="platformDesktop">
+                        <i class="bi bi-bell me-1 text-warning"></i>Notification Desktop
+                      </label>
+                    </div>
+                  </div>
+                  <div class="form-text mt-2">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Au moins une plateforme doit être sélectionnée. Email et Desktop sont sélectionnés par défaut.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x-circle me-1"></i>Annuler
+        </button>
+        <button type="button" id="modalSaveBtn" class="btn btn-outline-primary">
+          <i class="bi bi-lightning me-1"></i>Enregistrer comme alerte rapide
+        </button>
+        <button type="button" id="modalSendBtn" class="btn btn-success btn-lg">
+          <i class="bi bi-send me-1"></i>Envoyer l'alerte
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 @section Scripts {
 <script>
 async function fetchJson(url){ 
@@ -238,37 +421,38 @@ function renderListCustom(targetId, data){
     // Render sent alerts (created by user)
     el.innerHTML = `
       <table class="table table-sm align-middle">
-        <thead><tr><th scope="col">Date</th><th scope="col">Type</th><th scope="col">Titre</th><th scope="col">Destinataires</th><th scope="col">Emails</th><th scope="col">Confirmées</th></tr></thead>
+        <thead><tr><th scope="col">Date</th><th scope="col">Type</th><th scope="col">Titre</th><th scope="col">Emails</th><th scope="col">Statut</th></tr></thead>
         <tbody>
         ${data.items.map(x => `
-          <tr>
+          <tr id="sent-row-${x.alertId}">
             <td>${fmtPlus1(x.createdAt)}</td>
             <td><span class="badge ${x.alertType==='Obligatoire'?'bg-warning text-dark':'bg-info'}">${x.alertType}</span></td>
             <td>${x.title}</td>
-            <td>${x.recipientCount}</td>
             <td><small class="text-muted">${x.recipientEmails || 'N/A'}</small></td>
-            <td>${x.confirmedCount}/${x.recipientCount}</td>
+            <td id="status-cell-${x.alertId}">
+              ${getAlertStatusHtml(x)}
+            </td>
           </tr>`).join('')}
         </tbody>
       </table>`;
   } else {
     // Render dept data (original format)
-    el.innerHTML = `
-      <table class="table table-sm align-middle">
+  el.innerHTML = `
+    <table class="table table-sm align-middle">
         <thead><tr><th scope="col">Date</th><th scope="col">Type</th><th scope="col">Titre</th><th scope="col">Expéditeur</th><th scope="col">Destinataire</th><th scope="col">Statut</th><th scope="col">Heure de réception</th></tr></thead>
-        <tbody>
-        ${data.items.map(x => `
-          <tr>
-            <td>${fmtPlus1(x.createdAt)}</td>
-            <td>${x.alertType}</td>
-            <td>${x.title}</td>
-            <td>${x.sender}</td>
-            <td>${x.recipient}</td>
+      <tbody>
+      ${data.items.map(x => `
+        <tr>
+          <td>${fmtPlus1(x.createdAt)}</td>
+          <td>${x.alertType}</td>
+          <td>${x.title}</td>
+          <td>${x.sender}</td>
+          <td>${x.recipient}</td>
             <td>${x.alertType==='Obligatoire' ? (x.isConfirmed ? 'Lu' : 'Non lu') : ''}</td>
             <td>${x.isConfirmed && x.confirmedAt ? fmtPlus1(x.confirmedAt) : ''}</td>
-          </tr>`).join('')}
-        </tbody>
-      </table>`;
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
   }
 }
 
@@ -346,6 +530,119 @@ document.querySelectorAll('#allFilters select, #allFilters input, #deptFilters s
 async function confirmAlert(id){ await fetch('/Alerts/Confirm', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:`alertRecipientId=${id}` }); loadInbox(); loadMine(); updateUnreadKpi(); }
 async function markRead(id){ await fetch('/Alerts/MarkRead', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:`alertRecipientId=${id}` }); loadInbox(); loadMine(); updateUnreadKpi(); }
 
+// Fonctions pour le système de statut et d'annulation
+function getAlertStatusHtml(alert) {
+  // Par défaut, les alertes existantes sont "Envoyé"  
+  const status = alert.SendStatus || alert.sendStatus || alert.c1 || 'Sent';
+  
+  switch(status) {
+    case 'Pending':
+    case 'Sending':
+      return `
+        <span class="badge bg-warning text-dark">En cours</span>
+        <button class="btn btn-sm btn-outline-danger ms-1" onclick="cancelAlert(${alert.alertId})" title="Annuler l'envoi">
+          <span class="text-danger">✕</span>
+        </button>
+      `;
+    case 'Sent':
+      return `<span class="badge bg-success">Envoyé</span>`;
+    case 'Failed':
+      return `<span class="badge bg-danger">Échoué</span>`;
+    case 'Cancelled':
+      return `<span class="badge bg-secondary">Annulé</span>`;
+    default:
+      return `<span class="badge bg-success">Envoyé</span>`;
+  }
+}
+
+// Fonction pour annuler une alerte
+async function cancelAlert(alertId) {
+  try {
+    const response = await fetch('/AlertsCrud/Cancel', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `alertId=${alertId}`
+    });
+    
+    const result = await response.json();
+    if (result.success) {
+      updateAlertStatus(alertId, 'Cancelled');
+    } else {
+      console.error('Erreur lors de l\'annulation:', result.message);
+    }
+  } catch (error) {
+    console.error('Erreur lors de l\'annulation:', error);
+  }
+}
+
+// Fonction pour mettre à jour le statut d'une alerte en temps réel
+function updateAlertStatus(alertId, status) {
+  const statusCell = document.getElementById(`status-cell-${alertId}`);
+  if (statusCell) {
+    const fakeAlert = { alertId, SendStatus: status };
+    statusCell.innerHTML = getAlertStatusHtml(fakeAlert);
+  }
+}
+
+// Fonction pour gérer une nouvelle alerte avec statut "En cours"
+function handleNewAlert(alertId, title = 'Nouvelle alerte', recipientEmails = 'N/A') {
+  // Ajouter immédiatement la nouvelle alerte à la liste des envoyés
+  addNewAlertToSentList(alertId, title, recipientEmails);
+  
+  // Démarrer le timer de 10 secondes
+  setTimeout(() => {
+    // Vérifier si l'alerte n'a pas été annulée
+    const statusCell = document.getElementById(`status-cell-${alertId}`);
+    if (statusCell && statusCell.innerHTML.includes('En cours')) {
+      // Simuler l'envoi (sera remplacé par le vrai statut via SignalR)
+      updateAlertStatus(alertId, 'Sent');
+    }
+  }, 10000);
+}
+
+// Fonction pour ajouter une nouvelle alerte à la liste des envoyés
+function addNewAlertToSentList(alertId, title, recipientEmails) {
+  const sentList = document.getElementById('sentList');
+  if (!sentList) return;
+  
+  const now = new Date().toISOString();
+  const newAlert = {
+    alertId: alertId,
+    createdAt: now,
+    alertType: 'Information', // Par défaut
+    title: title,
+    recipientEmails: recipientEmails,
+    SendStatus: 'Pending'
+  };
+  
+  // Créer la nouvelle ligne
+  const newRow = `
+    <tr id="sent-row-${alertId}">
+      <td>${fmtPlus1(now)}</td>
+      <td><span class="badge bg-info">Information</span></td>
+      <td>${title}</td>
+      <td><small class="text-muted">${recipientEmails}</small></td>
+      <td id="status-cell-${alertId}">
+        ${getAlertStatusHtml(newAlert)}
+      </td>
+    </tr>
+  `;
+  
+  // Ajouter au début du tableau
+  const tbody = sentList.querySelector('tbody');
+  if (tbody) {
+    tbody.insertAdjacentHTML('afterbegin', newRow);
+  } else {
+    // Si pas de tableau, créer un nouveau tableau
+    sentList.innerHTML = `
+      <table class="table table-sm align-middle">
+        <thead><tr><th scope="col">Date</th><th scope="col">Type</th><th scope="col">Titre</th><th scope="col">Emails</th><th scope="col">Statut</th></tr></thead>
+        <tbody>${newRow}</tbody>
+      </table>
+    `;
+  }
+}
+
 // Initial load
 loadInbox();
 updateUnreadKpi();
@@ -419,6 +716,11 @@ if (window.signalR && typeof signalR !== 'undefined'){
     updateUnreadKpi(); 
     updateConfirmedMandatoryKpi(); 
     updateTodayKpi(); 
+  });
+  
+  connection.on('alertStatusChanged', (alertId, status) => {
+    // Update the status in real-time
+    updateAlertStatus(alertId, status);
   });
   
   connection.start().catch(err => console.warn('SignalR connection failed:', err));
@@ -522,6 +824,336 @@ function createToastContainer() {
   document.body.appendChild(container);
   return container;
 }
+
+// Modal Alert Functions
+async function loadModalQuickAlerts() {
+  try {
+    const res = await fetch('/AlertsCrud/QuickList');
+    const items = await res.json();
+    const sel = document.getElementById('modalQuickSelect');
+    if (sel) {
+      sel.innerHTML = '<option value="">-- Sélectionner --</option>';
+      items.forEach(x => {
+        const o = document.createElement('option');
+        o.value = x.alertId;
+        o.textContent = x.title;
+        sel.appendChild(o);
+      });
+    }
+  } catch (error) {
+    console.error('Error loading quick alerts:', error);
+  }
+}
+
+async function loadModalRecipients() {
+  try {
+    const res = await fetch('/AlertsCrud/Recipients');
+    const items = await res.json();
+    const container = document.getElementById('modalRecipients');
+    if (container) {
+      container.innerHTML = '';
+      
+      if (items.length === 0) {
+        container.innerHTML = '<div class="text-muted text-center p-3">Aucun destinataire disponible</div>';
+        return;
+      }
+      
+      items.forEach(x => {
+        const checkboxDiv = document.createElement('div');
+        checkboxDiv.className = 'form-check mb-2 p-2 border-bottom';
+        checkboxDiv.dataset.department = x.departmentId || '';
+        checkboxDiv.dataset.role = x.role || '';
+        
+        const checkbox = document.createElement('input');
+        checkbox.className = 'form-check-input';
+        checkbox.type = 'checkbox';
+        checkbox.id = `recipient_${x.userId}`;
+        checkbox.value = x.userId;
+        checkbox.name = 'recipients';
+        
+        const label = document.createElement('label');
+        label.className = 'form-check-label w-100';
+        label.htmlFor = `recipient_${x.userId}`;
+        label.style.cursor = 'pointer';
+        
+        // Créer le contenu du label avec icônes selon le rôle
+        const roleIcon = x.role === 'Admin' ? '👑' : x.role === 'SuperUser' ? '⭐' : '👤';
+        const deptBadge = x.departmentName ? `<span class="badge bg-secondary ms-2">${x.departmentName}</span>` : '';
+        
+        label.innerHTML = `
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <strong>${roleIcon} ${x.username}</strong>
+              <div class="text-muted small">${x.email || 'Pas d\'email'}</div>
+            </div>
+            ${deptBadge}
+          </div>
+        `;
+        
+        // Ajouter un event listener pour mettre à jour le compteur
+        checkbox.addEventListener('change', updateRecipientCount);
+        
+        checkboxDiv.appendChild(checkbox);
+        checkboxDiv.appendChild(label);
+        container.appendChild(checkboxDiv);
+      });
+      
+      // Filter functionality
+      const searchInput = document.getElementById('modalRecipientsSearch');
+      if (searchInput) {
+        // Remove existing event listener if any
+        searchInput.removeEventListener('input', filterCheckboxes);
+        searchInput.addEventListener('input', filterCheckboxes);
+      }
+    }
+  } catch (error) {
+    console.error('Error loading recipients:', error);
+    const container = document.getElementById('modalRecipients');
+    if (container) {
+      container.innerHTML = '<div class="text-danger text-center p-3">Erreur lors du chargement des destinataires</div>';
+    }
+  }
+}
+
+function filterCheckboxes(event) {
+  const searchTerm = event.target.value.toLowerCase();
+  const container = document.getElementById('modalRecipients');
+  if (container) {
+    const checkboxDivs = container.querySelectorAll('.form-check');
+    checkboxDivs.forEach(div => {
+      const text = div.textContent.toLowerCase();
+      div.style.display = text.includes(searchTerm) ? '' : 'none';
+    });
+  }
+}
+
+function updateRecipientCount() {
+  const container = document.getElementById('modalRecipients');
+  const countBadge = document.getElementById('recipientCount');
+  if (container && countBadge) {
+    const checkedCount = container.querySelectorAll('input[type="checkbox"]:checked').length;
+    countBadge.textContent = `${checkedCount} sélectionné(s)`;
+    countBadge.className = checkedCount > 0 ? 'badge bg-success' : 'badge bg-primary';
+  }
+}
+
+// Modal Event Handlers
+document.getElementById('modalQuickSelect')?.addEventListener('change', async function() {
+  if (!this.value) {
+    // Clear fields when no selection
+    document.getElementById('modalTitle').value = '';
+    document.getElementById('modalMessage').value = '';
+    document.getElementById('modalAlertType').value = 'Information';
+    return;
+  }
+  
+  try {
+    const res = await fetch(`/AlertsCrud/GetAlertDetails/${this.value}`);
+    if (res.ok) {
+      const data = await res.text();
+      let alert;
+      
+      try {
+        alert = JSON.parse(data);
+      } catch (e) {
+        console.error('Response is not JSON:', data);
+        showToast('Erreur lors du chargement de l\'alerte', 'error');
+        return;
+      }
+      
+      // Fill form fields
+      if (alert.title) document.getElementById('modalTitle').value = alert.title;
+      if (alert.message) document.getElementById('modalMessage').value = alert.message;
+      if (alert.alertType) document.getElementById('modalAlertType').value = alert.alertType;
+      
+      showToast('Alerte rapide chargée', 'success');
+    } else {
+      console.error('HTTP error:', res.status, res.statusText);
+      showToast('Alerte introuvable', 'error');
+    }
+  } catch (error) {
+    console.error('Error loading alert details:', error);
+    showToast('Erreur réseau', 'error');
+  }
+});
+
+document.getElementById('modalSaveBtn')?.addEventListener('click', async function() {
+  const title = document.getElementById('modalTitle')?.value?.trim();
+  const message = document.getElementById('modalMessage')?.value?.trim();
+  const alertType = document.getElementById('modalAlertType')?.value;
+  const departmentId = document.getElementById('modalDepartment')?.value || '';
+  
+  if (!title || !message) {
+    showToast('Titre et message requis pour enregistrer', 'error');
+    return;
+  }
+  
+  try {
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('message', message);
+    formData.append('alertType', alertType);
+    formData.append('departmentId', departmentId);
+    
+    const res = await fetch('/AlertsCrud/QuickSave', { method: 'POST', body: formData });
+    
+    if (res.ok) {
+      showToast('Alerte rapide enregistrée avec succès !', 'success');
+      await loadModalQuickAlerts(); // Refresh the quick alerts list
+    } else {
+      showToast('Erreur lors de l\'enregistrement', 'error');
+    }
+  } catch (error) {
+    console.error('Error saving quick alert:', error);
+    showToast('Erreur réseau', 'error');
+  }
+});
+
+        document.getElementById('modalSendBtn')?.addEventListener('click', async function() {
+          const title = document.getElementById('modalTitle')?.value?.trim();
+          const message = document.getElementById('modalMessage')?.value?.trim();
+          const alertType = document.getElementById('modalAlertType')?.value;
+          const departmentId = document.getElementById('modalDepartment')?.value || '';
+          
+          const recipientsContainer = document.getElementById('modalRecipients');
+          const selectedRecipients = Array.from(recipientsContainer?.querySelectorAll('input[type="checkbox"]:checked') || []).map(cb => cb.value);
+          
+          // Récupérer les plateformes sélectionnées
+          const selectedPlatforms = [];
+          if (document.getElementById('platformEmail')?.checked) selectedPlatforms.push('email');
+          if (document.getElementById('platformWhatsApp')?.checked) selectedPlatforms.push('whatsapp');
+          if (document.getElementById('platformDesktop')?.checked) selectedPlatforms.push('desktop');
+  
+          if (!title) {
+            showToast('Titre requis', 'error');
+            return;
+          }
+          
+          if (selectedPlatforms.length === 0) {
+            showToast('Veuillez sélectionner au moins une plateforme d\'envoi', 'error');
+            return;
+          }
+  
+  // D'abord créer l'alerte comme template
+  const quickSaveData = new FormData();
+  quickSaveData.append('title', title);
+  quickSaveData.append('message', message);
+  quickSaveData.append('alertType', alertType);
+  quickSaveData.append('departmentId', departmentId);
+  
+  try {
+    // Créer l'alerte template
+    const quickRes = await fetch('/AlertsCrud/QuickSave', { method: 'POST', body: quickSaveData });
+    if (!quickRes.ok) {
+      showToast('Erreur lors de la création de l\'alerte', 'error');
+      return;
+    }
+    
+    const quickResult = await quickRes.json();
+    const alertId = quickResult.alertId;
+    
+             // Maintenant envoyer l'alerte
+             const sendData = new FormData();
+             sendData.append('alertId', alertId);
+             sendData.append('recipients', selectedRecipients.join(','));
+             sendData.append('platforms', selectedPlatforms.join(','));
+    
+    const res = await fetch('/AlertsCrud/Send', { method: 'POST', body: sendData });
+    
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.alertId) {
+        showToast(`Alerte en cours d'envoi — ${data.recipients} destinataires. Fenêtre d'annulation: 10s`, 'success');
+        
+        // Add to pending alerts for cancellation with new system
+        if (typeof handleNewAlert === 'function') {
+          const recipientEmails = data.attemptedEmails ? data.attemptedEmails.join(', ') : 'N/A';
+          handleNewAlert(data.alertId, title, recipientEmails);
+        }
+        
+        // Refresh sent data
+        setTimeout(() => {
+          if (typeof loadSent === 'function') {
+            loadSent();
+          }
+        }, 500);
+        
+        // Clear form and close modal
+        document.getElementById('modalTitle').value = '';
+        document.getElementById('modalMessage').value = '';
+        document.getElementById('modalQuickSelect').value = '';
+        clearAllRecipients(); // Clear all checkboxes
+        
+        // Close modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('newAlertModal'));
+        modal?.hide();
+      } else {
+        showToast('Erreur: Pas d\'ID alerte retourné', 'error');
+      }
+    } else {
+      showToast(`Erreur HTTP ${res.status}`, 'error');
+    }
+  } catch (error) {
+    console.error('Error sending alert:', error);
+    showToast('Erreur réseau', 'error');
+  }
+});
+
+// Initialize modal data when modal is shown
+// Fonctions pour la sélection rapide des destinataires
+function selectAllRecipients() {
+  const container = document.getElementById('modalRecipients');
+  if (container) {
+    const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(checkbox => {
+      checkbox.checked = true;
+    });
+    updateRecipientCount();
+  }
+}
+
+function clearAllRecipients() {
+  const container = document.getElementById('modalRecipients');
+  if (container) {
+    const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(checkbox => {
+      checkbox.checked = false;
+    });
+    updateRecipientCount();
+  }
+}
+
+function selectByDepartment() {
+  const departmentSelect = document.getElementById('modalDepartment');
+  const container = document.getElementById('modalRecipients');
+  
+  if (!departmentSelect || !container) return;
+  
+  const selectedDept = departmentSelect.value;
+  if (!selectedDept) {
+    showToast('Veuillez d\'abord sélectionner un département', 'warning');
+    return;
+  }
+  
+  // Clear current selection
+  clearAllRecipients();
+  
+  // Select recipients from the chosen department
+  const checkboxDivs = container.querySelectorAll('.form-check');
+  checkboxDivs.forEach(div => {
+    if (div.dataset.department === selectedDept) {
+      const checkbox = div.querySelector('input[type="checkbox"]');
+      if (checkbox) checkbox.checked = true;
+    }
+  });
+  updateRecipientCount();
+}
+
+
+document.getElementById('newAlertModal')?.addEventListener('shown.bs.modal', function() {
+  loadModalQuickAlerts();
+  loadModalRecipients();
+});
 </script>
 }
 

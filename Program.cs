@@ -17,6 +17,7 @@ builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<AlertAuditService>();
 builder.Services.AddSingleton<AlertCancellationService>();
+builder.Services.AddHttpClient<IWhatsAppService, WhatsAppService>();
 
 // Configuration des reminders
 var reminderConfig = new AlertSystem.Services.ReminderConfiguration();
@@ -31,6 +32,9 @@ if (reminderSettings.Exists())
 }
 builder.Services.AddSingleton(reminderConfig);
 builder.Services.AddHostedService<ReminderService>();
+
+// WhatsApp Service
+builder.Services.AddHttpClient<IWhatsAppService, WhatsAppService>();
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {

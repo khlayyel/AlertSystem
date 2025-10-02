@@ -26,9 +26,10 @@ namespace AlertSystem.Controllers
         private readonly AlertCancellationService _cancellationService;
         private readonly INotificationService _notificationService;
         private readonly AlertAuditService _auditService;
-        public AlertsCrudController(ApplicationDbContext db, IHubContext<NotificationsHub> hub, IConfiguration cfg, AlertCancellationService cancellationService, INotificationService notificationService, AlertAuditService auditService, AlertSystem.Services.IEmailSender? email = null, ILogger<AlertsCrudController>? logger = null)
+        private readonly IWhatsAppService _whatsAppService;
+        public AlertsCrudController(ApplicationDbContext db, IHubContext<NotificationsHub> hub, IConfiguration cfg, AlertCancellationService cancellationService, INotificationService notificationService, AlertAuditService auditService, IWhatsAppService whatsAppService, AlertSystem.Services.IEmailSender? email = null, ILogger<AlertsCrudController>? logger = null)
         {
-            _db = db; _hub = hub; _cfg = cfg; _email = email; _logger = logger; _cancellationService = cancellationService; _notificationService = notificationService; _auditService = auditService;
+            _db = db; _hub = hub; _cfg = cfg; _email = email; _logger = logger; _cancellationService = cancellationService; _notificationService = notificationService; _auditService = auditService; _whatsAppService = whatsAppService;
             var pub = _cfg["WebPush:PublicKey"];
             var priv = _cfg["WebPush:PrivateKey"];
             var subject = _cfg["WebPush:Subject"];
@@ -176,16 +177,15 @@ namespace AlertSystem.Controllers
             _db.Alerts.Add(a);
             await _db.SaveChangesAsync();
             
-            // Notify all clients of new alert
-            await _hub.Clients.All.SendAsync("newAlert");
-            await _hub.Clients.All.SendAsync("alertsChanged");
+            // QuickSave ne doit PAS envoyer de notifications - c'est juste pour sauvegarder comme template
+            _logger?.LogInformation("=== QUICKSAVE EXECUTED === Alert template saved: {AlertId} - {Title} - NO NOTIFICATIONS SENT", a.AlertId, a.Title);
             
             return Ok(new { a.AlertId });
         }
 
         // Send alert to selected recipients (within same department). If none provided, send to all except sender.
         [HttpPost]
-        public async Task<IActionResult> Send([FromForm] int alertId, [FromForm] string? recipients, [FromForm] string? title, [FromForm] string? message, [FromForm] string? alertType, [FromForm] int? departmentId)
+        public async Task<IActionResult> Send([FromForm] int alertId, [FromForm] string? recipients, [FromForm] string? platforms, [FromForm] string? title, [FromForm] string? message, [FromForm] string? alertType, [FromForm] int? departmentId)
         {
             var template = await _db.Alerts.AsNoTracking().FirstOrDefaultAsync(a => a.AlertId == alertId);
             if (template == null) return NotFound();
@@ -199,8 +199,26 @@ namespace AlertSystem.Controllers
                 if (CurrentRole.Equals("SuperUser", StringComparison.OrdinalIgnoreCase) && depId != CurrentDepartmentId) return Forbid();
             }
 
-            _logger?.LogInformation("=== SEND ALERT START === User: {UserId}, Template: {TemplateId}, Recipients: {Recipients}, Dept: {DeptId}", 
-                CurrentUserId, alertId, recipients, departmentId);
+            _logger?.LogInformation("=== SEND ALERT START === User: {UserId}, Template: {TemplateId}, Recipients: {Recipients}, Platforms: {Platforms}, Dept: {DeptId}", 
+                CurrentUserId, alertId, recipients, platforms, departmentId);
+                
+            // Parser les plateformes sélectionnées
+            var selectedPlatforms = new List<string>();
+            if (!string.IsNullOrEmpty(platforms))
+            {
+                selectedPlatforms = platforms.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(p => p.Trim().ToLower())
+                    .Where(p => new[] { "email", "whatsapp", "desktop" }.Contains(p))
+                    .ToList();
+            }
+            
+            // Si aucune plateforme n'est sélectionnée, utiliser email et desktop par défaut
+            if (selectedPlatforms.Count == 0)
+            {
+                selectedPlatforms = new List<string> { "email", "desktop" };
+            }
+            
+            _logger?.LogInformation("Selected platforms: [{Platforms}]", string.Join(", ", selectedPlatforms));
                 
             // Créer une nouvelle alerte d'envoi (ne pas écraser le template)
             var sendAlert = new Alert
@@ -297,7 +315,7 @@ namespace AlertSystem.Controllers
                         UserId = uid, 
                         IsConfirmed = false,
                         SendStatus = "Pending",
-                        DeliveryPlatforms = "[]"
+                        DeliveryPlatforms = JsonSerializer.Serialize(selectedPlatforms)
                     });
                 }
             }
@@ -350,15 +368,19 @@ namespace AlertSystem.Controllers
             {
                 await _hub.Clients.User(uid.ToString()).SendAsync("historyChanged");
                 await _hub.Clients.User(uid.ToString()).SendAsync("badgeChanged");
-                await _hub.Clients.User(uid.ToString()).SendAsync("newAlert", new {
-                    title = sendAlert.Title,
-                    message = sendAlert.Message,
-                    alertType = sendAlert.AlertType,
-                    alertId = sendAlert.AlertId
-                });
+                // Send desktop notification only if selected
+                if (selectedPlatforms.Contains("desktop"))
+                {
+                    await _hub.Clients.User(uid.ToString()).SendAsync("newAlert", new {
+                        title = sendAlert.Title,
+                        message = sendAlert.Message,
+                        alertType = sendAlert.AlertType,
+                        alertId = sendAlert.AlertId
+                    });
+                }
 
-                // Send Web Push (to recipients only)
-                if (_pushClient != null)
+                // Send Web Push (to recipients only) if desktop is enabled
+                if (selectedPlatforms.Contains("desktop") && _pushClient != null)
                 {
                     var subs = await _db.WebPushSubscriptions.AsNoTracking().Where(s => s.UserId == uid).ToListAsync();
                     foreach (var s in subs)
@@ -381,15 +403,39 @@ namespace AlertSystem.Controllers
                     }
                 }
 
-                // Note: Email notifications are handled by AlertCancellationService after the 5-second window
-                // Count emails for response (but don't send them here to avoid duplicates)
-                var email = await _db.Users.AsNoTracking().Where(u => u.UserId == uid).Select(u => u.Email).FirstOrDefaultAsync();
-                if (!string.IsNullOrWhiteSpace(email))
+                // Get user data for email and WhatsApp
+                var user = await _db.Users.AsNoTracking().Where(u => u.UserId == uid).FirstOrDefaultAsync();
+                if (user != null)
                 {
-                    emailAttempts++;
-                    attemptedEmails.Add(email);
-                    // Email will be sent by AlertCancellationService
-                    sentEmails.Add(email); // Assume it will be sent successfully
+                    // Count and send Email if selected (handled by AlertCancellationService after delay)
+                    if (selectedPlatforms.Contains("email") && !string.IsNullOrWhiteSpace(user.Email))
+                    {
+                        emailAttempts++;
+                        attemptedEmails.Add(user.Email);
+                        // Email will be sent by AlertCancellationService
+                        sentEmails.Add(user.Email); // Assume it will be sent successfully
+                    }
+
+                    // Send WhatsApp immediately if selected (using PhoneNumber temporarily)
+                    if (selectedPlatforms.Contains("whatsapp"))
+                    {
+                        if (string.IsNullOrWhiteSpace(user.PhoneNumber))
+                        {
+                            _logger?.LogWarning("WhatsApp skipped for user {UserId} - no phone number configured", uid);
+                        }
+                        else
+                        {
+                            try
+                            {
+                                var success = await _whatsAppService.SendAlertAsync(user.PhoneNumber, sendAlert.Title, sendAlert.Message, senderName);
+                                _logger?.LogInformation("WhatsApp sent to user {UserId} ({PhoneNumber}): {Success}", uid, user.PhoneNumber, success);
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger?.LogError(ex, "WhatsApp failed for user {UserId} ({PhoneNumber})", uid, user.PhoneNumber);
+                            }
+                        }
+                    }
                 }
             }
             
@@ -438,6 +484,32 @@ namespace AlertSystem.Controllers
                 .FirstOrDefaultAsync(x => x.AlertId == id);
             if (a == null || !CanSee(a)) return NotFound();
             return View(a);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAlertDetails(int id)
+        {
+            try
+            {
+                var a = await _db.Alerts.AsNoTracking()
+                    .FirstOrDefaultAsync(x => x.AlertId == id);
+                    
+                if (a == null || !CanSee(a)) 
+                {
+                    return NotFound(new { error = "Alerte introuvable" });
+                }
+                
+                return Json(new { 
+                    title = a.Title, 
+                    message = a.Message, 
+                    alertType = a.AlertType 
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error getting alert details for ID {AlertId}", id);
+                return BadRequest(new { error = "Erreur lors du chargement" });
+            }
         }
 
         [HttpGet]
@@ -533,6 +605,115 @@ namespace AlertSystem.Controllers
             await _hub.Clients.All.SendAsync("alertsChanged");
             
             return RedirectToAction(nameof(Index));
+        }
+
+        // Test endpoint pour WhatsApp
+        [HttpPost]
+        public async Task<IActionResult> TestWhatsApp([FromForm] string phoneNumber, [FromForm] string message)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(phoneNumber) || string.IsNullOrWhiteSpace(message))
+                {
+                    return BadRequest(new { error = "Phone number and message required" });
+                }
+
+                _logger?.LogInformation("=== WHATSAPP TEST === Phone: {Phone}, Message: {Message}", phoneNumber, message);
+                
+                var success = await _whatsAppService.SendMessageAsync(phoneNumber, message);
+                
+                return Json(new { 
+                    success = success, 
+                    phoneNumber = phoneNumber,
+                    message = success ? "WhatsApp sent successfully!" : "Failed to send WhatsApp",
+                    timestamp = DateTime.Now
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error in WhatsApp test");
+                return Json(new { success = false, error = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Cancel(int alertId)
+        {
+            try
+            {
+                // Find all alert recipients for this alert
+                var recipients = await _db.AlertRecipients
+                    .Where(ar => ar.AlertId == alertId)
+                    .ToListAsync();
+
+                if (!recipients.Any())
+                {
+                    return Json(new { success = false, message = "Alerte non trouvée" });
+                }
+
+                // Check if the current user is the sender
+                var alert = await _db.Alerts.FirstOrDefaultAsync(a => a.AlertId == alertId);
+                if (alert == null || alert.CreatedBy != CurrentUserId)
+                {
+                    return Json(new { success = false, message = "Vous n'êtes pas autorisé à annuler cette alerte" });
+                }
+
+                // Check if cancellation is still possible (within 10 seconds)
+                var timeSinceCreation = DateTime.UtcNow - alert.CreatedAt;
+                if (timeSinceCreation.TotalSeconds > 10)
+                {
+                    return Json(new { success = false, message = "La période d'annulation est expirée" });
+                }
+
+                // Update all recipients to cancelled status
+                foreach (var recipient in recipients)
+                {
+                    recipient.SendStatus = "Cancelled";
+                }
+
+                await _db.SaveChangesAsync();
+
+                // Notify all clients of the cancellation
+                await _hub.Clients.All.SendAsync("alertStatusChanged", alertId, "Cancelled");
+
+                _logger?.LogInformation("Alert {AlertId} cancelled by user {UserId}", alertId, CurrentUserId);
+
+                return Json(new { success = true, message = "Alerte annulée avec succès" });
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error cancelling alert {AlertId}", alertId);
+                return Json(new { success = false, message = "Erreur lors de l'annulation" });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Recipients()
+        {
+            try
+            {
+                var users = await _db.Users.AsNoTracking()
+                    .Include(u => u.Department)
+                    .Where(u => u.UserId != CurrentUserId)  // Exclude current user
+                    .Select(u => new { 
+                        u.UserId, 
+                        u.Username, 
+                        u.Email, 
+                        u.Role, 
+                        DepartmentName = u.Department != null ? u.Department.Name : null, 
+                        u.DepartmentId 
+                    })
+                    .OrderBy(u => u.Username)
+                    .ToListAsync();
+                    
+                _logger?.LogInformation("Recipients endpoint: returning {Count} users", users.Count);
+                return Json(users);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error loading recipients");
+                return Json(new { error = "Failed to load recipients" });
+            }
         }
     }
 }

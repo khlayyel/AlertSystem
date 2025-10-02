@@ -9,6 +9,7 @@ namespace AlertSystem.Services
     {
         private readonly ApplicationDbContext _db;
         private readonly IEmailSender _emailSender;
+        private readonly IWhatsAppService _whatsAppService;
         private readonly PushServiceClient? _pushClient;
         private readonly ILogger<NotificationService> _logger;
         private readonly IConfiguration _config;
@@ -16,11 +17,13 @@ namespace AlertSystem.Services
         public NotificationService(
             ApplicationDbContext db, 
             IEmailSender emailSender, 
+            IWhatsAppService whatsAppService,
             IConfiguration config,
             ILogger<NotificationService> logger)
         {
             _db = db;
             _emailSender = emailSender;
+            _whatsAppService = whatsAppService;
             _config = config;
             _logger = logger;
 
@@ -60,15 +63,7 @@ namespace AlertSystem.Services
         {
             try
             {
-                // TODO: Implémenter l'API WhatsApp Business
-                // Pour l'instant, simulons l'envoi
-                _logger.LogInformation("WhatsApp message would be sent to {Phone}: {Message}", phoneNumber, message);
-                
-                // Simulation d'un délai d'envoi
-                await Task.Delay(100);
-                
-                // Pour les tests, considérons que ça marche toujours
-                return true;
+                return await _whatsAppService.SendMessageAsync(phoneNumber, message);
             }
             catch (Exception ex)
             {
@@ -156,7 +151,7 @@ namespace AlertSystem.Services
                 }
             }
 
-            // Send WhatsApp (if phone number available)
+            // Send WhatsApp (if phone number available - using PhoneNumber temporarily)
             if (!string.IsNullOrWhiteSpace(user.PhoneNumber))
             {
                 if (await SendWhatsAppAsync(user.PhoneNumber, $"{title}\n\n{message}"))

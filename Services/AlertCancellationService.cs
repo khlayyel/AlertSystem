@@ -2,6 +2,7 @@ using AlertSystem.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.SignalR;
 using System.Collections.Concurrent;
 
 namespace AlertSystem.Services
@@ -20,18 +21,18 @@ namespace AlertSystem.Services
 
         public async Task<bool> ScheduleAlertSending(int alertId, TimeSpan delay = default)
         {
-            if (delay == default) delay = TimeSpan.FromSeconds(5); // Default 5-second cancellation window
+            if (delay == default) delay = TimeSpan.FromSeconds(10); // Default 10-second cancellation window
 
             var cts = new CancellationTokenSource();
             _pendingAlerts[alertId] = cts;
 
             try
             {
-                // Mark as "Sending" immediately
-                await UpdateAlertStatus(alertId, "Sending");
-
-                // Wait for the delay period (cancellation window)
+                // Wait for the delay period (cancellation window) - keep "Pending" status during this time
                 await Task.Delay(delay, cts.Token);
+
+                // Mark as "Sending" just before actual sending
+                await UpdateAlertStatus(alertId, "Sending");
 
                 // If not cancelled, proceed with sending
                 await ProcessAlertSending(alertId);
@@ -97,6 +98,20 @@ namespace AlertSystem.Services
             }
 
             await dbContext.SaveChangesAsync();
+            
+            // Send SignalR notification for status change
+            try
+            {
+                var hubContext = scope.ServiceProvider.GetService<IHubContext<AlertSystem.Hubs.NotificationsHub>>();
+                if (hubContext != null)
+                {
+                    await hubContext.Clients.All.SendAsync("alertStatusChanged", alertId, status);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to send SignalR notification for alert status change");
+            }
         }
 
         private async Task ProcessAlertSending(int alertId)

@@ -6,6 +6,7 @@ namespace AlertSystem.Models.Entities
         public string Username { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string? PhoneNumber { get; set; }
+        // public string? WhatsAppNumber { get; set; } // Temporairement commenté jusqu'à ajout en base
         public string PasswordHash { get; set; } = string.Empty;
         public string Role { get; set; } = string.Empty; // Admin | SuperUser | User
         public int? DepartmentId { get; set; }

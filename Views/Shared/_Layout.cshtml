@@ -28,9 +28,6 @@
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                     
-                    <li class="nav-item">
-                        <a class="nav-link text-light @(ViewContext.RouteData.Values["Controller"]?.ToString()=="AlertsCrud"?"active":null)" asp-area="" asp-controller="AlertsCrud" asp-action="Index">Gestion alertes</a>
-                    </li>
                     @if (User.IsInRole("Admin") || User.IsInRole("SuperUser"))
                     {
                         <li class="nav-item">
