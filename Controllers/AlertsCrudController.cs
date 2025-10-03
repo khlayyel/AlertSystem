@@ -190,27 +190,61 @@ namespace AlertSystem.Controllers
             var template = await _db.Alerts.AsNoTracking().FirstOrDefaultAsync(a => a.AlertId == alertId);
             if (template == null) return NotFound();
 
-            int? depId = CurrentDepartmentId ?? template.DepartmentId;
-            // Admin peut envoyer à n'importe quel département
-            if (!CurrentRole.Equals("Admin", StringComparison.OrdinalIgnoreCase))
-            {
-                if (!depId.HasValue) return BadRequest("Department required");
-                // Scope: SuperUser can only send within own department
-                if (CurrentRole.Equals("SuperUser", StringComparison.OrdinalIgnoreCase) && depId != CurrentDepartmentId) return Forbid();
-            }
+            int? depId = CurrentDepartmentId ?? template.DepartmentId; // conservé pour traçabilité
+            // Tous les rôles peuvent envoyer à tous les utilisateurs (plus de restriction de département)
 
-            _logger?.LogInformation("=== SEND ALERT START === User: {UserId}, Template: {TemplateId}, Recipients: {Recipients}, Platforms: {Platforms}, Dept: {DeptId}", 
+            _logger?.LogInformation("=== SEND ALERT START === User: {UserId}, Template: {TemplateId}, Recipients: {Recipients}, Platforms(csv): {PlatformsCsv}, Dept: {DeptId}", 
                 CurrentUserId, alertId, recipients, platforms, departmentId);
+            try
+            {
+                var formKeys = string.Join(", ", Request.Form.Keys.ToArray());
+                _logger?.LogDebug("Send Form Keys: [{Keys}]", formKeys);
+                foreach (var k in Request.Form.Keys)
+                {
+                    if (k.Equals("platforms", StringComparison.OrdinalIgnoreCase))
+                    {
+                        _logger?.LogDebug("Form platforms value(s): {Vals}", string.Join("|", Request.Form[k].ToArray()));
+                    }
+                    if (k.StartsWith("platform", StringComparison.OrdinalIgnoreCase))
+                    {
+                        _logger?.LogDebug("Flag {Key} = {Val}", k, Request.Form[k].ToString());
+                    }
+                }
+            }
+            catch {}
                 
-            // Parser les plateformes sélectionnées
+            // Parser les plateformes sélectionnées à partir de plusieurs formes possibles
             var selectedPlatforms = new List<string>();
+            // 1) CSV
             if (!string.IsNullOrEmpty(platforms))
             {
-                selectedPlatforms = platforms.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                    .Select(p => p.Trim().ToLower())
-                    .Where(p => new[] { "email", "whatsapp", "desktop" }.Contains(p))
-                    .ToList();
+                selectedPlatforms.AddRange(platforms.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(p => p.Trim().ToLower()));
             }
+            // 2) Répétées: platforms=value1&platforms=value2
+            var repeated = Request.Form["platforms"]; // peut contenir plusieurs valeurs
+            if (repeated.Count > 1)
+            {
+                selectedPlatforms.AddRange(repeated.Select(v => v.ToString().Trim().ToLower()));
+            }
+            // 3) Flags individuels: platformEmail=on, platformWhatsApp=on, platformDesktop=on
+            void AddFlag(string key, string value, string normalized)
+            {
+                var v = Request.Form[key].ToString();
+                if (!string.IsNullOrWhiteSpace(v) && !string.Equals(v, "false", StringComparison.OrdinalIgnoreCase))
+                {
+                    selectedPlatforms.Add(normalized);
+                }
+            }
+            AddFlag("platformEmail", "on", "email");
+            AddFlag("platformWhatsApp", "on", "whatsapp");
+            AddFlag("platformDesktop", "on", "desktop");
+            // Normaliser/filtrer
+            selectedPlatforms = selectedPlatforms
+                .Select(p => p.Trim().ToLower())
+                .Where(p => p == "email" || p == "whatsapp" || p == "desktop")
+                .Distinct()
+                .ToList();
             
             // Si aucune plateforme n'est sélectionnée, utiliser email et desktop par défaut
             if (selectedPlatforms.Count == 0)
@@ -245,44 +279,18 @@ namespace AlertSystem.Controllers
                     .Select(s => int.TryParse(s, out var x) ? x : 0)
                     .Where(x => x > 0)
                     .ToList();
-                
-                // Admin peut envoyer à n'importe qui, les autres sont limités à leur département
-                if (!CurrentRole.Equals("Admin", StringComparison.OrdinalIgnoreCase) && depId.HasValue)
-                {
-                    var deptIds = await _db.Users.AsNoTracking().Where(u => u.DepartmentId == depId.Value && targetIds.Contains(u.UserId))
-                        .Select(u => u.UserId).ToListAsync();
-                    targetIds = deptIds;
-                }
-                else if (CurrentRole.Equals("Admin", StringComparison.OrdinalIgnoreCase))
-                {
-                    // Admin peut envoyer à tous les utilisateurs sélectionnés
-                    var validIds = await _db.Users.AsNoTracking().Where(u => targetIds.Contains(u.UserId))
-                        .Select(u => u.UserId).ToListAsync();
-                    targetIds = validIds;
-                }
+                // Valider contre la base pour ignorer des ids inexistants
+                var validIds = await _db.Users.AsNoTracking().Where(u => targetIds.Contains(u.UserId))
+                    .Select(u => u.UserId).ToListAsync();
+                targetIds = validIds;
             }
             else
             {
-                // Si Admin et pas de département spécifique, envoyer à tous les utilisateurs
-                if (CurrentRole.Equals("Admin", StringComparison.OrdinalIgnoreCase) && !sendAlert.DepartmentId.HasValue)
-                {
-                    targetIds = await _db.Users.AsNoTracking()
-                        .Where(u => u.UserId != CurrentUserId) // Exclure seulement l'expéditeur, pas tous les admins
-                        .Select(u => u.UserId)
-                        .ToListAsync();
-                }
-                else if (sendAlert.DepartmentId.HasValue)
-                {
-                    targetIds = await _db.Users.AsNoTracking()
-                        .Where(u => u.DepartmentId == sendAlert.DepartmentId)
-                        .Select(u => u.UserId)
-                        .ToListAsync();
-                }
-                else
-                {
-                    // Pas de département défini et pas Admin -> pas de destinataires
-                    targetIds = new List<int>();
-                }
+                // Aucun destinataire spécifié: envoyer à tous les utilisateurs sauf l'expéditeur
+                targetIds = await _db.Users.AsNoTracking()
+                    .Where(u => u.UserId != CurrentUserId)
+                    .Select(u => u.UserId)
+                    .ToListAsync();
             }
             // exclude sender
             targetIds = targetIds.Where(id => id != CurrentUserId).ToList();
@@ -361,81 +369,21 @@ namespace AlertSystem.Controllers
             // Note: L'expéditeur verra ses alertes envoyées dans l'onglet "Envoyées" via SentData()
             // qui filtre par a.CreatedBy == userId. Pas besoin d'AlertRecipient pour l'expéditeur.
 
-            // Push temps réel: notifier destinataires, expéditeur et vues département
+                // Push temps réel: notifier destinataires (UI refresh), pas d'envoi immédiat des plateformes ici
             _logger?.LogInformation("Sending alert {AlertId} to {Count} recipients in department {DepartmentId}", sendAlert.AlertId, targetIds.Count, depId);
 
             foreach (var uid in targetIds)
             {
                 await _hub.Clients.User(uid.ToString()).SendAsync("historyChanged");
                 await _hub.Clients.User(uid.ToString()).SendAsync("badgeChanged");
-                // Send desktop notification only if selected
-                if (selectedPlatforms.Contains("desktop"))
-                {
-                    await _hub.Clients.User(uid.ToString()).SendAsync("newAlert", new {
-                        title = sendAlert.Title,
-                        message = sendAlert.Message,
-                        alertType = sendAlert.AlertType,
-                        alertId = sendAlert.AlertId
-                    });
-                }
 
-                // Send Web Push (to recipients only) if desktop is enabled
-                if (selectedPlatforms.Contains("desktop") && _pushClient != null)
-                {
-                    var subs = await _db.WebPushSubscriptions.AsNoTracking().Where(s => s.UserId == uid).ToListAsync();
-                    foreach (var s in subs)
-                    {
-                        try
-                        {
-                            var subscription = new PushSubscription
-                            {
-                                Endpoint = s.Endpoint,
-                                Keys = new Dictionary<string, string>{{"p256dh", s.P256dh},{"auth", s.Auth}}
-                            };
-                            var payload = System.Text.Json.JsonSerializer.Serialize(new { title = sendAlert.Title, message = sendAlert.Message, url = $"/AlertsCrud/Details/{sendAlert.AlertId}" });
-                            await _pushClient.RequestPushMessageDeliveryAsync(subscription, new PushMessage(payload) { Topic = "alert" });
-                            _logger?.LogInformation("WebPush sent to user {UserId}", uid);
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger?.LogError(ex, "WebPush failed for user {UserId}", uid);
-                        }
-                    }
-                }
-
-                // Get user data for email and WhatsApp
+                // Marquer les stats email côté UI (tentatives) sans envoyer ici
                 var user = await _db.Users.AsNoTracking().Where(u => u.UserId == uid).FirstOrDefaultAsync();
-                if (user != null)
+                if (user != null && selectedPlatforms.Contains("email") && !string.IsNullOrWhiteSpace(user.Email))
                 {
-                    // Count and send Email if selected (handled by AlertCancellationService after delay)
-                    if (selectedPlatforms.Contains("email") && !string.IsNullOrWhiteSpace(user.Email))
-                    {
-                        emailAttempts++;
-                        attemptedEmails.Add(user.Email);
-                        // Email will be sent by AlertCancellationService
-                        sentEmails.Add(user.Email); // Assume it will be sent successfully
-                    }
-
-                    // Send WhatsApp immediately if selected (using PhoneNumber temporarily)
-                    if (selectedPlatforms.Contains("whatsapp"))
-                    {
-                        if (string.IsNullOrWhiteSpace(user.PhoneNumber))
-                        {
-                            _logger?.LogWarning("WhatsApp skipped for user {UserId} - no phone number configured", uid);
-                        }
-                        else
-                        {
-                            try
-                            {
-                                var success = await _whatsAppService.SendAlertAsync(user.PhoneNumber, sendAlert.Title, sendAlert.Message, senderName);
-                                _logger?.LogInformation("WhatsApp sent to user {UserId} ({PhoneNumber}): {Success}", uid, user.PhoneNumber, success);
-                            }
-                            catch (Exception ex)
-                            {
-                                _logger?.LogError(ex, "WhatsApp failed for user {UserId} ({PhoneNumber})", uid, user.PhoneNumber);
-                            }
-                        }
-                    }
+                    emailAttempts++;
+                    attemptedEmails.Add(user.Email);
+                    sentEmails.Add(user.Email); // affichage immédiat
                 }
             }
             
@@ -463,7 +411,7 @@ namespace AlertSystem.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CancelAlert(int alertId)
+        public async Task<IActionResult> CancelAlert([FromBody] int alertId)
         {
             var success = _cancellationService.CancelAlert(alertId);
             return Json(new { success });
@@ -636,6 +584,71 @@ namespace AlertSystem.Controllers
             }
         }
 
+        // Diagnostic avancé WhatsApp: effectue des appels bruts texte + template et renvoie les réponses détaillées
+        [HttpPost]
+        public async Task<IActionResult> TestWhatsAppDiag([FromForm] string phoneNumber, [FromForm] string? message)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(phoneNumber))
+                {
+                    return BadRequest(new { error = "Phone number required" });
+                }
+
+                var token = _cfg["WhatsApp:AccessToken"] ?? string.Empty;
+                var phoneId = _cfg["WhatsApp:PhoneNumberId"] ?? string.Empty;
+                var apiVersion = _cfg["WhatsApp:ApiVersion"] ?? "v22.0";
+                var tokenTail = token.Length >= 6 ? token[^6..] : token;
+                var baseUrl = $"https://graph.facebook.com/{apiVersion}/{phoneId}/messages";
+
+                // Construire payloads
+                var textPayload = new
+                {
+                    messaging_product = "whatsapp",
+                    to = phoneNumber,
+                    type = "text",
+                    text = new { body = string.IsNullOrWhiteSpace(message) ? "Diagnostic ping" : message }
+                };
+                var templatePayload = new
+                {
+                    messaging_product = "whatsapp",
+                    to = phoneNumber,
+                    type = "template",
+                    template = new { name = "hello_world", language = new { code = "en_US" } }
+                };
+
+                using var client = new HttpClient();
+                client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+
+                // Appel texte
+                var textContent = new StringContent(System.Text.Json.JsonSerializer.Serialize(textPayload), System.Text.Encoding.UTF8, "application/json");
+                var textResp = await client.PostAsync(baseUrl, textContent);
+                var textBody = await textResp.Content.ReadAsStringAsync();
+
+                // Appel template
+                var tplContent = new StringContent(System.Text.Json.JsonSerializer.Serialize(templatePayload), System.Text.Encoding.UTF8, "application/json");
+                var tplResp = await client.PostAsync(baseUrl, tplContent);
+                var tplBody = await tplResp.Content.ReadAsStringAsync();
+
+                _logger?.LogInformation("WA DIAG cfg: api={Api} phoneId={PhoneId} tokenLen={Len} tokenTail={Tail}", apiVersion, phoneId, token.Length, tokenTail);
+                _logger?.LogInformation("WA DIAG text -> {Status} {Body}", textResp.StatusCode, textBody);
+                _logger?.LogInformation("WA DIAG template -> {Status} {Body}", tplResp.StatusCode, tplBody);
+
+                return Json(new
+                {
+                    config = new { apiVersion, phoneId, tokenLen = token.Length, tokenTail },
+                    requests = new { baseUrl, phoneNumber },
+                    text = new { status = (int)textResp.StatusCode, ok = textResp.IsSuccessStatusCode, body = textBody },
+                    template = new { status = (int)tplResp.StatusCode, ok = tplResp.IsSuccessStatusCode, body = tplBody }
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error in WhatsApp diagnostics");
+                return Json(new { success = false, error = ex.Message });
+            }
+        }
+
         [HttpPost]
         public async Task<IActionResult> Cancel(int alertId)
         {
@@ -694,7 +707,6 @@ namespace AlertSystem.Controllers
             {
                 var users = await _db.Users.AsNoTracking()
                     .Include(u => u.Department)
-                    .Where(u => u.UserId != CurrentUserId)  // Exclude current user
                     .Select(u => new { 
                         u.UserId, 
                         u.Username, 
@@ -713,6 +725,33 @@ namespace AlertSystem.Controllers
             {
                 _logger?.LogError(ex, "Error loading recipients");
                 return Json(new { error = "Failed to load recipients" });
+            }
+        }
+
+        // Diagnostic: list users with phone info for WhatsApp eligibility
+        [HttpGet]
+        public async Task<IActionResult> RecipientsPhones()
+        {
+            try
+            {
+                var users = await _db.Users.AsNoTracking()
+                    .OrderBy(u => u.UserId)
+                    .Select(u => new {
+                        u.UserId,
+                        u.Username,
+                        u.Email,
+                        u.Role,
+                        u.DepartmentId,
+                        Phone = u.PhoneNumber,
+                        HasPhone = !string.IsNullOrWhiteSpace(u.PhoneNumber)
+                    })
+                    .ToListAsync();
+                return Json(new { count = users.Count, users });
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error loading RecipientsPhones");
+                return Json(new { error = "Failed to load RecipientsPhones" });
             }
         }
     }

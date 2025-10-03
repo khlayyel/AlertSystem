@@ -43,6 +43,8 @@ namespace AlertSystem.Services
                     _logger.LogError("WhatsApp configuration missing - cannot send message");
                     return false;
                 }
+                _logger.LogInformation("WA cfg check: base={Base}, phoneId={PhoneId}, tokenLen={Len}, tokenTail={Tail}",
+                    _httpClient.BaseAddress, _phoneNumberId, _accessToken.Length, _accessToken[^6..]);
 
                 // Nettoyer le numéro de téléphone (enlever espaces, tirets, etc.)
                 var cleanPhoneNumber = CleanPhoneNumber(phoneNumber);
@@ -66,7 +68,7 @@ namespace AlertSystem.Services
 
                 _logger.LogInformation("=== WHATSAPP SEND === To: {PhoneNumber}, URL: {URL}", 
                     cleanPhoneNumber, $"{_httpClient.BaseAddress}{_phoneNumberId}/messages");
-                _logger.LogDebug("WhatsApp payload: {Payload}", json);
+                _logger.LogInformation("WA payload(text): {Payload}", json);
 
                 var response = await _httpClient.PostAsync($"{_phoneNumberId}/messages", content);
                 var responseContent = await response.Content.ReadAsStringAsync();
@@ -102,7 +104,7 @@ namespace AlertSystem.Services
                                      $"{message}\n\n" +
                                      $"📤 Envoyé par: {senderName}\n" +
                                      $"⏰ {DateTime.Now:dd/MM/yyyy HH:mm}";
-
+                _logger.LogInformation("SendAlertAsync -> will send text to {Phone}", phoneNumber);
                 return await SendMessageAsync(phoneNumber, formattedMessage);
             }
             catch (Exception ex)
@@ -112,33 +114,80 @@ namespace AlertSystem.Services
             }
         }
 
+        public async Task<bool> SendTemplateHelloAsync(string phoneNumber)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(_accessToken) || string.IsNullOrWhiteSpace(_phoneNumberId))
+                {
+                    _logger.LogError("WhatsApp configuration missing - cannot send template");
+                    return false;
+                }
+
+                var cleanPhoneNumber = CleanPhoneNumber(phoneNumber);
+                if (string.IsNullOrWhiteSpace(cleanPhoneNumber))
+                {
+                    _logger.LogError("Invalid phone number: {PhoneNumber}", phoneNumber);
+                    return false;
+                }
+
+                var payload = new
+                {
+                    messaging_product = "whatsapp",
+                    to = cleanPhoneNumber,
+                    type = "template",
+                    template = new { name = "hello_world", language = new { code = "en_US" } }
+                };
+
+                var json = JsonSerializer.Serialize(payload);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                _logger.LogInformation("=== WHATSAPP TEMPLATE SEND === To: {PhoneNumber}, URL: {URL}", cleanPhoneNumber, $"{_httpClient.BaseAddress}{_phoneNumberId}/messages");
+                _logger.LogInformation("WA payload(template): {Payload}", json);
+                var response = await _httpClient.PostAsync($"{_phoneNumberId}/messages", content);
+                var responseContent = await response.Content.ReadAsStringAsync();
+                _logger.LogInformation("WhatsApp API Response - Status: {StatusCode}, Content: {Content}", response.StatusCode, responseContent);
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Exception sending WhatsApp template to {PhoneNumber}", phoneNumber);
+                return false;
+            }
+        }
+
         private string CleanPhoneNumber(string phoneNumber)
         {
             if (string.IsNullOrWhiteSpace(phoneNumber))
                 return phoneNumber;
 
-            // Enlever tous les caractères non numériques sauf le +
+            // Remove all non-digits except '+'
             var cleaned = new string(phoneNumber.Where(c => char.IsDigit(c) || c == '+').ToArray());
-            
-            // Si le numéro commence par +, le garder tel quel
+
+            // If already in E.164 format
             if (cleaned.StartsWith("+"))
                 return cleaned;
-            
-            // Si le numéro commence par 0, remplacer par le code pays (exemple: Tunisie +216)
-            if (cleaned.StartsWith("0"))
+
+            // Handle numbers starting with local trunk '0' → replace with +216 (Tunisia)
+            if (cleaned.StartsWith("0") && cleaned.Length >= 9)
             {
-                // Remplacer le 0 initial par +216 (code Tunisie)
-                // Vous pouvez modifier selon votre pays
                 return "+216" + cleaned.Substring(1);
             }
-            
-            // Si pas de code pays, ajouter +216 par défaut
-            if (!cleaned.StartsWith("+") && cleaned.Length >= 8)
+
+            // If already starts with country code without '+', convert to E.164 by prefixing '+'
+            // Tunisia: country code 216 → length should be 11 (216 + 8 digits)
+            if (cleaned.StartsWith("216") && cleaned.Length == 11)
+            {
+                return "+" + cleaned;
+            }
+
+            // If 8-digit local number, assume Tunisia and add +216
+            if (cleaned.Length == 8)
             {
                 return "+216" + cleaned;
             }
-            
-            return cleaned;
+
+            // Fallback: prefix '+' to whatever we have
+            return "+" + cleaned;
         }
     }
 }

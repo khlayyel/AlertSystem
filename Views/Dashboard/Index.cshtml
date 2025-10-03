@@ -153,8 +153,8 @@
           <button class="btn btn-outline-secondary" type="submit">Filtrer</button>
         </div>
         <div class="col-auto ms-auto">
-          <a id="exportCsvBtn" class="btn btn-sm btn-outline-primary" href="#">Exporter CSV</a>
-        </div>
+        <a id="exportCsvBtn" class="btn btn-sm btn-outline-primary" href="#">Exporter CSV</a>
+      </div>
       </form>
       <div id="allList">Chargement...</div>
     </div>
@@ -342,6 +342,8 @@
 
 @section Scripts {
 <script>
+// Global dashboard debug helper
+const DLOG = (scope, msg, obj) => { try { console.debug(`[${scope}]`, msg, obj ?? ''); } catch {} };
 async function fetchJson(url){ 
   try {
     const r = await fetch(url, { cache:'no-store' }); 
@@ -355,29 +357,37 @@ async function fetchJson(url){
 function fmtPlus1(dateIso){ const d = new Date(dateIso); return new Date(d.getTime()+3600000).toLocaleString(); }
 
 async function loadInbox(){
+  DLOG('Dashboard','loadInbox start');
   // Afficher toutes les alertes (lues et non lues) avec leur statut
   const data = await fetchJson('/Alerts/HistoryData?status=all&page=1&size=10');
+  DLOG('Dashboard','loadInbox result', { total: data?.totalCount, items: data?.items?.length });
   renderList('inboxList', data, true);
   updateKpisFromData(data);
   updateUnreadKpi();
 }
 async function loadSent(){
+  DLOG('Dashboard','loadSent start');
   const data = await fetchJson('/Alerts/SentData?page=1&size=10');
+  DLOG('Dashboard','loadSent result', { total: data?.totalCount, items: data?.items?.length });
   renderListCustom('sentList', data);
 }
 async function loadDept(){
+  DLOG('Dashboard','loadDept start');
   const formElement = document.getElementById('deptFilters');
   if (!formElement) return;
   const params = new URLSearchParams(new FormData(formElement));
   const data = await fetchJson('/Alerts/DeptData?' + params.toString() + '&page=1&size=10');
+  DLOG('Dashboard','loadDept result', { total: data?.totalCount, items: data?.items?.length });
   renderListCustom('deptList', data);
 }
 async function loadAll(){
+  DLOG('Dashboard','loadAll start');
   const formElement = document.getElementById('allFilters');
   if (!formElement) return;
   const params = new URLSearchParams(new FormData(formElement));
   const r = await fetch(`/Alerts/HistoryData?${params.toString()}&page=1&size=20`);
   const data = await r.json();
+  DLOG('Dashboard','loadAll result', { total: data?.totalCount, items: data?.items?.length });
   renderList('allList', data, false, true);
   const exportBtn = document.getElementById('exportCsvBtn');
   if (exportBtn) exportBtn.setAttribute('href', `/Alerts/ExportCsv?${params.toString()}`);
@@ -386,6 +396,7 @@ async function loadAll(){
 }
 
 function renderList(targetId, data, canConfirm, adminView=false){
+  DLOG('Dashboard','renderList', { targetId, canConfirm, adminView, items: data?.items?.length });
   const el = document.getElementById(targetId);
   if (!data.items || data.items.length===0){ el.innerHTML = '<div class="text-muted">Aucune alerte</div>'; return; }
   el.innerHTML = `
@@ -411,6 +422,7 @@ function renderList(targetId, data, canConfirm, adminView=false){
 }
 
 function renderListCustom(targetId, data){
+  DLOG('Dashboard','renderListCustom', { targetId, items: data?.items?.length });
   const el = document.getElementById(targetId);
   if (!data.items || data.items.length===0){ el.innerHTML = '<div class="text-muted">Aucune alerte</div>'; return; }
   
@@ -458,6 +470,7 @@ function renderListCustom(targetId, data){
 
 function updateKpisFromData(data){
   try{
+    DLOG('Dashboard','updateKpisFromData', { items: data?.items?.length });
     const items = Array.isArray(data?.items) ? data.items : [];
     // This is page-scoped; authoritative unread is fetched via updateUnreadKpi()
     const unreadCount = items.filter(x => x.alertType === 'Obligatoire' && !x.isConfirmed).length;
@@ -475,6 +488,7 @@ function updateKpisFromData(data){
 
 async function updateUnreadKpi(){
   try{
+    DLOG('Dashboard','updateUnreadKpi');
     const r = await fetch('/Alerts/UnreadCount', { cache:'no-store' });
     if(!r.ok) return;
     const { count } = await r.json();
@@ -485,6 +499,7 @@ async function updateUnreadKpi(){
 
 async function updateConfirmedMandatoryKpi(){
   try{
+    DLOG('Dashboard','updateConfirmedMandatoryKpi');
     const r = await fetch('/Alerts/ConfirmedMandatoryCount', { cache:'no-store' });
     if(!r.ok) return;
     const { count } = await r.json();
@@ -495,6 +510,7 @@ async function updateConfirmedMandatoryKpi(){
 
 async function updateTodayKpi(){
   try{
+    DLOG('Dashboard','updateTodayKpi');
     const r = await fetch('/Alerts/TodayCount', { cache:'no-store' });
     if(!r.ok) return;
     const { count } = await r.json();
@@ -557,6 +573,8 @@ function getAlertStatusHtml(alert) {
 
 // Fonction pour annuler une alerte
 async function cancelAlert(alertId) {
+  console.groupCollapsed('%c[Cancel-old]','color:#dc3545');
+  console.debug('[Cancel-old] alertId:', alertId);
   try {
     const response = await fetch('/AlertsCrud/Cancel', {
       method: 'POST',
@@ -565,6 +583,7 @@ async function cancelAlert(alertId) {
     });
     
     const result = await response.json();
+    console.debug('[Cancel-old] response:', result);
     if (result.success) {
       updateAlertStatus(alertId, 'Cancelled');
     } else {
@@ -572,7 +591,7 @@ async function cancelAlert(alertId) {
     }
   } catch (error) {
     console.error('Erreur lors de l\'annulation:', error);
-  }
+  } finally { console.groupEnd(); }
 }
 
 // Fonction pour mettre à jour le statut d'une alerte en temps réel
@@ -673,20 +692,39 @@ if (window.signalR && typeof signalR !== 'undefined'){
   const connection = new signalR.HubConnectionBuilder().withUrl('/hubs/notifications').withAutomaticReconnect().build();
   
   connection.on('historyChanged', ()=> {
+    console.debug('[SignalR] historyChanged');
     loadInbox();
     updateUnreadKpi();
     updateConfirmedMandatoryKpi();
   });
   
   connection.on('sentChanged', ()=> { 
+    console.debug('[SignalR] sentChanged');
     if (document.getElementById('sentList')) loadSent(); 
   });
   
   connection.on('deptChanged', ()=> { 
+    console.debug('[SignalR] deptChanged');
     if (document.getElementById('deptList')) loadDept(); 
   });
   
-  connection.on('newAlert', ()=> { 
+  connection.on('newAlert', (payload)=> { 
+    console.debug('[SignalR] newAlert', payload);
+    // Desktop notification attempt
+    try {
+      if (window.Notification) {
+        if (Notification.permission === 'default') { Notification.requestPermission().then(()=>{}); }
+        if (Notification.permission === 'granted') {
+          const n = new Notification(payload?.title || 'Nouvelle alerte', { body: payload?.message || '', icon: '/favicon.ico', tag: `alert-${payload?.alertId||''}` });
+          n.onclick = ()=>{ try { window.focus(); if (payload?.alertId) window.location.href = `/AlertsCrud/Details/${payload.alertId}`; } catch(_){} };
+          console.debug('[DesktopNotif] shown');
+        } else {
+          console.debug('[DesktopNotif] permission:', Notification.permission);
+        }
+      } else {
+        console.debug('[DesktopNotif] Notification API not supported');
+      }
+    } catch (e) { console.warn('Desktop notification error', e); }
     loadInbox(); 
     updateUnreadKpi(); 
     updateConfirmedMandatoryKpi(); 
@@ -702,6 +740,7 @@ if (window.signalR && typeof signalR !== 'undefined'){
   });
   
   connection.on('alertsChanged', ()=> {
+    console.debug('[SignalR] alertsChanged');
     // Refresh all tabs and KPIs
     loadInbox();
     updateUnreadKpi();
@@ -711,6 +750,10 @@ if (window.signalR && typeof signalR !== 'undefined'){
     if (document.getElementById('deptList')) loadDept();
     if (document.getElementById('allFilters')) loadAll();
   });
+  // WhatsApp debug logs from server
+  connection.on('waLog', (payload)=>{
+    console.debug('[WhatsApp]', payload);
+  });
   
   connection.on('badgeChanged', ()=> { 
     updateUnreadKpi(); 
@@ -719,11 +762,12 @@ if (window.signalR && typeof signalR !== 'undefined'){
   });
   
   connection.on('alertStatusChanged', (alertId, status) => {
+    console.debug('[SignalR] alertStatusChanged', { alertId, status });
     // Update the status in real-time
     updateAlertStatus(alertId, status);
   });
   
-  connection.start().catch(err => console.warn('SignalR connection failed:', err));
+  connection.start().then(()=> console.info('[SignalR] connected')).catch(err => console.warn('SignalR connection failed:', err));
 }
 
 // Pending alerts management
@@ -849,6 +893,11 @@ async function loadModalRecipients() {
   try {
     const res = await fetch('/AlertsCrud/Recipients');
     const items = await res.json();
+    console.debug('[Recipients] loaded:', Array.isArray(items)? items.length : items);
+    if (Array.isArray(items)) {
+      const ids = items.map(x=>x.userId);
+      console.debug('[Recipients] ids sample:', ids.slice(0,20));
+    }
     const container = document.getElementById('modalRecipients');
     if (container) {
       container.innerHTML = '';
@@ -1023,6 +1072,9 @@ document.getElementById('modalSaveBtn')?.addEventListener('click', async functio
           if (document.getElementById('platformEmail')?.checked) selectedPlatforms.push('email');
           if (document.getElementById('platformWhatsApp')?.checked) selectedPlatforms.push('whatsapp');
           if (document.getElementById('platformDesktop')?.checked) selectedPlatforms.push('desktop');
+          console.log('[Send] title:', title, 'type:', alertType, 'dept:', departmentId || '(none)');
+          console.log('[Send] recipients:', selectedRecipients);
+          console.log('[Send] platforms:', selectedPlatforms);
   
           if (!title) {
             showToast('Titre requis', 'error');
@@ -1045,6 +1097,7 @@ document.getElementById('modalSaveBtn')?.addEventListener('click', async functio
     // Créer l'alerte template
     const quickRes = await fetch('/AlertsCrud/QuickSave', { method: 'POST', body: quickSaveData });
     if (!quickRes.ok) {
+      try { const errText = await quickRes.text(); console.error('QuickSave error:', errText); } catch {}
       showToast('Erreur lors de la création de l\'alerte', 'error');
       return;
     }
@@ -1056,7 +1109,21 @@ document.getElementById('modalSaveBtn')?.addEventListener('click', async functio
              const sendData = new FormData();
              sendData.append('alertId', alertId);
              sendData.append('recipients', selectedRecipients.join(','));
+             // CSV principal
              sendData.append('platforms', selectedPlatforms.join(','));
+             // Flags explicites pour robustesse côté serveur
+             sendData.append('platformEmail', document.getElementById('platformEmail')?.checked ? 'on' : '');
+             sendData.append('platformWhatsApp', document.getElementById('platformWhatsApp')?.checked ? 'on' : '');
+             sendData.append('platformDesktop', document.getElementById('platformDesktop')?.checked ? 'on' : '');
+             // Dump du payload au console
+             console.debug('[Send] FormData dump:', {
+               alertId,
+               recipients: selectedRecipients,
+               platformsCsv: selectedPlatforms.join(','),
+               platformEmail: document.getElementById('platformEmail')?.checked,
+               platformWhatsApp: document.getElementById('platformWhatsApp')?.checked,
+               platformDesktop: document.getElementById('platformDesktop')?.checked
+             });
     
     const res = await fetch('/AlertsCrud/Send', { method: 'POST', body: sendData });
     
@@ -1091,6 +1158,7 @@ document.getElementById('modalSaveBtn')?.addEventListener('click', async functio
         showToast('Erreur: Pas d\'ID alerte retourné', 'error');
       }
     } else {
+      try { const errText = await res.text(); console.error('Send error:', errText); } catch {}
       showToast(`Erreur HTTP ${res.status}`, 'error');
     }
   } catch (error) {
@@ -1151,6 +1219,9 @@ function selectByDepartment() {
 
 
 document.getElementById('newAlertModal')?.addEventListener('shown.bs.modal', function() {
+  // Reset filters to avoid hiding users after previous interactions
+  const input = document.getElementById('modalRecipientsSearch');
+  if (input) { input.value = ''; }
   loadModalQuickAlerts();
   loadModalRecipients();
 });

@@ -119,6 +119,8 @@ namespace AlertSystem.Services
             using var scope = _serviceProvider.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             var emailSender = scope.ServiceProvider.GetService<IEmailSender>();
+            var whatsApp = scope.ServiceProvider.GetService<IWhatsAppService>();
+            var hubContext = scope.ServiceProvider.GetService<Microsoft.AspNetCore.SignalR.IHubContext<AlertSystem.Hubs.NotificationsHub>>();
 
             var alert = await dbContext.Alerts
                 .Include(a => a.Recipients)
@@ -127,9 +129,21 @@ namespace AlertSystem.Services
 
             if (alert == null) return;
 
+            // Resolve sender display name
+            string senderName = await dbContext.Users.AsNoTracking()
+                .Where(u => u.UserId == alert.CreatedBy)
+                .Select(u => u.Username)
+                .FirstOrDefaultAsync() ?? $"User#{alert.CreatedBy}";
+
             foreach (var recipient in alert.Recipients)
             {
-                if (recipient.User?.Email != null && emailSender != null)
+                // Read desired platforms once per recipient
+                var platforms = new List<string>();
+                try { platforms = System.Text.Json.JsonSerializer.Deserialize<List<string>>(recipient.DeliveryPlatforms) ?? new List<string>(); } catch {}
+                _logger.LogInformation("Alert {AlertId} -> Recipient {RecipientId}: platforms [{Platforms}]", alert.AlertId, recipient.UserId, string.Join(", ", platforms));
+
+                // Respect selected platforms for Email
+                if (recipient.User?.Email != null && emailSender != null && platforms.Any(p => string.Equals(p, "email", StringComparison.OrdinalIgnoreCase)))
                 {
                     try
                     {
@@ -141,15 +155,52 @@ namespace AlertSystem.Services
                                   $"Ouvrir l'alerte: http://localhost:5143/AlertsCrud/Details/{alert.AlertId}";
 
                         await emailSender.SendAsync(recipient.User.Email, subject, body);
-                        
-                        // Update delivery platforms
-                        var platforms = new List<string> { "Email" };
-                        recipient.DeliveryPlatforms = System.Text.Json.JsonSerializer.Serialize(platforms);
                     }
                     catch (Exception ex)
                     {
                         _logger.LogError(ex, "Failed to send email for AlertRecipient {Id}", recipient.AlertRecipientId);
                     }
+                }
+
+                // WhatsApp after window if platform selected
+                try
+                {
+                    if (platforms.Any(p => string.Equals(p, "whatsapp", StringComparison.OrdinalIgnoreCase)) && whatsApp != null)
+                    {
+                        var phone = recipient.User?.PhoneNumber;
+                        if (!string.IsNullOrWhiteSpace(phone))
+                        {
+                            _logger.LogInformation("Attempting WhatsApp template + text to {Phone} for alert {AlertId}", phone, alert.AlertId);
+                            try { if (hubContext != null) await hubContext.Clients.User(alert.CreatedBy.ToString()).SendAsync("waLog", new { type = "attempt", phone, alertId = alert.AlertId, recipientId = recipient.UserId }); } catch {}
+                            // Open a customer service window with a template, then send the actual alert text
+                            var okTemplate = await whatsApp.SendTemplateHelloAsync(phone);
+                            try { if (hubContext != null) await hubContext.Clients.User(alert.CreatedBy.ToString()).SendAsync("waLog", new { type = "templateResult", ok = okTemplate, phone, alertId = alert.AlertId, recipientId = recipient.UserId }); } catch {}
+                            var okText = await whatsApp.SendAlertAsync(phone, alert.Title, alert.Message, senderName);
+                            try { if (hubContext != null) await hubContext.Clients.User(alert.CreatedBy.ToString()).SendAsync("waLog", new { type = "textResult", ok = okText, phone, alertId = alert.AlertId, recipientId = recipient.UserId }); } catch {}
+                        }
+                        else
+                        {
+                            _logger.LogWarning("Skipping WhatsApp for recipient {RecipientId}: no phone number", recipient.UserId);
+                            try { if (hubContext != null) await hubContext.Clients.User(alert.CreatedBy.ToString()).SendAsync("waLog", new { type = "skip", reason = "no_phone", alertId = alert.AlertId, recipientId = recipient.UserId }); } catch {}
+                        }
+                    }
+
+                    // Desktop notification via SignalR after successful wait
+                    if (platforms.Any(p => string.Equals(p, "desktop", StringComparison.OrdinalIgnoreCase)) && hubContext != null)
+                    {
+                        _logger.LogInformation("Emitting SignalR newAlert to user {UserId} for alert {AlertId}", recipient.UserId, alert.AlertId);
+                        await hubContext.Clients.User(recipient.UserId.ToString()).SendAsync("newAlert", new
+                        {
+                            title = alert.Title,
+                            message = alert.Message,
+                            alertType = alert.AlertType,
+                            alertId = alert.AlertId
+                        });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to send WhatsApp for AlertRecipient {Id}", recipient.AlertRecipientId);
                 }
             }
         }

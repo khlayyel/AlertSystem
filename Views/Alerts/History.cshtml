@@ -41,6 +41,7 @@
 @section Scripts {
 <script>
   const isAdmin = @(User.IsInRole("Admin").ToString().ToLower());
+  const DLOG = (scope, msg, obj) => { try { console.debug(`[${scope}]`, msg, obj ?? ''); } catch {} };
   let page = 1, size = 10;
   function fmtPlus1(dateIso){ const d = new Date(dateIso); return new Date(d.getTime()+3600000).toLocaleString(); }
 
@@ -49,13 +50,16 @@
   async function load(){
     const params = new URLSearchParams(new FormData(document.getElementById('filters')));
     params.append('page', page); params.append('size', size);
-    const res = await fetch(`/Alerts/HistoryData?${params.toString()}`, { cache: 'no-store' });
+    DLOG('History','load params', Object.fromEntries(params));
+    const res = await fetch(`/Alerts/HistoryData?${params.toString()}`, { cache: 'no-store' }).catch(e=>{ console.error('History load failed', e); throw e; });
     const data = await res.json();
+    DLOG('History','load result', { total: data?.totalCount, items: data?.items?.length });
     render(data);
   }
 
   function render(data){
     const list = document.getElementById('list');
+    DLOG('History','render called', data);
     if(!data.items || data.items.length===0){
       list.innerHTML = '<div class="text-muted">Aucune alerte</div>';
       document.getElementById('pager').innerHTML = '';
@@ -83,6 +87,7 @@
   }
 
   function renderPager(total, pageIdx, size){
+    DLOG('History','renderPager', { total, pageIdx, size });
     const pages = Math.max(1, Math.ceil(total / size));
     const pager = document.getElementById('pager');
     pager.innerHTML = '';
@@ -96,15 +101,17 @@
   }
 
   async function confirmAlert(id){
+    DLOG('History','confirmAlert', { id });
     await fetch('/Alerts/Confirm', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded','RequestVerificationToken':token()}, body:`alertRecipientId=${id}` });
     load();
   }
   async function markRead(id){
+    DLOG('History','markRead', { id });
     await fetch('/Alerts/MarkRead', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded','RequestVerificationToken':token()}, body:`alertRecipientId=${id}` });
     load();
   }
 
-  document.getElementById('filters').addEventListener('submit', (e)=>{ e.preventDefault(); page=1; load(); });
+  document.getElementById('filters').addEventListener('submit', (e)=>{ e.preventDefault(); page=1; DLOG('History','filters submit'); load(); });
   load();
 </script>
 }

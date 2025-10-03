@@ -219,25 +219,33 @@ namespace AlertSystem.Controllers
                 return View(model);
             }
 
-            // SuperUser cannot move users out of his department
+            // Charger l'utilisateur actuel pour éviter d'écraser accidentellement son mot de passe
+            var existing = await _db.Users.FirstOrDefaultAsync(u => u.UserId == id);
+            if (existing == null) return NotFound();
+
+            // Mise à jour des champs simples
+            existing.Username = model.Username;
+            existing.Email = model.Email;
+            existing.PhoneNumber = model.PhoneNumber;
+
+            // Règles de rôle/département
             if (_current.IsSuperUser() && _current.GetDepartmentId().HasValue)
             {
-                model.DepartmentId = _current.GetDepartmentId();
-                model.Role = "User"; // SuperUser garde le rôle User
+                existing.DepartmentId = _current.GetDepartmentId();
+                existing.Role = "User"; // SuperUser garde le rôle User
             }
             else
             {
-                if (!GetAllowedRoles().Contains(model.Role)) model.Role = "User";
-                // Si Admin est sélectionné, forcer DepartmentId à null
-                if (model.Role == "Admin") model.DepartmentId = null;
+                existing.Role = GetAllowedRoles().Contains(model.Role) ? model.Role : "User";
+                existing.DepartmentId = existing.Role == "Admin" ? null : model.DepartmentId;
             }
 
-            // Si un nouveau mot de passe est fourni, on le re-hash
+            // Mot de passe: ne modifier que si un nouveau a été fourni
             if (!string.IsNullOrWhiteSpace(model.PasswordHash))
             {
-                model.PasswordHash = BCrypt.Net.BCrypt.HashPassword(model.PasswordHash);
+                existing.PasswordHash = BCrypt.Net.BCrypt.HashPassword(model.PasswordHash);
             }
-            _db.Entry(model).State = EntityState.Modified;
+
             await _db.SaveChangesAsync();
             
             // Notify all clients of user changes

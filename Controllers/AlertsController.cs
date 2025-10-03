@@ -351,6 +351,10 @@ namespace AlertSystem.Controllers
             var q = from a in _db.Alerts.AsNoTracking()
                     join uSrc in _db.Users.AsNoTracking() on a.CreatedBy equals uSrc.UserId
                     where a.CreatedBy == userId
+                          // Exclude templates with no recipients
+                          && _db.AlertRecipients.Any(ar => ar.AlertId == a.AlertId)
+                          // Exclude informational admin copies
+                          && !a.Title.StartsWith("[COPIE INFO]")
                     select new
                     {
                         a.AlertId,
