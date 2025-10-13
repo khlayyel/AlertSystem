@@ -44,6 +44,7 @@ namespace AlertSystem.Services
             }
         }
 
+        // Facade method: wraps IEmailSender to provide logging and consistent return value
         public async Task<bool> SendEmailAsync(string toEmail, string subject, string message)
         {
             try
@@ -128,46 +129,12 @@ namespace AlertSystem.Services
             }
         }
 
-        public async Task<List<string>> SendToAllPlatformsAsync(int userId, string title, string message, string? url = null)
+        // Sends to all available platforms for a user (Email, WhatsApp, Push) and returns list of successful platforms
+        public Task<List<string>> SendToAllPlatformsAsync(int userId, string title, string message, string? url = null)
         {
-            var successfulPlatforms = new List<string>();
-
-            // Get user info
-            var user = await _db.Users.AsNoTracking()
-                .FirstOrDefaultAsync(u => u.UserId == userId);
-
-            if (user == null)
-            {
-                _logger.LogWarning("User {UserId} not found", userId);
-                return successfulPlatforms;
-            }
-
-            // Send Email
-            if (!string.IsNullOrWhiteSpace(user.Email))
-            {
-                if (await SendEmailAsync(user.Email, title, message))
-                {
-                    successfulPlatforms.Add("Email");
-                }
-            }
-
-            // Send WhatsApp (if phone number available - using PhoneNumber temporarily)
-            if (!string.IsNullOrWhiteSpace(user.PhoneNumber))
-            {
-                if (await SendWhatsAppAsync(user.PhoneNumber, $"{title}\n\n{message}"))
-                {
-                    successfulPlatforms.Add("WhatsApp");
-                }
-            }
-
-            // Send Push Notification
-            if (await SendPushNotificationAsync(userId, title, message, url))
-            {
-                successfulPlatforms.Add("Push");
-            }
-
-            _logger.LogInformation("Notifications sent to user {UserId} via platforms: {Platforms}", userId, string.Join(", ", successfulPlatforms));
-            return successfulPlatforms;
+            // Nouveau modèle: pas de Users locaux; cette méthode est neutralisée pour l'instant
+            _logger.LogInformation("SendToAllPlatformsAsync neutralized (no local Users). Title={Title}", title);
+            return Task.FromResult(new List<string>());
         }
     }
 }

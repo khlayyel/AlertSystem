@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="manifest" href="/manifest.json">
+    <!-- Google Fonts for INSPINIA theme -->
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/AlertSystem.styles.css" asp-append-version="true" />
 </head>
@@ -17,9 +19,9 @@
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-dark border-bottom box-shadow mb-3">
             <div class="container-fluid">
                 <a class="navbar-brand d-flex align-items-center" asp-area="" asp-controller="Dashboard" asp-action="Index">
-                    <span class="me-2 d-inline-block" style="width:10px;height:10px;border-radius:2px;background:#0d6efd"></span>
+                    <span class="me-2 d-inline-block kpi-dot"></span>
                     Alert Dashboard
-                    <span id="badge-unread" class="badge rounded-pill bg-danger ms-2" style="display:none">0</span>
+                    <span id="badge-unread" class="badge rounded-pill badge-status-nonlu ms-2" style="display:none">0</span>
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Toggle navigation">
@@ -28,12 +30,7 @@
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                     
-                    @if (User.IsInRole("Admin") || User.IsInRole("SuperUser"))
-                    {
-                        <li class="nav-item">
-                            <a class="nav-link text-light @(ViewContext.RouteData.Values["Controller"]?.ToString()=="Users"?"active":null)" asp-area="" asp-controller="Users" asp-action="Index">Users</a>
-                        </li>
-                    }
+                    
                         
                     </ul>
                     <div class="d-flex">

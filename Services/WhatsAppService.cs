@@ -55,10 +55,32 @@ namespace AlertSystem.Services
                     return false;
                 }
 
+                // Try free-form message first
+                var success = await TryFreeFormMessage(cleanPhoneNumber, message);
+                if (success)
+                {
+                    return true;
+                }
+
+                // If free-form fails, try template message
+                _logger.LogWarning("Free-form message failed, trying template message for {PhoneNumber}", cleanPhoneNumber);
+                return await TryTemplateMessage(cleanPhoneNumber, message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "💥 Exception sending WhatsApp message to {PhoneNumber}", phoneNumber);
+                return false;
+            }
+        }
+
+        private async Task<bool> TryFreeFormMessage(string phoneNumber, string message)
+        {
+            try
+            {
                 var payload = new
                 {
                     messaging_product = "whatsapp",
-                    to = cleanPhoneNumber,
+                    to = phoneNumber,
                     type = "text",
                     text = new { body = message }
                 };
@@ -66,32 +88,125 @@ namespace AlertSystem.Services
                 var json = JsonSerializer.Serialize(payload);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                _logger.LogInformation("=== WHATSAPP SEND === To: {PhoneNumber}, URL: {URL}", 
-                    cleanPhoneNumber, $"{_httpClient.BaseAddress}{_phoneNumberId}/messages");
+                _logger.LogInformation("=== WHATSAPP FREE-FORM SEND === To: {PhoneNumber}, URL: {URL}", 
+                    phoneNumber, $"{_httpClient.BaseAddress}{_phoneNumberId}/messages");
                 _logger.LogInformation("WA payload(text): {Payload}", json);
 
                 var response = await _httpClient.PostAsync($"{_phoneNumberId}/messages", content);
                 var responseContent = await response.Content.ReadAsStringAsync();
 
-                _logger.LogInformation("WhatsApp API Response - Status: {StatusCode}, Content: {Content}", 
+                _logger.LogInformation("WhatsApp Free-Form Response - Status: {StatusCode}, Content: {Content}", 
                     response.StatusCode, responseContent);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    _logger.LogInformation("✅ WhatsApp message sent successfully to {PhoneNumber}", cleanPhoneNumber);
+                    _logger.LogInformation("✅ WhatsApp free-form message sent successfully to {PhoneNumber}", phoneNumber);
                     return true;
                 }
                 else
                 {
-                    _logger.LogError("❌ Failed to send WhatsApp message to {PhoneNumber}. Status: {StatusCode}, Response: {Response}", 
-                        cleanPhoneNumber, response.StatusCode, responseContent);
+                    // Parse error details
+                    await LogWhatsAppError(phoneNumber, response.StatusCode, responseContent);
                     return false;
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "💥 Exception sending WhatsApp message to {PhoneNumber}", phoneNumber);
+                _logger.LogError(ex, "Exception in TryFreeFormMessage for {PhoneNumber}", phoneNumber);
                 return false;
+            }
+        }
+
+        private async Task<bool> TryTemplateMessage(string phoneNumber, string message)
+        {
+            try
+            {
+                // Use hello_world template as fallback
+                var payload = new
+                {
+                    messaging_product = "whatsapp",
+                    to = phoneNumber,
+                    type = "template",
+                    template = new 
+                    { 
+                        name = "hello_world", 
+                        language = new { code = "en_US" } 
+                    }
+                };
+
+                var json = JsonSerializer.Serialize(payload);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                _logger.LogInformation("=== WHATSAPP TEMPLATE SEND === To: {PhoneNumber}, Template: hello_world", phoneNumber);
+                _logger.LogInformation("WA payload(template): {Payload}", json);
+
+                var response = await _httpClient.PostAsync($"{_phoneNumberId}/messages", content);
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                _logger.LogInformation("WhatsApp Template Response - Status: {StatusCode}, Content: {Content}", 
+                    response.StatusCode, responseContent);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    _logger.LogInformation("✅ WhatsApp template message sent successfully to {PhoneNumber}", phoneNumber);
+                    return true;
+                }
+                else
+                {
+                    await LogWhatsAppError(phoneNumber, response.StatusCode, responseContent);
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Exception in TryTemplateMessage for {PhoneNumber}", phoneNumber);
+                return false;
+            }
+        }
+
+        private async Task LogWhatsAppError(string phoneNumber, System.Net.HttpStatusCode statusCode, string responseContent)
+        {
+            try
+            {
+                using var document = JsonDocument.Parse(responseContent);
+                var root = document.RootElement;
+                
+                if (root.TryGetProperty("error", out var errorElement))
+                {
+                    var errorCode = errorElement.TryGetProperty("code", out var codeElement) ? codeElement.GetInt32() : 0;
+                    var errorMessage = errorElement.TryGetProperty("message", out var msgElement) ? msgElement.GetString() : "Unknown error";
+                    var errorType = errorElement.TryGetProperty("type", out var typeElement) ? typeElement.GetString() : "Unknown type";
+                    
+                    _logger.LogError("❌ WhatsApp API Error for {PhoneNumber} - Code: {ErrorCode}, Type: {ErrorType}, Message: {ErrorMessage}", 
+                        phoneNumber, errorCode, errorType, errorMessage);
+                        
+                    // Log specific error explanations
+                    switch (errorCode)
+                    {
+                        case 131026:
+                            _logger.LogWarning("🔒 Error 131026: Message undeliverable - User not opted in or 24-hour window expired for {PhoneNumber}", phoneNumber);
+                            break;
+                        case 131047:
+                            _logger.LogWarning("📵 Error 131047: Re-engagement message - User needs to message business first for {PhoneNumber}", phoneNumber);
+                            break;
+                        case 131051:
+                            _logger.LogWarning("⏰ Error 131051: Unsupported message type or template required for {PhoneNumber}", phoneNumber);
+                            break;
+                        default:
+                            _logger.LogWarning("❓ Unknown WhatsApp error code {ErrorCode} for {PhoneNumber}", errorCode, phoneNumber);
+                            break;
+                    }
+                }
+                else
+                {
+                    _logger.LogError("❌ WhatsApp API failed for {PhoneNumber} - Status: {StatusCode}, Raw Response: {Response}", 
+                        phoneNumber, statusCode, responseContent);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error parsing WhatsApp API error response for {PhoneNumber}", phoneNumber);
+                _logger.LogError("Raw response was: {Response}", responseContent);
             }
         }
 

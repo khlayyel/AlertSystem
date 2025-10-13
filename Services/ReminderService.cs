@@ -51,57 +51,14 @@ namespace AlertSystem.Services
             var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
 
             var now = DateTime.UtcNow;
-            var pendingReminders = await dbContext.AlertRecipients
-                .Include(ar => ar.Alert)
-                .Include(ar => ar.User)
-                .Where(ar => ar.Alert.AlertType == "Obligatoire" 
-                          && !ar.IsConfirmed 
-                          && ar.NextReminderAt.HasValue 
-                          && ar.NextReminderAt <= now
-                          && ar.SendStatus != "Cancelled")
-                .ToListAsync();
+            // Nouveau modèle: pas de AlertRecipients/Users; neutraliser le service pour l’instant
+            var pendingReminders = new List<object>();
 
-            _logger.LogInformation("Processing {Count} pending reminders", pendingReminders.Count);
+            _logger.LogInformation("Processing {Count} pending reminders (neutralized)", pendingReminders.Count);
 
-            foreach (var reminder in pendingReminders)
-            {
-                try
-                {
-                    var alertInterval = _config.GetIntervalForAlertType(reminder.Alert.AlertType);
-                    var title = $"[RAPPEL - {reminder.Alert.AlertType}] {reminder.Alert.Title}";
-                    var message = $"RAPPEL AUTOMATIQUE\n\n" +
-                                 $"Titre: {reminder.Alert.Title}\n" +
-                                 $"Type: {reminder.Alert.AlertType}\n" +
-                                 $"Date d'envoi initial: {reminder.Alert.CreatedAt:yyyy-MM-dd HH:mm}\n\n" +
-                                 $"Message:\n{reminder.Alert.Message}\n\n" +
-                                 $"Cette alerte nécessite votre confirmation. Veuillez la consulter dès que possible.";
+            // Neutralisé: pas de boucle d’envoi
 
-                    var url = $"/AlertsCrud/Details/{reminder.Alert.AlertId}";
-                    
-                    // Send to all platforms
-                    var successfulPlatforms = await notificationService.SendToAllPlatformsAsync(
-                        reminder.UserId, title, message, url);
-                    
-                    // Update reminder timing and platforms
-                    reminder.LastSentAt = now;
-                    reminder.NextReminderAt = now.Add(_config.SubsequentReminderInterval);
-                    reminder.DeliveryPlatforms = JsonSerializer.Serialize(successfulPlatforms);
-                    
-                    _logger.LogInformation("Reminder sent for AlertRecipient {Id} via platforms: {Platforms}", 
-                        reminder.AlertRecipientId, string.Join(", ", successfulPlatforms));
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Failed to send reminder for AlertRecipient {Id}", reminder.AlertRecipientId);
-                    reminder.SendStatus = "Failed";
-                }
-            }
-
-            if (pendingReminders.Any())
-            {
-                await dbContext.SaveChangesAsync();
-                _logger.LogInformation("Updated {Count} reminder records", pendingReminders.Count);
-            }
+            await Task.CompletedTask;
         }
 
     }

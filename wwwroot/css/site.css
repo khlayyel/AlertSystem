@@ -1,5 +1,27 @@
+/* INSPINIA Color Palette Variables */
+:root {
+  --inspinia-navy: #2f4050;
+  --inspinia-navy-dark: #293846;
+  --inspinia-navy-light: #3a4b5c;
+  --inspinia-blue: #1ab394;
+  --inspinia-blue-dark: #179d82;
+  --inspinia-blue-light: #1cc09f;
+  --inspinia-gray: #f3f3f4;
+  --inspinia-gray-dark: #e4e4e4;
+  --inspinia-gray-light: #f8f8f9;
+  --inspinia-white: #ffffff;
+  --inspinia-text: #676a6c;
+  --inspinia-text-dark: #5e5e5e;
+  --inspinia-border: #e7eaec;
+  --inspinia-success: #1ab394;
+  --inspinia-warning: #f8ac59;
+  --inspinia-danger: #ed5565;
+  --inspinia-info: #23c6c8;
+}
+
 html {
   font-size: 14px;
+  font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 @media (min-width: 768px) {
@@ -9,7 +31,7 @@ html {
 }
 
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem var(--inspinia-blue);
 }
 
 html {
@@ -19,55 +41,262 @@ html {
 
 body {
   margin-bottom: 60px;
+  background-color: var(--inspinia-gray);
+  color: var(--inspinia-text);
+  font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
-/* Badges helpers */
-.badge-type-info{background-color:#6c757d;} /* secondary */
-.badge-type-obl{background-color:#f7c948;color:#000;} /* warning */
-.badge-status-lu{background-color:#198754;} /* success */
-.badge-status-nonlu{background-color:#dc3545;} /* danger */
+/* INSPINIA Navbar Styling */
+.navbar.bg-dark {
+  background: var(--inspinia-navy) !important;
+  border-bottom: 1px solid var(--inspinia-border);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
 
-/* Cards spacing */
-.card + .card{margin-top:1rem}
+.navbar-brand {
+  color: var(--inspinia-white) !important;
+  font-weight: 600;
+}
 
-/* KPI cards */
-.kpi-card .kpi-label{font-size:.9rem;color:#6c757d;margin-bottom:.25rem}
-.kpi-card .kpi-value{font-size:1.75rem;font-weight:600;letter-spacing:.3px}
-.kpi-dot{display:inline-block;width:10px;height:10px;border-radius:50%}
+.navbar .nav-link {
+  color: rgba(255,255,255,0.8) !important;
+  transition: color 0.3s ease;
+}
 
-/* Dashboard tabs within card */
-.tab-content.card{border-radius:.5rem}
-.nav-tabs .nav-link{color:#6c757d}
-.nav-tabs .nav-link.active{color:#0d6efd}
-.nav-tabs{border-bottom:1px solid rgba(0,0,0,.08)}
-.tab-content{background:#fff}
+.navbar .nav-link:hover {
+  color: var(--inspinia-white) !important;
+}
 
-/* Tables */
-.table thead th{white-space:nowrap}
-.table-hover tbody tr:hover{background-color:#f8f9fa}
-.table thead th, .table tbody td{vertical-align:middle}
-.table thead th{font-weight:600;color:#495057}
+/* INSPINIA Cards */
+.card {
+  border: 1px solid var(--inspinia-border);
+  border-radius: 2px;
+  box-shadow: 0 1px 1px rgba(0,0,0,0.05);
+  background: var(--inspinia-white);
+  margin-bottom: 20px;
+}
 
-/* Badges tone adjustments for better contrast on white */
-.badge-type-info{background-color:#6c757d;color:#fff}
-.badge-type-obl{background-color:#ffe08a;color:#000}
-.badge-status-lu{background-color:#198754;color:#fff}
-.badge-status-nonlu{background-color:#dc3545;color:#fff}
+.card-header {
+  background: var(--inspinia-gray-light);
+  border-bottom: 1px solid var(--inspinia-border);
+  color: var(--inspinia-text-dark);
+  font-weight: 600;
+  padding: 15px 20px;
+}
 
-/* Utilities */
-.text-muted-small{font-size:.9rem;color:#6c757d}
-.spinner-area{min-height:120px;display:flex;align-items:center;justify-content:center}
+.card-body {
+  padding: 20px;
+}
 
-/* Navbar dark theme refinements */
-.navbar.bg-dark{background-image:linear-gradient(180deg, #1f2937, #111827)}
-.navbar .nav-link{opacity:.9}
-.navbar .nav-link:hover{opacity:1}
-.navbar .nav-link.active{font-weight:600}
+/* INSPINIA KPI Cards */
+.kpi-card {
+  background: var(--inspinia-white);
+  border: 1px solid var(--inspinia-border);
+  border-radius: 2px;
+  padding: 20px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
 
-/* Page shell spacing */
-main.pb-3{padding-bottom:2rem}
-footer.footer{background:#0f172a;color:#94a3b8}
-footer.footer a{color:#cbd5e1}
+.kpi-card:hover {
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  transform: translateY(-2px);
+}
+
+.kpi-card .kpi-label {
+  font-size: 0.9rem;
+  color: var(--inspinia-text);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.kpi-card .kpi-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--inspinia-text-dark);
+  margin-bottom: 0;
+}
+
+.kpi-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--inspinia-blue);
+}
+
+/* INSPINIA Buttons */
+.btn-primary {
+  background-color: var(--inspinia-blue);
+  border-color: var(--inspinia-blue);
+  color: var(--inspinia-white);
+}
+
+.btn-primary:hover {
+  background-color: var(--inspinia-blue-dark);
+  border-color: var(--inspinia-blue-dark);
+}
+
+.btn-success {
+  background-color: var(--inspinia-success);
+  border-color: var(--inspinia-success);
+}
+
+.btn-warning {
+  background-color: var(--inspinia-warning);
+  border-color: var(--inspinia-warning);
+  color: var(--inspinia-white);
+}
+
+.btn-danger {
+  background-color: var(--inspinia-danger);
+  border-color: var(--inspinia-danger);
+}
+
+.btn-info {
+  background-color: var(--inspinia-info);
+  border-color: var(--inspinia-info);
+}
+
+/* INSPINIA Badges */
+.badge-type-info {
+  background-color: var(--inspinia-info);
+  color: var(--inspinia-white);
+}
+
+.badge-type-obl {
+  background-color: var(--inspinia-warning);
+  color: var(--inspinia-white);
+}
+
+.badge-status-lu {
+  background-color: var(--inspinia-success);
+  color: var(--inspinia-white);
+}
+
+.badge-status-nonlu {
+  background-color: var(--inspinia-danger);
+  color: var(--inspinia-white);
+}
+
+/* INSPINIA Tables */
+.table {
+  background: var(--inspinia-white);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.table thead th {
+  background: var(--inspinia-gray-light);
+  border-bottom: 1px solid var(--inspinia-border);
+  color: var(--inspinia-text-dark);
+  font-weight: 600;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.table tbody td {
+  border-top: 1px solid var(--inspinia-border);
+  vertical-align: middle;
+  color: var(--inspinia-text);
+}
+
+.table-hover tbody tr:hover {
+  background-color: var(--inspinia-gray-light);
+}
+
+/* INSPINIA Tabs */
+.nav-tabs {
+  border-bottom: 1px solid var(--inspinia-border);
+  background: var(--inspinia-white);
+}
+
+.nav-tabs .nav-link {
+  color: var(--inspinia-text);
+  border: none;
+  border-radius: 0;
+  padding: 15px 20px;
+}
+
+.nav-tabs .nav-link.active {
+  color: var(--inspinia-blue);
+  background: var(--inspinia-white);
+  border-bottom: 2px solid var(--inspinia-blue);
+  font-weight: 600;
+}
+
+.nav-tabs .nav-link:hover {
+  color: var(--inspinia-blue);
+  border-color: transparent;
+}
+
+.tab-content {
+  background: var(--inspinia-white);
+  border: 1px solid var(--inspinia-border);
+  border-top: none;
+  padding: 20px;
+}
+
+/* INSPINIA Forms */
+.form-control {
+  border: 1px solid var(--inspinia-border);
+  border-radius: 2px;
+  color: var(--inspinia-text);
+}
+
+.form-control:focus {
+  border-color: var(--inspinia-blue);
+  box-shadow: 0 0 0 0.2rem rgba(26, 179, 148, 0.25);
+}
+
+/* INSPINIA Modal */
+.modal-content {
+  border: none;
+  border-radius: 2px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.modal-header {
+  background: var(--inspinia-gray-light);
+  border-bottom: 1px solid var(--inspinia-border);
+  color: var(--inspinia-text-dark);
+}
+
+.modal-footer {
+  border-top: 1px solid var(--inspinia-border);
+  background: var(--inspinia-gray-light);
+}
+
+/* INSPINIA Utilities */
+.text-muted-small {
+  font-size: 0.9rem;
+  color: var(--inspinia-text);
+}
+
+.spinner-area {
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--inspinia-white);
+}
+
+/* INSPINIA Page Layout */
+main.pb-3 {
+  padding-bottom: 2rem;
+  min-height: calc(100vh - 200px);
+}
+
+footer.footer {
+  background: var(--inspinia-navy);
+  color: rgba(255,255,255,0.8);
+  border-top: 1px solid var(--inspinia-border);
+}
+
+footer.footer a {
+  color: var(--inspinia-white);
+}
 
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
   color: var(--bs-secondary-color);
@@ -76,4 +305,437 @@ footer.footer a{color:#cbd5e1}
 
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
+}
+
+/* INSPINIA Additional Enhancements */
+.container {
+  max-width: 1200px;
+}
+
+/* INSPINIA Page Header */
+.page-header {
+  background: var(--inspinia-white);
+  border-bottom: 1px solid var(--inspinia-border);
+  padding: 20px 0;
+  margin-bottom: 20px;
+}
+
+.page-header h3 {
+  color: var(--inspinia-text-dark);
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.page-header .text-muted {
+  color: var(--inspinia-text) !important;
+}
+
+/* INSPINIA Alert Cards */
+.alert {
+  border-radius: 2px;
+  border: none;
+}
+
+.alert-warning {
+  background-color: #fcf8e3;
+  border-left: 4px solid var(--inspinia-warning);
+  color: #8a6d3b;
+}
+
+.alert-success {
+  background-color: #dff0d8;
+  border-left: 4px solid var(--inspinia-success);
+  color: #3c763d;
+}
+
+.alert-danger {
+  background-color: #f2dede;
+  border-left: 4px solid var(--inspinia-danger);
+  color: #a94442;
+}
+
+.alert-info {
+  background-color: #d9edf7;
+  border-left: 4px solid var(--inspinia-info);
+  color: #31708f;
+}
+
+/* INSPINIA Shadow Effects */
+.shadow-sm {
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+}
+
+.shadow {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+}
+
+.shadow-lg {
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+}
+
+/* INSPINIA Loading States */
+.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border: 2px solid var(--inspinia-border);
+  border-top: 2px solid var(--inspinia-blue);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* INSPINIA Responsive Adjustments */
+@media (max-width: 768px) {
+  .kpi-card .kpi-value {
+    font-size: 1.5rem;
+  }
+  
+  .card-body {
+    padding: 15px;
+  }
+  
+  .navbar-brand {
+    font-size: 1.1rem;
+  }
+}
+
+/* INSPINIA Status Indicators */
+.status-indicator {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.status-success {
+  background-color: var(--inspinia-success);
+}
+
+.status-warning {
+  background-color: var(--inspinia-warning);
+}
+
+.status-danger {
+  background-color: var(--inspinia-danger);
+}
+
+.status-info {
+  background-color: var(--inspinia-info);
+}
+
+/* INSPINIA Hover Effects */
+.btn {
+  transition: all 0.3s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.card {
+  transition: all 0.3s ease;
+}
+
+.nav-link {
+  transition: all 0.3s ease;
+}
+
+/* INSPINIA Modal Enhancements */
+.modal-xl {
+  max-width: 1200px;
+}
+
+.modal-content {
+  border: none;
+  border-radius: 4px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.modal-header {
+  background: var(--inspinia-navy) !important;
+  color: var(--inspinia-white) !important;
+  border-bottom: 1px solid var(--inspinia-border);
+  padding: 20px 25px;
+}
+
+.modal-header .modal-title {
+  font-weight: 600;
+  font-size: 1.25rem;
+  color: var(--inspinia-white) !important;
+}
+
+.modal-header .btn-close {
+  filter: invert(1);
+  opacity: 0.8;
+}
+
+.modal-header .btn-close:hover {
+  opacity: 1;
+}
+
+.modal-body {
+  padding: 25px;
+  background: var(--inspinia-gray-light);
+}
+
+.modal-footer {
+  background: var(--inspinia-white);
+  border-top: 1px solid var(--inspinia-border);
+  padding: 20px 25px;
+}
+
+/* INSPINIA Modal Cards */
+.modal-body .card {
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+}
+
+.modal-body .card-header {
+  font-weight: 600;
+  padding: 15px 20px;
+  border-radius: 4px 4px 0 0;
+}
+
+.modal-body .card-header.bg-primary {
+  background: var(--inspinia-blue) !important;
+  color: var(--inspinia-white) !important;
+  border-color: var(--inspinia-blue);
+}
+
+.modal-body .card-header.bg-success {
+  background: var(--inspinia-success) !important;
+  color: var(--inspinia-white) !important;
+  border-color: var(--inspinia-success);
+}
+
+.modal-body .card-header.bg-info {
+  background: var(--inspinia-info) !important;
+  color: var(--inspinia-white) !important;
+  border-color: var(--inspinia-info);
+}
+
+.modal-body .card-header.bg-warning {
+  background: var(--inspinia-warning) !important;
+  color: var(--inspinia-text-dark) !important;
+  border-color: var(--inspinia-warning);
+}
+
+.modal-body .card-body {
+  padding: 20px;
+  background: var(--inspinia-white);
+}
+
+/* INSPINIA Form Elements in Modal */
+.modal-body .form-label {
+  color: var(--inspinia-text-dark);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.modal-body .form-control {
+  border: 1px solid var(--inspinia-border);
+  border-radius: 3px;
+  padding: 10px 12px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.modal-body .form-control:focus {
+  border-color: var(--inspinia-blue);
+  box-shadow: 0 0 0 0.2rem rgba(26, 179, 148, 0.15);
+  background-color: var(--inspinia-white);
+}
+
+.modal-body .form-select {
+  border: 1px solid var(--inspinia-border);
+  border-radius: 3px;
+  padding: 10px 12px;
+  background-color: var(--inspinia-white);
+}
+
+.modal-body .form-select:focus {
+  border-color: var(--inspinia-blue);
+  box-shadow: 0 0 0 0.2rem rgba(26, 179, 148, 0.15);
+}
+
+/* INSPINIA Checkbox Styling in Modal */
+.modal-body .form-check-input {
+  border: 2px solid var(--inspinia-border);
+  border-radius: 3px;
+}
+
+.modal-body .form-check-input:checked {
+  background-color: var(--inspinia-blue);
+  border-color: var(--inspinia-blue);
+}
+
+.modal-body .form-check-input:focus {
+  box-shadow: 0 0 0 0.2rem rgba(26, 179, 148, 0.25);
+}
+
+.modal-body .form-check-label {
+  color: var(--inspinia-text);
+  font-weight: 500;
+}
+
+/* INSPINIA Tags Input Styling */
+.modal-body #emailsTags,
+.modal-body #whatsTags {
+  background: var(--inspinia-white);
+  border: 1px solid var(--inspinia-border);
+  border-radius: 3px;
+  min-height: 42px;
+  padding: 8px;
+}
+
+.modal-body #emailsTags:focus-within,
+.modal-body #whatsTags:focus-within {
+  border-color: var(--inspinia-blue);
+  box-shadow: 0 0 0 0.2rem rgba(26, 179, 148, 0.15);
+}
+
+/* INSPINIA Tag Styling */
+.tag {
+  background: var(--inspinia-blue);
+  color: var(--inspinia-white);
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tag .remove-tag {
+  background: none;
+  border: none;
+  color: var(--inspinia-white);
+  cursor: pointer;
+  padding: 0;
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.tag .remove-tag:hover {
+  opacity: 1;
+}
+
+/* INSPINIA Input Group Styling */
+.modal-body .input-group .form-control {
+  border-right: none;
+}
+
+.modal-body .input-group .btn {
+  border-left: none;
+  border-color: var(--inspinia-border);
+}
+
+/* INSPINIA Button Styling in Modal */
+.modal-footer .btn {
+  padding: 10px 20px;
+  font-weight: 600;
+  border-radius: 3px;
+  transition: all 0.3s ease;
+}
+
+.modal-footer .btn-secondary {
+  background-color: var(--inspinia-gray-dark);
+  border-color: var(--inspinia-gray-dark);
+  color: var(--inspinia-text-dark);
+}
+
+.modal-footer .btn-secondary:hover {
+  background-color: #d0d0d0;
+  border-color: #d0d0d0;
+}
+
+.modal-footer .btn-outline-primary {
+  border-color: var(--inspinia-blue);
+  color: var(--inspinia-blue);
+}
+
+.modal-footer .btn-outline-primary:hover {
+  background-color: var(--inspinia-blue);
+  border-color: var(--inspinia-blue);
+  color: var(--inspinia-white);
+}
+
+.modal-footer .btn-success {
+  background-color: var(--inspinia-success);
+  border-color: var(--inspinia-success);
+}
+
+.modal-footer .btn-success:hover {
+  background-color: var(--inspinia-blue-dark);
+  border-color: var(--inspinia-blue-dark);
+}
+
+/* INSPINIA Status Messages */
+.modal-body .text-muted {
+  color: var(--inspinia-text) !important;
+  font-size: 13px;
+}
+
+.modal-body .form-text {
+  color: var(--inspinia-text) !important;
+  font-size: 12px;
+}
+
+/* INSPINIA API Key Status */
+#apiKeyStatus {
+  padding: 10px;
+  border-radius: 3px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+#apiKeyStatus.success {
+  background-color: rgba(26, 179, 148, 0.1);
+  color: var(--inspinia-success);
+  border: 1px solid rgba(26, 179, 148, 0.3);
+}
+
+#apiKeyStatus.error {
+  background-color: rgba(237, 85, 101, 0.1);
+  color: var(--inspinia-danger);
+  border: 1px solid rgba(237, 85, 101, 0.3);
+}
+
+/* INSPINIA Modal Responsive */
+@media (max-width: 768px) {
+  .modal-xl {
+    max-width: 95%;
+    margin: 10px auto;
+  }
+  
+  .modal-body {
+    padding: 15px;
+  }
+  
+  .modal-header,
+  .modal-footer {
+    padding: 15px;
+  }
+  
+  .modal-body .card-body {
+    padding: 15px;
+  }
 }

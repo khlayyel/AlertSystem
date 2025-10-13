@@ -17,6 +17,7 @@ namespace AlertSystem.Services
 
         public async Task SendAsync(string toEmail, string subject, string textBody)
         {
+            // Build a simple plain-text email using MimeKit
             var message = new MimeMessage();
             message.From.Add(new MailboxAddress(_cfg["Smtp:FromName"] ?? "AlertSystem", _cfg["Smtp:From"] ?? "no-reply@example.com"));
             message.To.Add(MailboxAddress.Parse(toEmail));
@@ -29,14 +30,17 @@ namespace AlertSystem.Services
             var useStartTls = string.Equals(_cfg["Smtp:UseStartTls"], "true", StringComparison.OrdinalIgnoreCase);
             try
             {
+                // Connect using configured TLS preference (StartTLS if explicitly set)
                 await smtp.ConnectAsync(host, port, useStartTls ? SecureSocketOptions.StartTls : SecureSocketOptions.Auto);
                 var user = _cfg["Smtp:User"];
                 var pass = _cfg["Smtp:Pass"];
+                // Authenticate if username is provided (supports Gmail/app passwords)
                 if (!string.IsNullOrEmpty(user)) await smtp.AuthenticateAsync(user, pass);
                 await smtp.SendAsync(message);
             }
             catch (Exception ex)
             {
+                // Log full context (host/port/from) to debug connectivity/auth issues
                 _logger.LogError(ex, "SMTP send failed (Host={Host}, Port={Port}, From={From})", host, port, _cfg["Smtp:From"]);
                 throw;
             }

@@ -7,7 +7,7 @@
   <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
       <h3 class="mb-1">Tableau de bord</h3>
-    <div class="text-muted">Bienvenue @ViewBag.DisplayName — Rôle: @role</div>
+    <div class="text-muted">Bienvenue</div>
     </div>
     <button type="button" class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#newAlertModal" style="font-size: 1.1rem;">
       <i class="bi bi-plus-circle me-2"></i>Nouvelle alerte
@@ -72,93 +72,16 @@
 
   <ul class="nav nav-tabs" id="tabs" role="tablist">
     <li class="nav-item" role="presentation"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#inbox" type="button"><span class="me-1" aria-hidden="true">📥</span> Boîte de réception</button></li>
-    @if (string.Equals(role, "SuperUser", StringComparison.OrdinalIgnoreCase) || string.Equals(role, "User", StringComparison.OrdinalIgnoreCase) || string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase)) {
-      <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#sent" type="button"><span class="me-1" aria-hidden="true">📤</span> Envoyées</button></li>
-    }
-    @if (string.Equals(role, "SuperUser", StringComparison.OrdinalIgnoreCase)) {
-      <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#dept" type="button"><span class="me-1" aria-hidden="true">🏢</span> Mon département</button></li>
-    }
-    @if (string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase)) {
-      <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#all" type="button"><span class="me-1" aria-hidden="true">🗂️</span> Tous départements</button></li>
-    }
+    <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#sent" type="button"><span class="me-1" aria-hidden="true">📤</span> Boîte d'envoi</button></li>
   </ul>
   <div class="tab-content card shadow-sm border-0 p-3">
     <div class="tab-pane fade show active" id="inbox">
       <div id="inboxList">Chargement...</div>
     </div>
-    @if (string.Equals(role, "SuperUser", StringComparison.OrdinalIgnoreCase) || string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase)) {
     <div class="tab-pane fade" id="sent">
       <div id="sentList">Chargement...</div>
     </div>
-    <div class="tab-pane fade" id="dept">
-      <form class="row g-2 mb-2 align-items-end" id="deptFilters">
-        <div class="col-auto">
-          <label class="form-label small">Type</label>
-          <select name="type" class="form-select">
-            <option value="">Tous types</option>
-            <option value="Information">Information</option>
-            <option value="Obligatoire">Obligatoire</option>
-          </select>
-        </div>
-        <div class="col-auto">
-          <label class="form-label small">Statut</label>
-          <select name="status" class="form-select">
-            <option value="all">Tous statuts</option>
-            <option value="unread">Non lus</option>
-            <option value="confirmed">Lu</option>
-          </select>
-        </div>
-        <div class="col-auto">
-          <label class="form-label small">Du</label>
-          <input type="date" name="from" class="form-control" />
-        </div>
-        <div class="col-auto">
-          <label class="form-label small">Au</label>
-          <input type="date" name="to" class="form-control" />
-        </div>
-        <div class="col-auto">
-          <button class="btn btn-outline-secondary" type="submit">Filtrer</button>
-        </div>
-      </form>
-      <div id="deptList">Chargement...</div>
-    </div>
-    }
-    @if (string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase)) {
-    <div class="tab-pane fade" id="all">
-      <form class="row g-2 mb-2 align-items-end" id="allFilters">
-        <div class="col-auto">
-          <label class="form-label small">Département</label>
-          <select name="departmentId" class="form-select">
-            <option value="">Tous départements</option>
-            @foreach (var d in departments!) { <option value="@d.DepartmentId">@d.Name</option> }
-          </select>
-        </div>
-        <div class="col-auto">
-          <label class="form-label small">Type</label>
-          <select name="type" class="form-select">
-            <option value="">Tous types</option>
-            <option value="Information">Information</option>
-            <option value="Obligatoire">Obligatoire</option>
-          </select>
-        </div>
-        <div class="col-auto">
-          <label class="form-label small">Du</label>
-          <input type="date" name="from" class="form-control" />
-        </div>
-        <div class="col-auto">
-          <label class="form-label small">Au</label>
-          <input type="date" name="to" class="form-control" />
-        </div>
-        <div class="col-auto">
-          <button class="btn btn-outline-secondary" type="submit">Filtrer</button>
-        </div>
-        <div class="col-auto ms-auto">
-        <a id="exportCsvBtn" class="btn btn-sm btn-outline-primary" href="#">Exporter CSV</a>
-      </div>
-      </form>
-      <div id="allList">Chargement...</div>
-    </div>
-    }
+    
   </div>
 </div>
 
@@ -166,16 +89,16 @@
 <div class="modal fade" id="newAlertModal" tabindex="-1" aria-labelledby="newAlertModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-xl">
     <div class="modal-content">
-      <div class="modal-header bg-primary text-white">
+      <div class="modal-header">
         <h4 class="modal-title" id="newAlertModalLabel">
           <i class="bi bi-bell me-2"></i>Nouvelle alerte
         </h4>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         <!-- Section Alertes rapides -->
-        <div class="card border-primary mb-4">
-          <div class="card-header bg-primary text-white">
+        <div class="card mb-4">
+          <div class="card-header bg-primary">
             <h6 class="mb-0"><i class="bi bi-lightning me-1"></i>Alertes rapides</h6>
           </div>
           <div class="card-body">
@@ -211,7 +134,7 @@
               <textarea id="modalMessage" class="form-control" rows="4" placeholder="Entrez le message de l'alerte..."></textarea>
             </div>
             
-            <!-- Type et Département -->
+            <!-- Type -->
             <div class="col-md-6">
               <label class="form-label fw-bold">
                 <i class="bi bi-tag me-1"></i>Type d'alerte
@@ -221,74 +144,11 @@
                 <option value="Obligatoire">⚠️ Obligatoire</option>
               </select>
             </div>
-            
-            @if (User.IsInRole("Admin"))
-            {
-              <div class="col-md-6">
-                <label class="form-label fw-bold">
-                  <i class="bi bi-building me-1"></i>Département
-                </label>
-                <select id="modalDepartment" class="form-select">
-                  <option value="">-- Tous les départements --</option>
-                  @if (departments != null)
-                  {
-                    @foreach (var dept in departments)
-                    {
-                      <option value="@dept.DepartmentId">@dept.Name</option>
-                    }
-                  }
-                </select>
-              </div>
-            }
-            else
-            {
-              <div class="col-md-6">
-                <label class="form-label fw-bold">
-                  <i class="bi bi-building me-1"></i>Département
-                </label>
-                <input class="form-control" value="@ViewBag.DepartmentName" disabled />
-              </div>
-            }
           </div>
           
-          <!-- Section Destinataires -->
-                   <div class="card border-info mt-4">
-                     <div class="card-header bg-info text-white">
-                       <h6 class="mb-0"><i class="bi bi-people me-1"></i>Destinataires</h6>
-                     </div>
-            <div class="card-body">
-              <div class="row">
-                <div class="col-md-6">
-                  <label class="form-label">Rechercher un destinataire</label>
-                  <input id="modalRecipientsSearch" class="form-control mb-2" placeholder="Tapez le nom ou email..." />
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label">Sélection rapide</label>
-                  <div class="btn-group w-100" role="group">
-                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="selectAllRecipients()">Tous</button>
-                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearAllRecipients()">Aucun</button>
-                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="selectByDepartment()">Par département</button>
-                  </div>
-                </div>
-              </div>
-              <div class="mt-3">
-                <div class="border rounded p-3" style="max-height: 300px; overflow-y: auto; background-color: #f8f9fa;">
-                  <div id="modalRecipients"></div>
-                </div>
-                <div class="form-text mt-2 d-flex justify-content-between">
-                  <span>
-                    <i class="bi bi-info-circle me-1"></i>
-                    Cochez les destinataires de votre choix. Laisser vide pour envoyer à tous (sauf vous).
-                  </span>
-                  <span id="recipientCount" class="badge bg-primary">0 sélectionné(s)</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Section Plateformes d'envoi -->
-          <div class="card border-success mt-4">
-            <div class="card-header bg-success text-white">
+          <!-- Plateformes d'envoi (en haut) -->
+          <div class="card mt-4 order-0">
+            <div class="card-header bg-success">
               <h6 class="mb-0"><i class="bi bi-send me-1"></i>Plateformes d'envoi</h6>
             </div>
             <div class="card-body">
@@ -297,7 +157,7 @@
                   <label class="form-label fw-bold">Sélectionnez les moyens d'envoi :</label>
                   <div class="mt-2">
                     <div class="form-check form-check-inline">
-                      <input class="form-check-input" type="checkbox" id="platformEmail" value="email" checked>
+                      <input class="form-check-input" type="checkbox" id="platformEmail" value="email">
                       <label class="form-check-label" for="platformEmail">
                         <i class="bi bi-envelope me-1 text-primary"></i>Email
                       </label>
@@ -309,7 +169,7 @@
                       </label>
                     </div>
                     <div class="form-check form-check-inline">
-                      <input class="form-check-input" type="checkbox" id="platformDesktop" value="desktop" checked>
+                      <input class="form-check-input" type="checkbox" id="platformDesktop" value="desktop">
                       <label class="form-check-label" for="platformDesktop">
                         <i class="bi bi-bell me-1 text-warning"></i>Notification Desktop
                       </label>
@@ -317,12 +177,73 @@
                   </div>
                   <div class="form-text mt-2">
                     <i class="bi bi-info-circle me-1"></i>
-                    Au moins une plateforme doit être sélectionnée. Email et Desktop sont sélectionnés par défaut.
+                    Sélectionnez une ou plusieurs plateformes.
                   </div>
                 </div>
               </div>
             </div>
           </div>
+
+          <!-- Coordonnées des destinataires (saisie libre) -->
+          <div class="card mt-4 order-1">
+            <div class="card-header bg-info">
+              <h6 class="mb-0"><i class="bi bi-people me-1"></i>Coordonnées des destinataires</h6>
+            </div>
+            <div class="card-body">
+              <div id="emailBlock" class="mb-3" style="display:none;">
+                <label class="form-label fw-bold"><i class="bi bi-envelope me-1"></i>Emails</label>
+                <div id="emailsTags" class="form-control d-flex flex-wrap gap-1" style="min-height:2.6rem; padding-top:.375rem; padding-bottom:.375rem;"></div>
+                <small class="text-muted">Saisissez un email puis Entrée, virgule ou point-virgule.</small>
+                <input type="hidden" id="emailsInput" />
+              </div>
+              <div id="whatsBlock" class="mb-3" style="display:none;">
+                <label class="form-label fw-bold"><i class="bi bi-whatsapp me-1"></i>Numéros WhatsApp</label>
+                <div id="whatsTags" class="form-control d-flex flex-wrap gap-1" style="min-height:2.6rem; padding-top:.375rem; padding-bottom:.375rem;"></div>
+                <small class="text-muted">Saisissez un numéro (ex: +21650123456) puis Entrée, virgule ou point-virgule.</small>
+                <input type="hidden" id="whatsInput" />
+              </div>
+              <div id="desktopBlock" class="mb-2" style="display:none;">
+                <label class="form-label fw-bold"><i class="bi bi-bell me-1"></i>Device IDs (optionnel, séparés par virgule)</label>
+                <input id="deviceIdsInput" class="form-control" placeholder="ex: device-abc, device-xyz" />
+              </div>
+              <div class="form-text">Ces champs apparaissent selon les plateformes sélectionnées.</div>
+            </div>
+          </div>
+
+          <!-- API Key Management -->
+          <div class="card mt-4">
+            <div class="card-header bg-warning">
+              <h6 class="mb-0"><i class="bi bi-key me-1"></i>Configuration API</h6>
+            </div>
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-md-8">
+                  <label class="form-label fw-bold">Clé API</label>
+                  <div class="input-group">
+                    <input type="password" id="apiKeyInput" class="form-control" placeholder="Entrez votre clé API..." />
+                    <button type="button" id="toggleApiKeyBtn" class="btn btn-outline-secondary">
+                      <i class="bi bi-eye"></i>
+                    </button>
+                  </div>
+                  <small class="text-muted">La clé API est nécessaire pour envoyer des alertes via l'API</small>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">&nbsp;</label>
+                  <div class="d-grid gap-2">
+                    <button type="button" id="saveApiKeyBtn" class="btn btn-outline-primary btn-sm">
+                      <i class="bi bi-save me-1"></i>Sauvegarder
+                    </button>
+                    <button type="button" id="testApiKeyBtn" class="btn btn-outline-success btn-sm">
+                      <i class="bi bi-check-circle me-1"></i>Tester
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div id="apiKeyStatus" class="mt-2"></div>
+            </div>
+          </div>
+          
+          <!-- Section Plateformes d'envoi (ancienne) supprimée car déplacée au-dessus -->
         </form>
       </div>
       <div class="modal-footer">
@@ -345,11 +266,16 @@
 // Global dashboard debug helper
 const DLOG = (scope, msg, obj) => { try { console.debug(`[${scope}]`, msg, obj ?? ''); } catch {} };
 async function fetchJson(url){ 
+  console.log('[DEBUG] fetchJson called with URL:', url);
   try {
     const r = await fetch(url, { cache:'no-store' }); 
+    console.log('[DEBUG] fetchJson response status:', r.status, r.statusText);
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    return await r.json(); 
+    const data = await r.json();
+    console.log('[DEBUG] fetchJson success, data:', data);
+    return data; 
   } catch (error) {
+    console.error('[DEBUG] fetchJson error for URL:', url, 'Error:', error);
     console.error('Failed to load alerts dynamically, falling back to page reload', error);
     throw error;
   }
@@ -357,19 +283,27 @@ async function fetchJson(url){
 function fmtPlus1(dateIso){ const d = new Date(dateIso); return new Date(d.getTime()+3600000).toLocaleString(); }
 
 async function loadInbox(){
-  DLOG('Dashboard','loadInbox start');
-  // Afficher toutes les alertes (lues et non lues) avec leur statut
-  const data = await fetchJson('/Alerts/HistoryData?status=all&page=1&size=10');
-  DLOG('Dashboard','loadInbox result', { total: data?.totalCount, items: data?.items?.length });
-  renderList('inboxList', data, true);
-  updateKpisFromData(data);
-  updateUnreadKpi();
+  console.log('[DEBUG] loadInbox start');
+  try {
+    // Afficher toutes les alertes (lues et non lues) avec leur statut
+    const data = await fetchJson('/Alerts/HistoryData?status=all&page=1&size=10');
+    console.log('[DEBUG] loadInbox result:', { total: data?.total, items: data?.items?.length });
+    renderList('inboxList', data, true);
+    updateKpisFromData(data);
+    updateUnreadKpi();
+  } catch (error) {
+    console.error('[DEBUG] loadInbox error:', error);
+  }
 }
 async function loadSent(){
-  DLOG('Dashboard','loadSent start');
-  const data = await fetchJson('/Alerts/SentData?page=1&size=10');
-  DLOG('Dashboard','loadSent result', { total: data?.totalCount, items: data?.items?.length });
-  renderListCustom('sentList', data);
+  console.log('[DEBUG] loadSent start');
+  try {
+    const data = await fetchJson('/Alerts/SentData?page=1&size=10');
+    console.log('[DEBUG] loadSent result:', { total: data?.total, items: data?.items?.length });
+    renderListCustom('sentList', data);
+  } catch (error) {
+    console.error('[DEBUG] loadSent error:', error);
+  }
 }
 async function loadDept(){
   DLOG('Dashboard','loadDept start');
@@ -488,60 +422,56 @@ function updateKpisFromData(data){
 
 async function updateUnreadKpi(){
   try{
-    DLOG('Dashboard','updateUnreadKpi');
+    console.log('[DEBUG] updateUnreadKpi start');
     const r = await fetch('/Alerts/UnreadCount', { cache:'no-store' });
+    console.log('[DEBUG] updateUnreadKpi response:', r.status, r.statusText);
     if(!r.ok) return;
-    const { count } = await r.json();
+    const data = await r.json();
+    console.log('[DEBUG] updateUnreadKpi data:', data);
+    const count = typeof data === 'number' ? data : data.count || 0;
     const set = (id,v)=>{ const el=document.getElementById(id); if(el) el.textContent = String(v); };
     set('kpiPending', count);
-  }catch{}
+    console.log('[DEBUG] updateUnreadKpi set kpiPending to:', count);
+  }catch(e){
+    console.error('[DEBUG] updateUnreadKpi error:', e);
+  }
 }
 
 async function updateConfirmedMandatoryKpi(){
   try{
-    DLOG('Dashboard','updateConfirmedMandatoryKpi');
+    console.log('[DEBUG] updateConfirmedMandatoryKpi start');
     const r = await fetch('/Alerts/ConfirmedMandatoryCount', { cache:'no-store' });
+    console.log('[DEBUG] updateConfirmedMandatoryKpi response:', r.status, r.statusText);
     if(!r.ok) return;
-    const { count } = await r.json();
+    const data = await r.json();
+    console.log('[DEBUG] updateConfirmedMandatoryKpi data:', data);
+    const count = typeof data === 'number' ? data : data.count || 0;
     const el = document.getElementById('kpiConfirmedMandatory');
     if(el) el.textContent = String(count);
-  }catch{}
+    console.log('[DEBUG] updateConfirmedMandatoryKpi set to:', count);
+  }catch(e){
+    console.error('[DEBUG] updateConfirmedMandatoryKpi error:', e);
+  }
 }
 
 async function updateTodayKpi(){
   try{
-    DLOG('Dashboard','updateTodayKpi');
+    console.log('[DEBUG] updateTodayKpi start');
     const r = await fetch('/Alerts/TodayCount', { cache:'no-store' });
+    console.log('[DEBUG] updateTodayKpi response:', r.status, r.statusText);
     if(!r.ok) return;
-    const { count } = await r.json();
+    const data = await r.json();
+    console.log('[DEBUG] updateTodayKpi data:', data);
+    const count = typeof data === 'number' ? data : data.count || 0;
     const el = document.getElementById('kpiToday');
     if(el) el.textContent = String(count);
-  }catch{}
+    console.log('[DEBUG] updateTodayKpi set to:', count);
+  }catch(e){
+    console.error('[DEBUG] updateTodayKpi error:', e);
+  }
 }
 
-// Dynamic filters for all tabs
-document.getElementById('allFilters')?.addEventListener('submit', (e)=>{ e.preventDefault(); loadAll(); });
-document.getElementById('deptFilters')?.addEventListener('submit', (e)=>{ e.preventDefault(); loadDept(); });
-
-// Auto-filter on change for better UX
-document.querySelectorAll('#allFilters select, #allFilters input, #deptFilters select, #deptFilters input').forEach(el => {
-  el.addEventListener('change', () => {
-    const form = el.closest('form');
-    if (form.id === 'allFilters') loadAll();
-    else if (form.id === 'deptFilters') loadDept();
-  });
-  if (el.type === 'date' || el.type === 'text') {
-    let timeout;
-    el.addEventListener('input', () => {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => {
-        const form = el.closest('form');
-        if (form.id === 'allFilters') loadAll();
-        else if (form.id === 'deptFilters') loadDept();
-      }, 500);
-    });
-  }
-});
+// (filtres département supprimés)
 
 async function confirmAlert(id){ await fetch('/Alerts/Confirm', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:`alertRecipientId=${id}` }); loadInbox(); loadMine(); updateUnreadKpi(); }
 async function markRead(id){ await fetch('/Alerts/MarkRead', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:`alertRecipientId=${id}` }); loadInbox(); loadMine(); updateUnreadKpi(); }
@@ -668,8 +598,7 @@ updateUnreadKpi();
 updateConfirmedMandatoryKpi();
 updateTodayKpi();
 if (document.getElementById('sentList')) loadSent();
-if (document.getElementById('deptList')) loadDept();
-if (document.getElementById('allFilters')) { loadAll(); }
+// onglets supprimés
 
 // Auto-refresh every 30 seconds for real-time updates
 setInterval(() => {
@@ -703,10 +632,7 @@ if (window.signalR && typeof signalR !== 'undefined'){
     if (document.getElementById('sentList')) loadSent(); 
   });
   
-  connection.on('deptChanged', ()=> { 
-    console.debug('[SignalR] deptChanged');
-    if (document.getElementById('deptList')) loadDept(); 
-  });
+  // événements liés aux départements retirés
   
   connection.on('newAlert', (payload)=> { 
     console.debug('[SignalR] newAlert', payload);
@@ -747,8 +673,7 @@ if (window.signalR && typeof signalR !== 'undefined'){
     updateConfirmedMandatoryKpi();
     updateTodayKpi();
     if (document.getElementById('sentList')) loadSent();
-    if (document.getElementById('deptList')) loadDept();
-    if (document.getElementById('allFilters')) loadAll();
+    // onglets retirés
   });
   // WhatsApp debug logs from server
   connection.on('waLog', (payload)=>{
@@ -1030,7 +955,7 @@ document.getElementById('modalSaveBtn')?.addEventListener('click', async functio
   const title = document.getElementById('modalTitle')?.value?.trim();
   const message = document.getElementById('modalMessage')?.value?.trim();
   const alertType = document.getElementById('modalAlertType')?.value;
-  const departmentId = document.getElementById('modalDepartment')?.value || '';
+  const departmentId = '';
   
   if (!title || !message) {
     showToast('Titre et message requis pour enregistrer', 'error');
@@ -1062,19 +987,32 @@ document.getElementById('modalSaveBtn')?.addEventListener('click', async functio
           const title = document.getElementById('modalTitle')?.value?.trim();
           const message = document.getElementById('modalMessage')?.value?.trim();
           const alertType = document.getElementById('modalAlertType')?.value;
-          const departmentId = document.getElementById('modalDepartment')?.value || '';
+          const departmentId = '';
           
-          const recipientsContainer = document.getElementById('modalRecipients');
-          const selectedRecipients = Array.from(recipientsContainer?.querySelectorAll('input[type="checkbox"]:checked') || []).map(cb => cb.value);
+          // Construire les destinataires à partir des coordonnées saisies
+          const emailsRaw = document.getElementById('emailsInput')?.value || '';
+          const whatsRaw = document.getElementById('whatsInput')?.value || '';
+          const deviceIdsRaw = document.getElementById('deviceIdsInput')?.value || '';
+          const splitList = (s)=> s.split(/[;,\n]+/).map(x=>x.trim()).filter(Boolean);
+          const emails = splitList(emailsRaw);
+          const phones = splitList(whatsRaw);
+          const deviceIds = splitList(deviceIdsRaw);
+          const recipients = [];
+          emails.forEach(e=> recipients.push({ externalRecipientId: e }));
+          phones.forEach(p=> recipients.push({ externalRecipientId: p }));
+          deviceIds.forEach(d=> recipients.push({ externalRecipientId: d }));
           
           // Récupérer les plateformes sélectionnées
           const selectedPlatforms = [];
           if (document.getElementById('platformEmail')?.checked) selectedPlatforms.push('email');
           if (document.getElementById('platformWhatsApp')?.checked) selectedPlatforms.push('whatsapp');
           if (document.getElementById('platformDesktop')?.checked) selectedPlatforms.push('desktop');
-          console.log('[Send] title:', title, 'type:', alertType, 'dept:', departmentId || '(none)');
-          console.log('[Send] recipients:', selectedRecipients);
-          console.log('[Send] platforms:', selectedPlatforms);
+          console.log('[DEBUG] Send button clicked');
+          console.log('[DEBUG] Form data:', { title, message, alertType, departmentId });
+          console.log('[DEBUG] Raw inputs:', { emailsRaw, whatsRaw, deviceIdsRaw });
+          console.log('[DEBUG] Parsed recipients:', { emails, phones, deviceIds });
+          console.log('[DEBUG] Final recipients array:', recipients);
+          console.log('[DEBUG] Selected platforms:', selectedPlatforms);
   
           if (!title) {
             showToast('Titre requis', 'error');
@@ -1086,51 +1024,40 @@ document.getElementById('modalSaveBtn')?.addEventListener('click', async functio
             return;
           }
   
-  // D'abord créer l'alerte comme template
-  const quickSaveData = new FormData();
-  quickSaveData.append('title', title);
-  quickSaveData.append('message', message);
-  quickSaveData.append('alertType', alertType);
-  quickSaveData.append('departmentId', departmentId);
-  
   try {
-    // Créer l'alerte template
-    const quickRes = await fetch('/AlertsCrud/QuickSave', { method: 'POST', body: quickSaveData });
-    if (!quickRes.ok) {
-      try { const errText = await quickRes.text(); console.error('QuickSave error:', errText); } catch {}
-      showToast('Erreur lors de la création de l\'alerte', 'error');
-      return;
-    }
+    // Appeler l'API v1 directement
+    const apiKey = localStorage.getItem('apiKey') || '';
+    const payload = {
+      title,
+      message,
+      alertType: alertType === 'Obligatoire' ? 'acquittementNécessaire' : 'acquittementNonNécessaire',
+      expedType: 'Humain',
+      appId: 1,
+      expediteurId: null,
+      recipients
+    };
+    console.log('[DEBUG] API call starting...');
+    console.log('[DEBUG] API Key present:', !!apiKey);
+    console.log('[DEBUG] POST /api/v1/alerts payload:', payload);
     
-    const quickResult = await quickRes.json();
-    const alertId = quickResult.alertId;
+    const headers = { 'Content-Type': 'application/json' };
+    if (apiKey) headers['X-Api-Key'] = apiKey;
+    console.log('[DEBUG] Request headers:', headers);
     
-             // Maintenant envoyer l'alerte
-             const sendData = new FormData();
-             sendData.append('alertId', alertId);
-             sendData.append('recipients', selectedRecipients.join(','));
-             // CSV principal
-             sendData.append('platforms', selectedPlatforms.join(','));
-             // Flags explicites pour robustesse côté serveur
-             sendData.append('platformEmail', document.getElementById('platformEmail')?.checked ? 'on' : '');
-             sendData.append('platformWhatsApp', document.getElementById('platformWhatsApp')?.checked ? 'on' : '');
-             sendData.append('platformDesktop', document.getElementById('platformDesktop')?.checked ? 'on' : '');
-             // Dump du payload au console
-             console.debug('[Send] FormData dump:', {
-               alertId,
-               recipients: selectedRecipients,
-               platformsCsv: selectedPlatforms.join(','),
-               platformEmail: document.getElementById('platformEmail')?.checked,
-               platformWhatsApp: document.getElementById('platformWhatsApp')?.checked,
-               platformDesktop: document.getElementById('platformDesktop')?.checked
-             });
+    const res = await fetch('/api/v1/alerts', { 
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload)
+    });
     
-    const res = await fetch('/AlertsCrud/Send', { method: 'POST', body: sendData });
+    console.log('[DEBUG] Response status:', res.status, res.statusText);
     
     if (res.ok) {
       const data = await res.json();
-      if (data && data.alertId) {
-        showToast(`Alerte en cours d'envoi — ${data.recipients} destinataires. Fenêtre d'annulation: 10s`, 'success');
+      console.log('[DEBUG] Response data:', data);
+      if (data && (data.id || data.alertId)) {
+        console.log('[DEBUG] Alert created successfully with ID:', data.id || data.alertId);
+        showToast(`Alerte créée — destinataires: ${recipients.length}`, 'success');
         
         // Add to pending alerts for cancellation with new system
         if (typeof handleNewAlert === 'function') {
@@ -1149,7 +1076,9 @@ document.getElementById('modalSaveBtn')?.addEventListener('click', async functio
         document.getElementById('modalTitle').value = '';
         document.getElementById('modalMessage').value = '';
         document.getElementById('modalQuickSelect').value = '';
-        clearAllRecipients(); // Clear all checkboxes
+        document.getElementById('emailsInput').value = '';
+        document.getElementById('whatsInput').value = '';
+        document.getElementById('deviceIdsInput').value = '';
         
         // Close modal
         const modal = bootstrap.Modal.getInstance(document.getElementById('newAlertModal'));
@@ -1158,12 +1087,19 @@ document.getElementById('modalSaveBtn')?.addEventListener('click', async functio
         showToast('Erreur: Pas d\'ID alerte retourné', 'error');
       }
     } else {
-      try { const errText = await res.text(); console.error('Send error:', errText); } catch {}
-      showToast(`Erreur HTTP ${res.status}`, 'error');
+      console.log('[DEBUG] API call failed with status:', res.status);
+      try { 
+        const errText = await res.text(); 
+        console.error('[DEBUG] Error response body:', errText); 
+        showToast(`Erreur HTTP ${res.status}: ${errText}`, 'error');
+      } catch (e) {
+        console.error('[DEBUG] Could not read error response:', e);
+        showToast(`Erreur HTTP ${res.status}`, 'error');
+      }
     }
   } catch (error) {
-    console.error('Error sending alert:', error);
-    showToast('Erreur réseau', 'error');
+    console.error('[DEBUG] Network/JS error sending alert:', error);
+    showToast('Erreur réseau: ' + error.message, 'error');
   }
 });
 
@@ -1219,12 +1155,208 @@ function selectByDepartment() {
 
 
 document.getElementById('newAlertModal')?.addEventListener('shown.bs.modal', function() {
-  // Reset filters to avoid hiding users after previous interactions
-  const input = document.getElementById('modalRecipientsSearch');
-  if (input) { input.value = ''; }
   loadModalQuickAlerts();
-  loadModalRecipients();
+  // afficher/cacher blocs selon plateformes
+  toggleContactBlocks?.();
 });
+
+// Affichage dynamique des blocs de coordonnées en fonction des plateformes
+function toggleContactBlocks(){
+  const showEmail = document.getElementById('platformEmail')?.checked;
+  const showWhats = document.getElementById('platformWhatsApp')?.checked;
+  const showDesktop = document.getElementById('platformDesktop')?.checked;
+  document.getElementById('emailBlock').style.display = showEmail? 'block':'none';
+  document.getElementById('whatsBlock').style.display = showWhats? 'block':'none';
+  document.getElementById('desktopBlock').style.display = showDesktop? 'block':'none';
+}
+// Utiliser une boucle classique pour compatibilité Razor
+var platformIds = ['platformEmail','platformWhatsApp','platformDesktop'];
+for (var i = 0; i < platformIds.length; i++) {
+  var id = platformIds[i];
+  document.getElementById(id)?.addEventListener('change', toggleContactBlocks);
+}
+toggleContactBlocks();
+
+// Helpers pour champs “tags” (emails / whatsApp)
+function initTagInput(containerId, hiddenInputId, validator){
+  const container = document.getElementById(containerId);
+  const hidden = document.getElementById(hiddenInputId);
+  if (!container || !hidden) return;
+  const items = new Set();
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'border-0 flex-grow-1';
+  input.style.outline = 'none';
+  input.placeholder = 'Tapez et appuyez Entrée';
+  container.appendChild(input);
+
+  function render(){
+    container.querySelectorAll('.tag-item').forEach(e=>e.remove());
+    items.forEach(v=>{
+      const tag = document.createElement('span');
+      tag.className = 'tag-item badge bg-light text-dark border';
+      tag.innerHTML = `${v} <span role="button" class="ms-1 text-danger">×</span>`;
+      tag.querySelector('span').onclick = ()=>{ items.delete(v); render(); };
+      container.insertBefore(tag, input);
+    });
+    hidden.value = Array.from(items).join(',');
+  }
+
+  function tryAdd(value){
+    const v = value.trim();
+    if (!v) return;
+    if (!validator(v)) { input.classList.add('is-invalid'); return; }
+    input.classList.remove('is-invalid');
+    items.add(v);
+    input.value='';
+    render();
+  }
+
+  // Eviter les tableaux littéraux pour compatibilité Razor
+  const submitKeys = { 'Enter': true, ',': true, ';': true };
+  input.addEventListener('keydown', (e)=>{
+    if (submitKeys[e.key]) { e.preventDefault(); tryAdd(input.value); }
+    if (e.key === 'Backspace' && input.value === '' && items.size>0) { items.delete(Array.from(items).pop()); render(); }
+  });
+  input.addEventListener('paste', (e)=>{
+    e.preventDefault();
+    const text = (e.clipboardData||window.clipboardData).getData('text');
+    const normalized = text.replace(/[; ,\n]+/g, ',');
+    normalized.split(',').forEach(tryAdd);
+  });
+
+  render();
+}
+
+function isValidEmail(v){
+  // Doubler le caractère @@ pour Razor: @@
+  return /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/.test(v);
+}
+function isValidPhone(v){
+  return /^\+?[0-9]{8,15}$/.test(v.replace(/\s|-/g,''));
+}
+
+// initialiser les champs tags
+initTagInput('emailsTags','emailsInput', isValidEmail);
+initTagInput('whatsTags','whatsInput', isValidPhone);
+
+// API Key Management
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('[DEBUG] Initializing API key management');
+  
+  // Load saved API key on page load
+  const savedApiKey = localStorage.getItem('apiKey');
+  if (savedApiKey) {
+    document.getElementById('apiKeyInput').value = savedApiKey;
+    console.log('[DEBUG] Loaded API key from localStorage');
+    testApiKey(savedApiKey, false); // Test silently on load
+  }
+
+  // Toggle API key visibility
+  document.getElementById('toggleApiKeyBtn')?.addEventListener('click', function() {
+    const input = document.getElementById('apiKeyInput');
+    const icon = this.querySelector('i');
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.className = 'bi bi-eye-slash';
+    } else {
+      input.type = 'password';
+      icon.className = 'bi bi-eye';
+    }
+    console.log('[DEBUG] Toggled API key visibility');
+  });
+
+  // Save API key
+  document.getElementById('saveApiKeyBtn')?.addEventListener('click', function() {
+    const apiKey = document.getElementById('apiKeyInput').value.trim();
+    console.log('[DEBUG] Saving API key, length:', apiKey.length);
+    
+    if (apiKey) {
+      localStorage.setItem('apiKey', apiKey);
+      showApiKeyStatus('Clé API sauvegardée avec succès', 'success');
+      console.log('[DEBUG] API key saved to localStorage');
+    } else {
+      localStorage.removeItem('apiKey');
+      showApiKeyStatus('Clé API supprimée', 'info');
+      console.log('[DEBUG] API key removed from localStorage');
+    }
+  });
+
+  // Test API key
+  document.getElementById('testApiKeyBtn')?.addEventListener('click', function() {
+    const apiKey = document.getElementById('apiKeyInput').value.trim();
+    console.log('[DEBUG] Testing API key, length:', apiKey.length);
+    
+    if (!apiKey) {
+      showApiKeyStatus('Veuillez entrer une clé API', 'warning');
+      return;
+    }
+    
+    testApiKey(apiKey, true);
+  });
+});
+
+async function testApiKey(apiKey, showResult = true) {
+  console.log('[DEBUG] testApiKey called, showResult:', showResult);
+  
+  try {
+    const response = await fetch('/api/v1/keys/validate', {
+      method: 'GET',
+      headers: {
+        'X-Api-Key': apiKey,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    console.log('[DEBUG] API key test response:', response.status, response.statusText);
+    
+    if (response.ok) {
+      const data = await response.json();
+      console.log('[DEBUG] API key test success:', data);
+      if (showResult) {
+        showApiKeyStatus('✅ Clé API valide et active', 'success');
+      }
+      return true;
+    } else {
+      const errorData = await response.json().catch(() => ({}));
+      console.log('[DEBUG] API key test failed:', errorData);
+      if (showResult) {
+        showApiKeyStatus('❌ Clé API invalide ou inactive', 'danger');
+      }
+      return false;
+    }
+  } catch (error) {
+    console.error('[DEBUG] API key test error:', error);
+    if (showResult) {
+      showApiKeyStatus('❌ Erreur de connexion: ' + error.message, 'danger');
+    }
+    return false;
+  }
+}
+
+function showApiKeyStatus(message, type) {
+  const statusDiv = document.getElementById('apiKeyStatus');
+  if (!statusDiv) return;
+  
+  const alertClass = `alert alert-${type}`;
+  statusDiv.innerHTML = `<div class="${alertClass} alert-dismissible fade show" role="alert">
+    ${message}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>`;
+  
+  console.log('[DEBUG] API key status shown:', message, type);
+  
+  // Auto-hide success messages after 3 seconds
+  if (type === 'success') {
+    setTimeout(() => {
+      const alert = statusDiv.querySelector('.alert');
+      if (alert) {
+        const bsAlert = new bootstrap.Alert(alert);
+        bsAlert.close();
+      }
+    }, 3000);
+  }
+}
 </script>
 }
 
