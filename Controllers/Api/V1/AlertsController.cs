@@ -31,7 +31,7 @@ namespace AlertSystem.Controllers.Api.V1
                     .Include(a => a.ExpedType)
                     .Include(a => a.Statut)
                     .Include(a => a.Etat)
-                    .Include(a => a.Destinataires)
+                    .Include(a => a.HistoriqueAlertes)
                     .AsNoTracking()
                     .Where(x => x.AlerteId == id)
                     .Select(a => new
@@ -44,16 +44,18 @@ namespace AlertSystem.Controllers.Api.V1
                         statut = a.Statut != null ? a.Statut.StatutName : null,
                         etat = a.Etat != null ? a.Etat.EtatAlerteName : null,
                         dateCreation = a.DateCreationAlerte,
-                        dateLecture = a.DateLecture,
-                        rappelSuivant = a.RappelSuivant,
                         appId = a.AppId,
                         expediteurId = a.ExpediteurId,
-                        recipients = a.Destinataires.Select(d => new
+                        recipients = a.HistoriqueAlertes.Select(d => new
                         {
                             destinataireId = d.DestinataireId,
+                            destinataireUserId = d.DestinataireUserId,
                             etatAlerte = d.EtatAlerte,
                             dateLecture = d.DateLecture,
-                            externalRecipientId = d.ExternalRecipientId
+                            rappelSuivant = d.RappelSuivant,
+                            destinataireEmail = d.DestinataireEmail,
+                            destinatairePhoneNumber = d.DestinatairePhoneNumber,
+                            destinataireDesktop = d.DestinataireDesktop
                         }).ToList()
                     })
                     .FirstOrDefaultAsync();
@@ -130,7 +132,6 @@ namespace AlertSystem.Controllers.Api.V1
                         statut = a.Statut != null ? a.Statut.StatutName : null,
                         etat = a.Etat != null ? a.Etat.EtatAlerteName : null,
                         dateCreation = a.DateCreationAlerte,
-                        dateLecture = a.DateLecture,
                         appId = a.AppId,
                         expediteurId = a.ExpediteurId
                     })
@@ -157,7 +158,7 @@ namespace AlertSystem.Controllers.Api.V1
 
         public sealed class RecipientDto
         {
-            public string? ExternalRecipientId { get; set; }
+            public string? RecipientId { get; set; } // Renommé de ExternalRecipientId
         }
 
         [HttpPost]
@@ -180,9 +181,9 @@ namespace AlertSystem.Controllers.Api.V1
                 {
                     foreach (var r in dto.Recipients)
                     {
-                        if (string.IsNullOrWhiteSpace(r.ExternalRecipientId)) continue;
+                        if (string.IsNullOrWhiteSpace(r.RecipientId)) continue;
 
-                        var recipient = ValidateRecipient(r.ExternalRecipientId.Trim());
+                        var recipient = ValidateRecipient(r.RecipientId.Trim());
                         if (recipient != null)
                         {
                             validatedRecipients.Add(recipient);
@@ -245,19 +246,17 @@ namespace AlertSystem.Controllers.Api.V1
 
                 _logger.LogInformation("[DEBUG] Alert created with ID: {AlertId}", alert.AlerteId);
 
-                // Create recipients
-                var createdRecipients = new List<Models.Entities.Destinataire>();
-                foreach (var recipient in validatedRecipients)
+                // Create single recipient record per alert
+                var historiqueAlerte = new Models.Entities.HistoriqueAlerte
                 {
-                    var destinataire = new Models.Entities.Destinataire
-                    {
-                        AlerteId = alert.AlerteId,
-                        EtatAlerte = "Non Lu",
-                        ExternalRecipientId = recipient.Id
-                    };
-                    _db.Destinataire.Add(destinataire);
-                    createdRecipients.Add(destinataire);
-                }
+                    AlerteId = alert.AlerteId,
+                    DestinataireUserId = 1, // TODO: Utiliser le vrai UserId du destinataire
+                    EtatAlerte = "Non Lu",
+                    DestinataireEmail = "test@example.com", // TODO: Récupérer depuis Users ou Recipients
+                    DestinatairePhoneNumber = "+21699414008", // TODO: Récupérer depuis Users ou Recipients
+                    DestinataireDesktop = "desktop-token" // TODO: Récupérer depuis Users ou Recipients
+                };
+                _db.HistoriqueAlertes.Add(historiqueAlerte);
                 await _db.SaveChangesAsync();
 
                 // Send notifications
@@ -298,7 +297,7 @@ namespace AlertSystem.Controllers.Api.V1
                 return CreatedAtAction(nameof(GetById), new { id = alert.AlerteId }, new 
                 { 
                     alertId = alert.AlerteId,
-                    recipientsCreated = createdRecipients.Count,
+                    recipientsCreated = 1, // Un seul destinataire par alerte
                     notificationsSent = notificationResults.Count,
                     notifications = notificationResults
                 });
@@ -346,13 +345,13 @@ namespace AlertSystem.Controllers.Api.V1
             Device
         }
 
-        public sealed class MarkReadDto { public string? ExternalRecipientId { get; set; } }
+        public sealed class MarkReadDto { public int DestinataireId { get; set; } }
 
         [HttpPost("{id:int}/read")]
         public async Task<IActionResult> MarkRead(int id, [FromBody] MarkReadDto dto)
         {
-            if (string.IsNullOrWhiteSpace(dto.ExternalRecipientId)) return BadRequest(new { error = "externalRecipientId_required" });
-            var row = await _db.Destinataire.FirstOrDefaultAsync(d => d.AlerteId == id && d.ExternalRecipientId == dto.ExternalRecipientId);
+            if (dto.DestinataireId <= 0) return BadRequest(new { error = "destinataireId_required" });
+            var row = await _db.HistoriqueAlertes.FirstOrDefaultAsync(d => d.AlerteId == id && d.DestinataireId == dto.DestinataireId);
             if (row == null) return NotFound();
             row.EtatAlerte = "Lu";
             row.DateLecture = DateTime.UtcNow;

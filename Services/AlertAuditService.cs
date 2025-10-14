@@ -75,12 +75,12 @@ namespace AlertSystem.Services
                 .ToListAsync();
 
             // Confirmation rates (destinataires lus/non lus)
-            var totalRecipients = await _db.Destinataire
+            var totalRecipients = await _db.HistoriqueAlertes
                 .Join(_db.Alerte, d => d.AlerteId, a => a.AlerteId, (d, a) => new { d, a })
                 .Where(x => x.a.DateCreationAlerte >= from && x.a.DateCreationAlerte <= to)
                 .CountAsync();
 
-            var confirmedRecipients = await _db.Destinataire
+            var confirmedRecipients = await _db.HistoriqueAlertes
                 .Join(_db.Alerte, d => d.AlerteId, a => a.AlerteId, (d, a) => new { d, a })
                 .Where(x => x.a.DateCreationAlerte >= from && x.a.DateCreationAlerte <= to)
                 .Where(x => x.d.EtatAlerte == "Lu" || x.d.DateLecture != null)

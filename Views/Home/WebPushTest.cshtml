@@ -1,0 +1,356 @@
+@{
+    ViewData["Title"] = "Test Web Push Notifications";
+}
+
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12">
+            <h2><i class="bi bi-bell-fill me-2"></i>Test Web Push Notifications</h2>
+            <p class="text-muted">Testez les notifications desktop pour tous les utilisateurs</p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Status Card -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Statut des Notifications</h5>
+                </div>
+                <div class="card-body">
+                    <div id="notificationStatus">
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="badge bg-secondary me-2">Support</span>
+                            <span id="supportStatus">Vérification...</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="badge bg-warning me-2">Permission</span>
+                            <span id="permissionStatus">Vérification...</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="badge bg-info me-2">Abonnement</span>
+                            <span id="subscriptionStatus">Vérification...</span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-success me-2">Service Worker</span>
+                            <span id="swStatus">Vérification...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions Card -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-gear me-2"></i>Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button id="enableNotifications" class="btn btn-primary">
+                            <i class="bi bi-bell me-2"></i>Activer les Notifications
+                        </button>
+                        <button id="sendTestNotification" class="btn btn-success" disabled>
+                            <i class="bi bi-send me-2"></i>Envoyer Test
+                        </button>
+                        <button id="disableNotifications" class="btn btn-danger" disabled>
+                            <i class="bi bi-bell-slash me-2"></i>Désactiver
+                        </button>
+                        <button id="refreshStatus" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-clockwise me-2"></i>Actualiser Statut
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Users List -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-people me-2"></i>Utilisateurs de Test</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nom</th>
+                                    <th>Email</th>
+                                    <th>WhatsApp</th>
+                                    <th>Rôle</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>1</td>
+                                    <td><strong>Khalil Ouerghemmi</strong></td>
+                                    <td>khalilouerghemmi@gmail.com</td>
+                                    <td>+21699414008</td>
+                                    <td><span class="badge bg-danger">Admin</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="testUserNotification(1, 'Khalil')">
+                                            <i class="bi bi-send"></i> Test
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>2</td>
+                                    <td><strong>Zied Soltani</strong></td>
+                                    <td>zied.soltani111@gmail.com</td>
+                                    <td>+21621494064</td>
+                                    <td><span class="badge bg-warning">SuperUser</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="testUserNotification(2, 'Zied')">
+                                            <i class="bi bi-send"></i> Test
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>3</td>
+                                    <td><strong>Sarah Ben Ali</strong></td>
+                                    <td>sarah.benali@test.com</td>
+                                    <td>+21620123456</td>
+                                    <td><span class="badge bg-secondary">User</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="testUserNotification(3, 'Sarah')">
+                                            <i class="bi bi-send"></i> Test
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>4</td>
+                                    <td><strong>Ahmed Trabelsi</strong></td>
+                                    <td>ahmed.trabelsi@test.com</td>
+                                    <td>+21625987654</td>
+                                    <td><span class="badge bg-secondary">User</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="testUserNotification(4, 'Ahmed')">
+                                            <i class="bi bi-send"></i> Test
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>5</td>
+                                    <td><strong>Fatma Karray</strong></td>
+                                    <td>fatma.karray@test.com</td>
+                                    <td>+21622555777</td>
+                                    <td><span class="badge bg-warning">SuperUser</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="testUserNotification(5, 'Fatma')">
+                                            <i class="bi bi-send"></i> Test
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logs -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0"><i class="bi bi-terminal me-2"></i>Logs</h5>
+                </div>
+                <div class="card-body">
+                    <div id="logs" class="bg-dark text-light p-3 rounded" style="height: 200px; overflow-y: auto; font-family: monospace;">
+                        <div class="text-success">[WebPush Test] Page chargée</div>
+                    </div>
+                    <button id="clearLogs" class="btn btn-sm btn-outline-secondary mt-2">
+                        <i class="bi bi-trash"></i> Effacer les logs
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+// Web Push Test Page
+let webPushManager = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+    log('Initialisation de la page de test Web Push...');
+    
+    // Attendre que le WebPushManager soit disponible
+    if (window.webPushManager) {
+        webPushManager = window.webPushManager;
+        await initializeTest();
+    } else {
+        // Attendre un peu et réessayer
+        setTimeout(async () => {
+            if (window.webPushManager) {
+                webPushManager = window.webPushManager;
+                await initializeTest();
+            } else {
+                log('❌ WebPushManager non disponible', 'error');
+            }
+        }, 1000);
+    }
+    
+    setupEventListeners();
+});
+
+async function initializeTest() {
+    log('🚀 Initialisation du WebPushManager...');
+    
+    try {
+        const success = await webPushManager.init(1); // Khalil par défaut
+        if (success) {
+            log('✅ WebPushManager initialisé avec succès');
+            updateStatus();
+        } else {
+            log('❌ Échec de l\'initialisation du WebPushManager', 'error');
+        }
+    } catch (error) {
+        log(`❌ Erreur lors de l'initialisation: ${error.message}`, 'error');
+    }
+}
+
+function setupEventListeners() {
+    document.getElementById('enableNotifications')?.addEventListener('click', async () => {
+        log('🔔 Activation des notifications...');
+        try {
+            await webPushManager.requestPermissionAndSubscribe();
+            log('✅ Notifications activées avec succès');
+            updateStatus();
+        } catch (error) {
+            log(`❌ Erreur lors de l'activation: ${error.message}`, 'error');
+        }
+    });
+
+    document.getElementById('sendTestNotification')?.addEventListener('click', async () => {
+        log('📤 Envoi d\'une notification de test...');
+        try {
+            const result = await webPushManager.sendTestNotification(
+                'Test AlertSystem',
+                'Ceci est une notification de test depuis la page de test!'
+            );
+            log('✅ Notification de test envoyée');
+            log(`📊 Résultat: ${JSON.stringify(result)}`);
+        } catch (error) {
+            log(`❌ Erreur lors de l'envoi: ${error.message}`, 'error');
+        }
+    });
+
+    document.getElementById('disableNotifications')?.addEventListener('click', async () => {
+        log('🔕 Désactivation des notifications...');
+        try {
+            await webPushManager.unsubscribe();
+            log('✅ Notifications désactivées');
+            updateStatus();
+        } catch (error) {
+            log(`❌ Erreur lors de la désactivation: ${error.message}`, 'error');
+        }
+    });
+
+    document.getElementById('refreshStatus')?.addEventListener('click', () => {
+        log('🔄 Actualisation du statut...');
+        updateStatus();
+    });
+
+    document.getElementById('clearLogs')?.addEventListener('click', () => {
+        document.getElementById('logs').innerHTML = '<div class="text-success">[WebPush Test] Logs effacés</div>';
+    });
+}
+
+function updateStatus() {
+    if (!webPushManager) {
+        log('⚠️ WebPushManager non disponible pour la mise à jour du statut', 'warning');
+        return;
+    }
+
+    const status = webPushManager.getSubscriptionStatus();
+    
+    // Support
+    document.getElementById('supportStatus').innerHTML = status.isSupported 
+        ? '<span class="text-success">✅ Supporté</span>' 
+        : '<span class="text-danger">❌ Non supporté</span>';
+    
+    // Permission
+    const permissionText = status.hasPermission 
+        ? '<span class="text-success">✅ Accordée</span>'
+        : '<span class="text-warning">⚠️ Non accordée</span>';
+    document.getElementById('permissionStatus').innerHTML = permissionText;
+    
+    // Subscription
+    document.getElementById('subscriptionStatus').innerHTML = status.isSubscribed 
+        ? '<span class="text-success">✅ Abonné</span>' 
+        : '<span class="text-muted">❌ Non abonné</span>';
+    
+    // Service Worker
+    document.getElementById('swStatus').innerHTML = 'serviceWorker' in navigator 
+        ? '<span class="text-success">✅ Disponible</span>' 
+        : '<span class="text-danger">❌ Non disponible</span>';
+    
+    // Update buttons
+    const enableBtn = document.getElementById('enableNotifications');
+    const testBtn = document.getElementById('sendTestNotification');
+    const disableBtn = document.getElementById('disableNotifications');
+    
+    if (status.isSubscribed) {
+        enableBtn.disabled = true;
+        testBtn.disabled = false;
+        disableBtn.disabled = false;
+    } else {
+        enableBtn.disabled = false;
+        testBtn.disabled = true;
+        disableBtn.disabled = true;
+    }
+    
+    log(`📊 Statut mis à jour - Support: ${status.isSupported}, Permission: ${status.hasPermission}, Abonné: ${status.isSubscribed}`);
+}
+
+async function testUserNotification(userId, userName) {
+    log(`📤 Test de notification pour ${userName} (ID: ${userId})...`);
+    
+    try {
+        const response = await fetch('/api/v1/webpush/test-notification', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                userId: userId,
+                title: `Test pour ${userName}`,
+                message: `Bonjour ${userName}! Ceci est une notification de test depuis AlertSystem.`
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const result = await response.json();
+        log(`✅ Notification envoyée à ${userName}`);
+        log(`📊 Résultat: ${JSON.stringify(result)}`);
+    } catch (error) {
+        log(`❌ Erreur lors de l'envoi à ${userName}: ${error.message}`, 'error');
+    }
+}
+
+function log(message, type = 'info') {
+    const logs = document.getElementById('logs');
+    const timestamp = new Date().toLocaleTimeString();
+    const colorClass = type === 'error' ? 'text-danger' : type === 'warning' ? 'text-warning' : 'text-light';
+    
+    const logEntry = document.createElement('div');
+    logEntry.className = colorClass;
+    logEntry.innerHTML = `<span class="text-muted">[${timestamp}]</span> ${message}`;
+    
+    logs.appendChild(logEntry);
+    logs.scrollTop = logs.scrollHeight;
+}
+</script>
+}

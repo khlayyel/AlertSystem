@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AlertSystem.Controllers
 {
-    [Authorize(Roles = "Admin,SuperUser")]
     public sealed class StatisticsController : Controller
     {
         private readonly AlertAuditService _auditService;

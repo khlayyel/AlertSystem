@@ -20,6 +20,7 @@ builder.Services.AddScoped<ICurrentUserAccessor, CurrentUserAccessor>();
 // Email sending is provided by SmtpEmailSender via IEmailSender
 builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IWebPushService, WebPushService>();
 builder.Services.AddScoped<AlertAuditService>();
 builder.Services.AddSingleton<AlertCancellationService>();
 // WhatsApp service uses typed HttpClient configured with appsettings WhatsApp section
@@ -63,13 +64,6 @@ builder.Services.AddHostedService<ReminderService>();
 
 // WhatsApp Service
 builder.Services.AddHttpClient<IWhatsAppService, WhatsAppService>();
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(options =>
-    {
-        options.LoginPath = "/Account/Login";
-        options.AccessDeniedPath = "/Account/Login";
-        options.SlidingExpiration = true;
-    });
 
 var app = builder.Build();
 
@@ -86,9 +80,6 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
-
-app.UseAuthentication();
-app.UseAuthorization();
 
 // Auth API Key pour toutes les routes /api
 app.UseMiddleware<ApiKeyAuthenticationMiddleware>();

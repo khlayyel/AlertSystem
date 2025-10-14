@@ -15,10 +15,12 @@ namespace AlertSystem.Data
         public DbSet<ExpedType> ExpedType => Set<ExpedType>();
         public DbSet<Etat> Etat => Set<Etat>();
         public DbSet<Statut> Statut => Set<Statut>();
-        public DbSet<Destinataire> Destinataire => Set<Destinataire>();
+        public DbSet<HistoriqueAlerte> HistoriqueAlertes { get; set; }
         public DbSet<RappelSuivant> RappelSuivant => Set<RappelSuivant>();
         public DbSet<WebPushSubscription> WebPushSubscriptions => Set<WebPushSubscription>();
         public DbSet<ApiClient> ApiClients => Set<ApiClient>();
+        public DbSet<User> Users => Set<User>();
+        public DbSet<PlateformeEnvoie> PlateformeEnvoie => Set<PlateformeEnvoie>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -44,6 +46,10 @@ namespace AlertSystem.Data
                 b.HasOne(x => x.ExpedType).WithMany().HasForeignKey(x => x.ExpedTypeId).OnDelete(DeleteBehavior.NoAction);
                 b.HasOne(x => x.Statut).WithMany().HasForeignKey(x => x.StatutId).OnDelete(DeleteBehavior.NoAction);
                 b.HasOne(x => x.Etat).WithMany().HasForeignKey(x => x.EtatAlerteId).OnDelete(DeleteBehavior.NoAction);
+                
+                // Nouvelles relations
+                b.HasOne(x => x.PlateformeEnvoie).WithMany(p => p.Alertes).HasForeignKey(x => x.PlateformeEnvoieId).OnDelete(DeleteBehavior.SetNull);
+                b.HasOne(x => x.Destinataire).WithMany().HasForeignKey(x => x.DestinataireId).OnDelete(DeleteBehavior.SetNull);
             });
 
             modelBuilder.Entity<AlertType>(b =>
@@ -76,11 +82,12 @@ namespace AlertSystem.Data
                 b.Property(x => x.EtatAlerteName).HasColumnName("EtatAlerte");
             });
 
-            modelBuilder.Entity<Destinataire>(b =>
+            modelBuilder.Entity<HistoriqueAlerte>(b =>
             {
-                b.ToTable("Destinataire");
+                b.ToTable("HistoriqueAlerte");
                 b.HasKey(x => x.DestinataireId);
-                b.HasOne(x => x.Alerte).WithMany(a => a.Destinataires).HasForeignKey(x => x.AlerteId).OnDelete(DeleteBehavior.Cascade);
+                b.HasOne(x => x.Alerte).WithMany(a => a.HistoriqueAlertes).HasForeignKey(x => x.AlerteId).OnDelete(DeleteBehavior.Cascade);
+                b.HasOne(x => x.User).WithMany().HasForeignKey(x => x.DestinataireUserId).OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<RappelSuivant>(b =>
@@ -88,6 +95,22 @@ namespace AlertSystem.Data
                 b.ToTable("RappelSuivant");
                 b.HasKey(x => x.RappelId);
                 b.HasOne(x => x.Alerte).WithMany(a => a.Rappels).HasForeignKey(x => x.AlerteId).OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<User>(b =>
+            {
+                b.ToTable("Users");
+                b.HasKey(x => x.UserId);
+                b.Property(x => x.FullName).IsRequired();
+                b.Property(x => x.Email).IsRequired();
+                b.HasIndex(x => x.Email).IsUnique();
+            });
+
+            modelBuilder.Entity<PlateformeEnvoie>(b =>
+            {
+                b.ToTable("PlateformeEnvoie");
+                b.HasKey(x => x.PlateformeId);
+                b.Property(x => x.Plateforme).IsRequired().HasMaxLength(50);
             });
         }
     }

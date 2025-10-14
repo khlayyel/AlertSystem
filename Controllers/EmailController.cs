@@ -5,7 +5,6 @@ using Microsoft.Extensions.Logging;
 
 namespace AlertSystem.Controllers
 {
-    [Authorize(Roles="Admin")] // restreindre le test aux admins
     public sealed class EmailController : Controller
     {
         private readonly SmtpEmailSender _email;

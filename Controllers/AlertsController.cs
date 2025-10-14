@@ -19,7 +19,7 @@ namespace AlertSystem.Controllers
             try
             {
                 // Count unread alerts in the new model
-                var count = await _db.Destinataire
+                var count = await _db.HistoriqueAlertes
                     .Where(d => d.EtatAlerte == "Non Lu" || d.DateLecture == null)
                     .CountAsync();
                 
@@ -57,7 +57,7 @@ namespace AlertSystem.Controllers
             try
             {
                 // Count confirmed mandatory alerts
-                var count = await _db.Destinataire
+                var count = await _db.HistoriqueAlertes
                     .Join(_db.Alerte, d => d.AlerteId, a => a.AlerteId, (d, a) => new { d, a })
                     .Join(_db.AlertType, x => x.a.AlertTypeId, at => at.AlertTypeId, (x, at) => new { x.d, x.a, at })
                     .Where(x => x.at.AlertTypeName == "Obligatoire" && 
@@ -102,7 +102,7 @@ namespace AlertSystem.Controllers
                         status = a.Statut != null ? a.Statut.StatutName : "Unknown",
                         state = a.Etat != null ? a.Etat.EtatAlerteName : "Unknown",
                         createdAt = a.DateCreationAlerte,
-                        readAt = a.DateLecture
+                        readAt = a.HistoriqueAlertes.FirstOrDefault() != null ? a.HistoriqueAlertes.FirstOrDefault()!.DateLecture : null
                     })
                     .ToListAsync();
 
@@ -122,7 +122,7 @@ namespace AlertSystem.Controllers
                 var query = _db.Alerte
                     .Include(a => a.AlertType)
                     .Include(a => a.Statut)
-                    .Include(a => a.Destinataires)
+                    .Include(a => a.HistoriqueAlertes)
                     .AsQueryable();
 
                 var total = await query.CountAsync();
@@ -138,8 +138,8 @@ namespace AlertSystem.Controllers
                         type = a.AlertType != null ? a.AlertType.AlertTypeName : "Unknown",
                         status = a.Statut != null ? a.Statut.StatutName : "Unknown",
                         createdAt = a.DateCreationAlerte,
-                        recipientCount = a.Destinataires.Count,
-                        confirmedCount = a.Destinataires.Count(d => d.EtatAlerte == "Lu" || d.DateLecture != null)
+                        recipientCount = a.HistoriqueAlertes.Count,
+                        confirmedCount = a.HistoriqueAlertes.Count(d => d.EtatAlerte == "Lu" || d.DateLecture != null)
                     })
                     .ToListAsync();
 

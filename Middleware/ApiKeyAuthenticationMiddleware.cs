@@ -44,6 +44,13 @@ namespace AlertSystem.Middleware
                     return;
                 }
 
+                // Allow WebPush endpoints without API key (browser-based usage)
+                if (context.Request.Path.StartsWithSegments("/api/v1/webpush"))
+                {
+                    await _next(context);
+                    return;
+                }
+
                 // All other API endpoints require valid API key
                 string? apiKey = context.Request.Headers["X-Api-Key"].ToString();
                 if (!await validator.IsValidAsync(apiKey))

@@ -7,7 +7,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AlertSystem.Controllers
 {
-    [Authorize]
     [ApiController]
     [Route("[controller]/[action]")]
     public sealed class PushController : ControllerBase
@@ -28,28 +27,15 @@ namespace AlertSystem.Controllers
         [HttpPost]
         public async Task<IActionResult> Subscribe([FromBody] SubscribeDto dto)
         {
-            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            if (string.IsNullOrWhiteSpace(dto.Endpoint) || string.IsNullOrWhiteSpace(dto.P256dh) || string.IsNullOrWhiteSpace(dto.Auth)) return BadRequest();
-            var existing = await _db.WebPushSubscriptions.FirstOrDefaultAsync(x => x.UserId == userId && x.Endpoint == dto.Endpoint);
-            if (existing == null)
-            {
-                _db.WebPushSubscriptions.Add(new WebPushSubscription{ UserId = userId, Endpoint = dto.Endpoint, P256dh = dto.P256dh, Auth = dto.Auth, CreatedAt = DateTime.UtcNow });
-            }
-            else
-            {
-                existing.P256dh = dto.P256dh; existing.Auth = dto.Auth;
-            }
-            await _db.SaveChangesAsync();
-            return Ok();
+            // Note: Ce contrôleur est obsolète, utilisez /api/v1/webpush/subscribe à la place
+            return BadRequest(new { error = "Use /api/v1/webpush/subscribe instead" });
         }
 
         [HttpPost]
         public async Task<IActionResult> Unsubscribe([FromBody] SubscribeDto dto)
         {
-            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            var row = await _db.WebPushSubscriptions.FirstOrDefaultAsync(x => x.UserId == userId && x.Endpoint == dto.Endpoint);
-            if (row != null){ _db.WebPushSubscriptions.Remove(row); await _db.SaveChangesAsync(); }
-            return Ok();
+            // Note: Ce contrôleur est obsolète, utilisez /api/v1/webpush/unsubscribe à la place
+            return BadRequest(new { error = "Use /api/v1/webpush/unsubscribe instead" });
         }
     }
 }

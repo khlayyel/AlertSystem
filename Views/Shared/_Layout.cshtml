@@ -29,22 +29,28 @@
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
-                    
-                    
-                        
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-controller="Home" asp-action="Index">Accueil</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-controller="Dashboard" asp-action="Index">Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-controller="Home" asp-action="WebPushTest">
+                                <i class="bi bi-bell-fill me-1"></i>Test Web Push
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-controller="Home" asp-action="HistoriqueTest">
+                                <i class="bi bi-clock-history me-1"></i>Test Historique
+                            </a>
+                        </li>
                     </ul>
-                    <div class="d-flex">
-                        @if (User?.Identity?.IsAuthenticated ?? false)
-                        {
-                            <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
-                                @Html.AntiForgeryToken()
-                                <button type="submit" class="btn btn-link nav-link text-light">Logout</button>
-                            </form>
-                        }
-                        else
-                        {
-                            <a class="nav-link text-light" asp-controller="Account" asp-action="Login">Login</a>
-                        }
+                    <div class="d-flex align-items-center">
+                        <div class="text-light">
+                            <i class="bi bi-building me-1"></i>
+                            <span class="fw-bold">AlertSystem API</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -65,6 +71,8 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/webpush-manager.js" asp-append-version="true"></script>
+    <script src="~/gmail-dashboard.js" asp-append-version="true"></script>
     <script>
       // Ask notification permission on first load
       (async ()=>{ try{ if ("Notification" in window && Notification.permission === 'default'){ await Notification.requestPermission(); } }catch{} })();

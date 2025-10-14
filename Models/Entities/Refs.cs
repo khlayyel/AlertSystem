@@ -24,15 +24,21 @@ namespace AlertSystem.Models.Entities
         public string EtatAlerteName { get; set; } = string.Empty; // maps to EtatAlerte
     }
 
-    public sealed class Destinataire
+    public sealed class HistoriqueAlerte
     {
-        public int DestinataireId { get; set; }
+        public int DestinataireId { get; set; } // Clé primaire (ancien DestinataireId)
         public int AlerteId { get; set; }
+        public int DestinataireUserId { get; set; } // Référence vers Users.UserId
         public string? EtatAlerte { get; set; }
-        public System.DateTime? DateLecture { get; set; }
-        public string? ExternalRecipientId { get; set; }
+        public DateTime? DateLecture { get; set; }
+        public DateTime? RappelSuivant { get; set; }
+        public string? DestinataireEmail { get; set; }
+        public string? DestinatairePhoneNumber { get; set; }
+        public string? DestinataireDesktop { get; set; }
 
+        // Navigation properties
         public Alerte? Alerte { get; set; }
+        public User? User { get; set; }
     }
 
     public sealed class RappelSuivant
