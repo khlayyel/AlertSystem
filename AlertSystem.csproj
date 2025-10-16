@@ -20,4 +20,11 @@
     <PackageReference Include="WebPush" Version="1.0.12" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="AlertSystem.Worker\**" />
+    <Content Remove="AlertSystem.Worker\**" />
+    <EmbeddedResource Remove="AlertSystem.Worker\**" />
+    <None Remove="AlertSystem.Worker\**" />
+  </ItemGroup>
+
 </Project>
