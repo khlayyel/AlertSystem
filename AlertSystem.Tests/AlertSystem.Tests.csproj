@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.2" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AlertSystem.Entities\AlertSystem.Entities.csproj" />
+    <ProjectReference Include="..\AlertSystem.Service\AlertSystem.Service.csproj" />
+    <ProjectReference Include="..\AlertSystem.Repository\AlertSystem.Repository.csproj" />
+    <ProjectReference Include="..\AlertSystem.Infrastructure\AlertSystem.Infrastructure.csproj" />
+    <ProjectReference Include="..\AlertSystem.DataLayer\AlertSystem.DataLayer.csproj" />
+    <ProjectReference Include="..\AlertSystem.DataLayer.DB\AlertSystem.DataLayer.DB.csproj" />
+    <ProjectReference Include="..\AlertSystem.WEB\AlertSystem.WEB.csproj" />
+    <ProjectReference Include="..\AlertSystem.API\AlertSystem.API.csproj" />
+  </ItemGroup>
+
+</Project>

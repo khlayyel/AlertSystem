@@ -1,0 +1,288 @@
+@{
+    ViewData["Title"] = "Dashboard";
+}
+<div class="container py-3">
+  <div class="mb-3">
+    <h3 class="mb-1">Tableau de bord</h3>
+    <div class="text-muted">Bienvenue</div>
+  </div>
+
+  <!-- KPI Cards row -->
+  <div class="row g-3 mb-4">
+    <div class="col-12 col-md-4">
+      <div class="card shadow-sm border-0">
+        <div class="card-body text-center">
+          <div class="text-muted mb-1">ALERTES DU JOUR</div>
+          <div class="display-6 fw-bold" id="todayCount">0</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-md-4">
+      <div class="card shadow-sm border-0">
+        <div class="card-body text-center">
+          <div class="text-muted mb-1">OBLIGATOIRES EN ATTENTE</div>
+          <div class="display-6 fw-bold" id="mandatoryPendingCount">0</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-md-4">
+      <div class="card shadow-sm border-0">
+        <div class="card-body text-center">
+          <div class="text-muted mb-1">OBLIGATOIRES CONFIRMÉES</div>
+          <div class="display-6 fw-bold" id="mandatoryConfirmedCount">0</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top search -->
+  <div class="mb-3 d-flex align-items-center">
+    <input id="alertSearch" class="form-control" placeholder="Rechercher une alerte (titre, expéditeur, contenu, destinataire)..." />
+  </div>
+
+  <ul class="nav nav-tabs gmail-tabs" id="tabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#inbox" type="button">
+        <i class="bi bi-inbox me-2"></i>Boîte de réception
+        <span id="unreadCount" class="badge bg-danger ms-2">0</span>
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#sent" type="button">
+        <i class="bi bi-send me-2"></i>Boîte d'envoi
+      </button>
+    </li>
+  </ul>
+
+  <div class="tab-content gmail-content">
+    <div class="tab-pane fade show active" id="inbox">
+      <div id="inboxPagination" class="gmail-pagination" style="display:none;">
+        <div class="d-flex justify-content-between align-items-center">
+          <span class="gmail-pagination-info">
+            <span id="inboxRangeStart">1</span>-<span id="inboxRangeEnd">50</span> sur <span id="inboxTotal">0</span>
+          </span>
+          <div class="gmail-pagination-controls">
+            <button id="inboxPrevBtn" class="btn btn-sm btn-outline-secondary me-2" disabled>
+              <i class="bi bi-chevron-left"></i>
+            </button>
+            <button id="inboxNextBtn" class="btn btn-sm btn-outline-secondary" disabled>
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div id="inboxList" class="gmail-list">
+        <div class="gmail-loading">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Chargement...</span>
+          </div>
+          <span class="ms-2">Chargement des alertes...</span>
+        </div>
+      </div>
+    </div>
+    <div class="tab-pane fade" id="sent">
+      <div id="sentPagination" class="gmail-pagination" style="display:none;">
+        <div class="d-flex justify-content-between align-items-center">
+          <span class="gmail-pagination-info">
+            <span id="sentRangeStart">1</span>-<span id="sentRangeEnd">50</span> sur <span id="sentTotal">0</span>
+          </span>
+          <div class="gmail-pagination-controls">
+            <button id="sentPrevBtn" class="btn btn-sm btn-outline-secondary me-2" disabled>
+              <i class="bi bi-chevron-left"></i>
+            </button>
+            <button id="sentNextBtn" class="btn btn-sm btn-outline-secondary" disabled>
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div id="sentList" class="gmail-list">
+        <div class="gmail-loading">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Chargement...</span>
+          </div>
+          <span class="ms-2">Chargement des alertes...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="gmail-compose-fab" id="composeFab">
+    <button type="button" class="btn btn-primary btn-lg rounded-pill shadow-lg" data-bs-toggle="modal" data-bs-target="#newAlertModal">
+      <i class="bi bi-plus-lg me-2"></i>Composer
+    </button>
+  </div>
+</div>
+
+<!-- Compose Modal -->
+<div class="modal fade" id="newAlertModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Nouvelle alerte</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Alertes rapides -->
+        <div class="card mb-3 border-0 shadow-sm">
+          <div class="card-header bg-teal text-white" style="background:#18a999;color:#fff;">
+            Alertes rapides
+          </div>
+          <div class="card-body">
+            <div class="row g-3 align-items-center">
+              <div class="col-12 col-md-8">
+                    <select id="quickTemplate" class="form-select">
+                      <option value="">-- Sélectionner --</option>
+                    </select>
+              </div>
+              <div class="col-12 col-md-4 text-muted small">
+                Sélectionnez pour remplir automatiquement
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Titre & message -->
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Titre de l'alerte *</label>
+          <input id="composeTitle" class="form-control" placeholder="Entrez le titre de l'alerte..." />
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Message</label>
+          <textarea id="composeMessage" rows="6" class="form-control" placeholder="Entrez le message de l'alerte..."></textarea>
+        </div>
+
+        <!-- Type d'alerte -->
+        <div class="mb-4">
+          <label class="form-label fw-semibold">Type d'alerte</label>
+          <select id="composeType" class="form-select">
+            <option value="Information">Information</option>
+            <option value="Avertissement">Avertissement</option>
+            <option value="Obligatoire">Obligatoire</option>
+          </select>
+        </div>
+
+        <!-- Plateformes d'envoi -->
+        <div class="card mb-3 border-0 shadow-sm">
+          <div class="card-header" style="background:#18a999;color:#fff;">Plateformes d'envoi</div>
+          <div class="card-body">
+            <div class="mb-2 fw-semibold">Sélectionnez les moyens d'envoi :</div>
+            <div class="row g-3">
+              <div class="col-auto">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="platformEmail">
+                  <label class="form-check-label" for="platformEmail">Email</label>
+                </div>
+              </div>
+              <div class="col-auto">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="platformWhatsApp">
+                  <label class="form-check-label" for="platformWhatsApp">WhatsApp</label>
+                </div>
+              </div>
+              <div class="col-auto">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="platformDesktop">
+                  <label class="form-check-label" for="platformDesktop">Notification Desktop</label>
+                </div>
+              </div>
+            </div>
+            <div class="form-text">Sélectionnez une ou plusieurs plateformes.</div>
+          </div>
+        </div>
+
+        <!-- Coordonnées des destinataires (placeholder UI) -->
+        <div class="card mb-3 border-0 shadow-sm">
+          <div class="card-header" style="background:#18a999;color:#fff;">Coordonnées des destinataires</div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-12 col-md-6">
+                <label class="form-label">Emails (séparés par des virgules)</label>
+                <input id="destEmails" class="form-control" placeholder="ex: a@ex.com, b@ex.com" />
+              </div>
+              <div class="col-12 col-md-6">
+                <label class="form-label">Téléphones WhatsApp</label>
+                <input id="destPhones" class="form-control" placeholder="ex: +21612345678, +21698765432" />
+              </div>
+            </div>
+            <div class="form-text">Ces champs apparaissent selon les plateformes sélectionnées.</div>
+          </div>
+        </div>
+
+        <!-- Configuration API -->
+        <div class="card mb-2 border-0 shadow-sm">
+          <div class="card-header" style="background:#f39c12;color:#fff;">Configuration API</div>
+          <div class="card-body">
+            <div class="row g-2 align-items-center">
+              <div class="col-12 col-md">
+                <label class="form-label">Clé API</label>
+                <input id="apiKey" class="form-control" placeholder="..." />
+                <div class="form-text">La clé API est nécessaire pour envoyer des alertes via l'API</div>
+              </div>
+              <div class="col-auto d-grid">
+                <button type="button" id="apiSaveBtn" class="btn btn-outline-primary">Sauvegarder</button>
+              </div>
+              <div class="col-auto d-grid">
+                <button type="button" id="apiTestBtn" class="btn btn-outline-success">Tester</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer d-flex justify-content-between">
+        <div>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        </div>
+        <div class="d-flex gap-2">
+          <button type="button" id="saveQuickBtn" class="btn btn-outline-primary">Enregistrer comme alerte rapide</button>
+          <button type="button" id="composeSendBtn" class="btn btn-teal btn-primary" style="background:#18a999;border-color:#18a999;">Envoyer l'alerte</button>
+        </div>
+      </div>
+    </div>
+  </div>
+ </div>
+
+<!-- Details Modal -->
+<div class="modal fade" id="alertDetailsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Détails de l'alerte</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <div class="fw-semibold">Titre</div>
+          <div id="detailTitle" class="text-body"></div>
+        </div>
+        <div class="mb-3">
+          <div class="fw-semibold">Message</div>
+          <pre id="detailMessage" class="mb-0" style="white-space:pre-wrap"></pre>
+        </div>
+        <div class="row g-3">
+          <div class="col">
+            <div class="small text-muted">Type</div>
+            <div id="detailType"></div>
+          </div>
+          <div class="col">
+            <div class="small text-muted">Statut</div>
+            <div id="detailStatus"></div>
+          </div>
+          <div class="col">
+            <div class="small text-muted">Créée le</div>
+            <div id="detailCreatedAt"></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+@section Scripts {
+<script src="~/js/gmail-dashboard.js"></script>
+}
+
+

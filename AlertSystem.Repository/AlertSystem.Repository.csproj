@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\AlertSystem.Entities\AlertSystem.Entities.csproj" />
+    <ProjectReference Include="..\AlertSystem.DataLayer.DB\AlertSystem.DataLayer.DB.csproj" />
+    <ProjectReference Include="..\AlertSystem.DataLayer\AlertSystem.DataLayer.csproj" />
+    <ProjectReference Include="..\AlertSystem.Utils\AlertSystem.Utils.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

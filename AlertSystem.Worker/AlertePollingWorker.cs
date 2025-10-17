@@ -41,7 +41,7 @@ namespace AlertSystem.Worker
                 try
                 {
                     await ProcessUnprocessedAlerts(stoppingToken);
-                    await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken); // Poll every 5 seconds
+                    await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken); // Poll every 1 minute
                 }
                 catch (Exception ex)
                 {
@@ -95,6 +95,8 @@ namespace AlertSystem.Worker
             // Determine channels to use
             var channels = GetChannelsForAlert(alert);
 
+            var totalAttempts = 0;
+            var totalSuccess = 0;
             // Send to each recipient via each channel
             foreach (var recipient in recipients)
             {
@@ -112,7 +114,9 @@ namespace AlertSystem.Worker
                 {
                     try
                     {
+                        totalAttempts++;
                         await SendViaChannel(channel, recipient, alert.TitreAlerte, alert.DescriptionAlerte, cancellationToken);
+                        totalSuccess++;
                     }
                     catch (Exception ex)
                     {
@@ -124,6 +128,15 @@ namespace AlertSystem.Worker
 
             _logger.LogInformation("Completed processing alert {AlerteId} for {RecipientCount} recipients via {ChannelCount} channels", 
                 alert.AlerteId, recipients.Count, channels.Count);
+
+            if (totalAttempts > 0 && totalSuccess > 0)
+            {
+                await _alertRepository.MarkAlertAsProcessedAsync(alert.AlerteId, cancellationToken);
+            }
+            else
+            {
+                await _alertRepository.MarkAlertAsFailedAsync(alert.AlerteId, cancellationToken);
+            }
         }
 
         private async Task<List<UserModel>> GetRecipientsForAlert(AlerteModel alert, CancellationToken cancellationToken)

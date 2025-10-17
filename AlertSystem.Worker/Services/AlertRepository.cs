@@ -31,10 +31,10 @@ namespace AlertSystem.Worker.Services
 
             using var command = connection.CreateCommand();
             command.CommandText = @"
-                SELECT AlerteId, AlertTypeId, DestinataireId, PlateformeEnvoieId, 
+                SELECT AlerteId, AlertTypeId, DestinataireId, PlateformeEnvoieId, StatutId,
                        TitreAlerte, DescriptionAlerte, DateCreationAlerte, ProcessedByWorker
                 FROM dbo.Alerte 
-                WHERE ProcessedByWorker = 0 
+                WHERE StatutId IN (1,4) AND (ProcessedByWorker = 0 OR ProcessedByWorker IS NULL)
                 ORDER BY DateCreationAlerte ASC";
 
             using var reader = await command.ExecuteReaderAsync(cancellationToken);
@@ -49,7 +49,8 @@ namespace AlertSystem.Worker.Services
                     TitreAlerte = reader.GetString("TitreAlerte") ?? string.Empty,
                     DescriptionAlerte = reader.GetString("DescriptionAlerte") ?? string.Empty,
                     DateCreationAlerte = reader.GetDateTime("DateCreationAlerte"),
-                    ProcessedByWorker = reader.GetBoolean("ProcessedByWorker")
+                    StatutId = reader.GetInt32("StatutId"),
+                    ProcessedByWorker = reader.IsDBNull("ProcessedByWorker") ? false : reader.GetBoolean("ProcessedByWorker")
                 });
             }
 
@@ -122,11 +123,28 @@ namespace AlertSystem.Worker.Services
             await connection.OpenAsync(cancellationToken);
 
             using var command = connection.CreateCommand();
-            command.CommandText = "UPDATE dbo.Alerte SET ProcessedByWorker = 1 WHERE AlerteId = @AlerteId";
+            command.CommandText = @"UPDATE dbo.Alerte 
+                                    SET ProcessedByWorker = 1, StatutId = 2  -- Envoyé
+                                    WHERE AlerteId = @AlerteId";
             command.Parameters.Add(new SqlParameter("@AlerteId", SqlDbType.Int) { Value = alerteId });
 
             await command.ExecuteNonQueryAsync(cancellationToken);
             _logger.LogInformation("Marked alert {AlerteId} as processed", alerteId);
+        }
+
+        public async Task MarkAlertAsFailedAsync(int alerteId, CancellationToken cancellationToken = default)
+        {
+            using var connection = new SqlConnection(_connectionString);
+            await connection.OpenAsync(cancellationToken);
+
+            using var command = connection.CreateCommand();
+            command.CommandText = @"UPDATE dbo.Alerte 
+                                    SET ProcessedByWorker = 0, StatutId = 4  -- Échoué
+                                    WHERE AlerteId = @AlerteId";
+            command.Parameters.Add(new SqlParameter("@AlerteId", SqlDbType.Int) { Value = alerteId });
+
+            await command.ExecuteNonQueryAsync(cancellationToken);
+            _logger.LogWarning("Marked alert {AlerteId} as failed", alerteId);
         }
 
         public async Task CreateHistoriqueAlerteAsync(int alerteId, int userId, string email, string phoneNumber, string desktopToken, CancellationToken cancellationToken = default)

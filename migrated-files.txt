@@ -1,0 +1,35 @@
+[FOUND ROOT ARTIFACT] Controllers/
+[FOUND ROOT ARTIFACT] Views/
+[FOUND ROOT ARTIFACT] Services/
+[FOUND ROOT ARTIFACT] Hubs/
+[FOUND ROOT ARTIFACT] Data/
+[FOUND ROOT ARTIFACT] wwwroot/
+[FOUND ROOT ARTIFACT] Models/
+
+[RESTORE-IFACE] AlertSystem/Services/INotificationService.cs -> AlertSystem.Service/INotificationService.cs
+[RESTORE-IFACE] AlertSystem/Services/IWhatsAppService.cs -> AlertSystem.Service/IWhatsAppService.cs
+[RESTORE-IFACE] AlertSystem/Services/WebPushService.cs (IWebPushService) -> AlertSystem.Service/Notifications/IWebPushService.cs
+
+[MOVE] wwwroot/gmail-dashboard.js -> AlertSystem.WEB/wwwroot/js/gmail-dashboard.js
+[MODIFY] AlertSystem.WEB/wwwroot/js/gmail-dashboard.js : robust modal init
+
+[MODIFY] AlertSystem.WEB/Views/Shared/_Layout.cshtml : asset paths fixed
+[BACKUP] AlertSystem.WEB/Views/Shared/_Layout.cshtml -> docs/migration-backups/_Layout.cshtml.backup
+
+[MODIFY] AlertSystem.WEB/Views/Home/Index.cshtml : soft redirect to Dashboard
+
+[MODIFY] AlertSystem.WEB/Controllers/PushController.cs : using AlertSystem.Services; DI via IWebPushService
+[MODIFY] AlertSystem.API/Controllers/AlertsController.cs : using AlertSystem.Services;
+[MODIFY] AlertSystem.API/Controllers/WhatsAppTestController.cs : using AlertSystem.Services;
+[MODIFY] AlertSystem.API/Controllers/WhatsAppDebugController.cs : using AlertSystem.Services;
+
+[REMOVE] AlertSystem.Service/Alerts/IAlertReadService.cs (duplicate)
+[REMOVE] AlertSystem.Service/Alerts/AlertReadService.cs (duplicate)
+[REMOVE] AlertSystem.Service/IWebPushService.cs (duplicate)
+[REMOVE] AlertSystem.Service/WebPushService.cs (stub duplicate)
+
+[MODIFY] AlertSystem.Service/NotificationService.cs : using AlertSystem.Services
+[MODIFY] AlertSystem.Service/ReminderService.cs : using AlertSystem.Services
+
+[MODIFY] AlertSystem.WEB/Properties/launchSettings.json : http port 5185
+[MODIFY] AlertSystem.WEB/appsettings.Development.json : valid JSON + ConnectionStrings

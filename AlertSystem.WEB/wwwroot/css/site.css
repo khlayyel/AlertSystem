@@ -1,0 +1,45 @@
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body { background: #f8fafc; }
+.card, .gmail-content, .gmail-tabs { background: #fff; border-radius: 8px; box-shadow:0 2px 6px rgba(0,0,0,0.06); }
+.navbar-dark { background-color: #293042!important; }
+.gmail-tabs .nav-link { color: #555; font-weight:500; border:none; border-bottom:2px solid transparent; }
+.gmail-tabs .nav-link.active { color: #0074d9; background:#f9fafb; border-bottom:2px solid #0074d9; }
+.gmail-list { padding:1.3rem 0 2.1rem 0; }
+.gmail-alert-row { display:grid; grid-template-columns: 1.2fr 2fr auto; align-items:center; gap:12px; padding: 12px 14px; margin-bottom: .2rem; background: #fff; border-radius: 6px; box-shadow:0 1px 2px #e3e8ef; border:1px solid #eceff3; cursor:pointer; }
+.gmail-alert-row:hover{ background:#f8fbff; }
+.gmail-alert-row .title-col{ font-weight:600; color:#2d3748; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.gmail-alert-row .desc-col{ color:#6b7280; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.gmail-alert-row .date-col{ color:#8a94a6; font-weight:500; text-align:right; }
+.badge-info-soft{ background:#19c2d6; color:#fff; border-radius:12px; padding:2px 8px; font-size:.75rem; }
+.gmail-pagination { margin-top:1.2rem; background:#fff9; border-radius:5px; }
+.gmail-pagination .gmail-pagination-info{ font-weight:500; color:#6b7280; }
+.gmail-compose-fab { position:fixed!important; bottom:32px; right:48px; z-index:1300; }
+.gmail-compose-fab button { box-shadow:0 6px 18px 0 #0074d9a8; font-size:1.35rem; border-radius:30px; padding: 0.7rem 2.2rem; background:#00bfae; border:none; }
+.gmail-compose-fab button:hover { background:#42e6e0; }
+
+.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
+  color: var(--bs-secondary-color);
+  text-align: end;
+}
+
+.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
+  text-align: start;
+}

@@ -11,6 +11,7 @@ namespace AlertSystem.Worker.Services
         Task<List<UserModel>> GetActiveUsersAsync(CancellationToken cancellationToken = default);
         Task<UserModel?> GetUserByIdAsync(int userId, CancellationToken cancellationToken = default);
         Task MarkAlertAsProcessedAsync(int alerteId, CancellationToken cancellationToken = default);
+        Task MarkAlertAsFailedAsync(int alerteId, CancellationToken cancellationToken = default);
         Task CreateHistoriqueAlerteAsync(int alerteId, int userId, string email, string phoneNumber, string desktopToken, CancellationToken cancellationToken = default);
     }
 }

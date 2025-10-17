@@ -1,0 +1,6 @@
+[DI] Added builder.Services.AddScoped<AlertSystem.Services.IWebPushService, AlertSystem.Services.WebPushService>();
+[DI] Added builder.Services.AddScoped<AlertSystem.Service.IAlertReadService, AlertSystem.Service.AlertReadService>();
+[DI] Added builder.Services.AddScoped<AlertSystem.Service.IAlertCrudService, AlertSystem.Service.AlertCrudService>();
+[DI] Added builder.Services.AddScoped<AlertSystem.Service.IEmailSender, AlertSystem.Services.SmtpEmailSender>();
+[DI] Added builder.Services.AddScoped<AlertSystem.Service.AlertAuditService>();
+[DI] Added builder.Services.AddSingleton<AlertSystem.Service.ReminderConfiguration>();
