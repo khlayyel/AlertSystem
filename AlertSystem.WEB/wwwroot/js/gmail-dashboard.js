@@ -1,6 +1,10 @@
 // Minimal bootstrap to load inbox/sent using existing endpoints in WEB controllers
 let inboxPage = 1, sentPage = 1, pageSize = 50, inboxTotal = 0, sentTotal = 0;
 
+// Simple frontend logging helper
+const __ALERT_DEBUG = true;
+function dbg(){ try { if (__ALERT_DEBUG && window.console){ console.debug.apply(console, arguments); } } catch{} }
+
 document.addEventListener('DOMContentLoaded', function() {
   try { loadInbox(); } catch {}
   const sentTab = document.querySelector('[data-bs-target="#sent"]');
@@ -17,6 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (window.bootstrap && typeof window.bootstrap.Modal?.getOrCreateInstance === 'function') {
         window.bootstrap.Modal.getOrCreateInstance(el);
       }
+      dbg('Modal open click', { targetSel });
     });
   });
   // Load KPIs and unread badge
@@ -88,6 +93,7 @@ if (saveQuickBtn){
       const q = search.value.trim().toLowerCase();
       filterList('inboxList', q);
       filterList('sentList', q);
+      dbg('search:input', { q });
     });
   }
 });
@@ -115,7 +121,15 @@ async function loadQuickTemplates(){
 }
 
 
-async function fetchJson(url){ const r = await fetch(url, { cache:'no-store' }); if(!r.ok) throw new Error('HTTP '+r.status); return await r.json(); }
+async function fetchJson(url){
+  dbg('fetchJson:start', url);
+  const r = await fetch(url, { cache:'no-store' });
+  dbg('fetchJson:resp', { url, status:r.status });
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  const j = await r.json();
+  dbg('fetchJson:data', { url, data:j });
+  return j;
+}
 
 function showLoading(containerId){ const c = document.getElementById(containerId); if(!c) return; c.innerHTML = '<div class="gmail-loading"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Chargement...</span></div><span class="ms-2">Chargement des alertes...</span></div>'; }
 
@@ -154,6 +168,7 @@ async function loadInbox(){
   renderList('inboxList', data.items);
   inboxTotal = data.total ?? 0;
   updatePagination('inbox', inboxPage, inboxTotal);
+  dbg('inbox:loaded', { page: inboxPage, total: inboxTotal });
 }
 async function loadSent(){
   showLoading('sentList');
@@ -161,6 +176,7 @@ async function loadSent(){
   renderList('sentList', data.items);
   sentTotal = data.total ?? 0;
   updatePagination('sent', sentPage, sentTotal);
+  dbg('sent:loaded', { page: sentPage, total: sentTotal });
 }
 
 function updatePagination(kind, page, total){
@@ -190,6 +206,7 @@ function filterList(containerId, query){
     const text = row.innerText.toLowerCase();
     row.style.display = text.includes(query) ? '' : 'none';
   });
+  dbg('filterList', { containerId, query, rows: rows.length });
 }
 
 async function updateUnreadBadge(){
@@ -229,15 +246,21 @@ if (sendBtn){
       Desktop: document.getElementById('platformDesktop')?.checked || false
     };
     try {
+      console.groupCollapsed('Send:compose');
+      dbg('send:payload', { title, message, emails, phones, platforms });
       const r = await fetch('/AlertsCrud/Send', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ title, message, emails, phones, platforms }) });
+      dbg('send:responseStatus', r.status);
       if (!r.ok) throw new Error('HTTP '+r.status);
-      await r.json();
+      const j = await r.json();
+      dbg('send:responseBody', j);
       // Fermer le modal et recharger Inbox pour voir la nouvelle alerte
       const modalEl = document.getElementById('newAlertModal');
       if (modalEl && window.bootstrap?.Modal){ window.bootstrap.Modal.getOrCreateInstance(modalEl).hide(); }
       inboxPage = 1; await loadInbox();
+      console.groupEnd();
     } catch(err){
       console.error('CreateFromTemplate failed', err);
+      console.groupEnd();
       alert("Échec de création d'alerte");
     }
   });
@@ -251,6 +274,7 @@ function setupDynamicPlatforms(){
   const updateVis = () => {
     if (emailInput) emailInput.style.display = emailChk?.checked ? '' : 'none';
     if (phoneInput) phoneInput.style.display = waChk?.checked ? '' : 'none';
+    dbg('platforms:toggle', { email: !!emailChk?.checked, whatsapp: !!waChk?.checked });
   };
   emailChk?.addEventListener('change', updateVis);
   waChk?.addEventListener('change', updateVis);
@@ -279,10 +303,12 @@ function makeTagInput(inputId, separatorRegex, normalizer){
     const x = document.createElement('button'); x.type='button'; x.className='tag-x'; x.textContent='×';
     x.onclick = ()=>{ list.removeChild(tag); syncHidden(); };
     tag.appendChild(x); list.appendChild(tag); syncHidden();
+    dbg('tag:add', { inputId, value:v });
   };
   const syncHidden = ()=>{
     const vals = Array.from(list.querySelectorAll('.tag')).map(t=>t.firstChild.nodeValue);
     input.value = vals.join(',');
+    dbg('tag:sync', { inputId, values: vals });
   };
   editor.addEventListener('keydown', (e)=>{
     if (e.key==='Enter' || separatorRegex.test(editor.value)){

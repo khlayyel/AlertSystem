@@ -47,13 +47,31 @@ namespace AlertSystem.Service
         {
             try
             {
+                _logger.LogInformation("Attempting to send email to {Email} with subject: {Subject}", toEmail, subject);
                 await _emailSender.SendEmailAsync(toEmail, subject, message);
                 _logger.LogInformation("Email sent successfully to {Email}", toEmail);
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to send email to {Email}", toEmail);
+                _logger.LogError(ex, "Failed to send email to {Email}. Exception: {ExceptionMessage}", toEmail, ex.Message);
+                return false;
+            }
+        }
+
+        // Overload for HTML emails
+        public async Task<bool> SendHtmlEmailAsync(string toEmail, string subject, string htmlContent)
+        {
+            try
+            {
+                _logger.LogInformation("Attempting to send HTML email to {Email} with subject: {Subject}", toEmail, subject);
+                await _emailSender.SendHtmlEmailAsync(toEmail, subject, htmlContent);
+                _logger.LogInformation("HTML email sent successfully to {Email}", toEmail);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send HTML email to {Email}. Exception: {ExceptionMessage}", toEmail, ex.Message);
                 return false;
             }
         }

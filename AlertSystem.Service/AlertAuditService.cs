@@ -3,6 +3,8 @@ using AlertSystem.Data;
 using AlertSystem.Entities.Entities;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace AlertSystem.Service
 {
@@ -84,7 +86,7 @@ namespace AlertSystem.Service
             var confirmedRecipients = await _db.HistoriqueAlertes
                 .Join(_db.Alerte, d => d.AlerteId, a => a.AlerteId, (d, a) => new { d, a })
                 .Where(x => x.a.DateCreationAlerte >= from && x.a.DateCreationAlerte <= to)
-                .Where(x => x.d.EtatAlerte == "Lu" || x.d.DateLecture != null)
+                .Where(x => x.d.EtatAlerteId == 2 || x.d.DateLecture != null)
                 .CountAsync();
 
             stats["TotalAlerts"] = totalAlerts;
@@ -98,6 +100,13 @@ namespace AlertSystem.Service
                 from, to, totalAlerts, stats["ConfirmationRate"]);
 
             return stats;
+        }
+
+        public async Task<int> CountConfirmedAsync(int alerteId)
+        {
+            return await _db.HistoriqueAlertes
+                .Where(x => x.AlerteId == alerteId && (x.EtatAlerteId == 2 || x.DateLecture != null))
+                .CountAsync();
         }
     }
 }

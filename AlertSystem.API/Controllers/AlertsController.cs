@@ -51,7 +51,7 @@ namespace AlertSystem.Controllers.Api.V1
                         {
                             destinataireId = d.DestinataireId,
                             destinataireUserId = d.DestinataireUserId,
-                            etatAlerte = d.EtatAlerte,
+                            etatAlerteId = d.EtatAlerteId,
                             dateLecture = d.DateLecture,
                             rappelSuivant = d.RappelSuivant,
                             destinataireEmail = d.DestinataireEmail,
@@ -252,7 +252,7 @@ namespace AlertSystem.Controllers.Api.V1
                 {
                     AlerteId = alert.AlerteId,
                     DestinataireUserId = 1, // TODO: Utiliser le vrai UserId du destinataire
-                    EtatAlerte = "Non Lu",
+                    EtatAlerteId = etatId,
                     DestinataireEmail = "test@example.com", // TODO: Récupérer depuis Users ou Recipients
                     DestinatairePhoneNumber = "+21699414008", // TODO: Récupérer depuis Users ou Recipients
                     DestinataireDesktop = "desktop-token" // TODO: Récupérer depuis Users ou Recipients
@@ -354,7 +354,7 @@ namespace AlertSystem.Controllers.Api.V1
             if (dto.DestinataireId <= 0) return BadRequest(new { error = "destinataireId_required" });
             var row = await _db.HistoriqueAlertes.FirstOrDefaultAsync(d => d.AlerteId == id && d.DestinataireId == dto.DestinataireId);
             if (row == null) return NotFound();
-            row.EtatAlerte = "Lu";
+            row.EtatAlerteId = 2; // Lu
             row.DateLecture = DateTime.UtcNow;
             await _db.SaveChangesAsync();
             return Ok();

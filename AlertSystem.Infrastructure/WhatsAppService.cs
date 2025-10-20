@@ -130,11 +130,7 @@ namespace AlertSystem.Services
                     messaging_product = "whatsapp",
                     to = phoneNumber,
                     type = "template",
-                    template = new 
-                    { 
-                        name = "hello_world", 
-                        language = new { code = "en_US" } 
-                    }
+                    template = new { name = "hello_world", language = new { code = "en_US" } }
                 };
 
                 var json = JsonSerializer.Serialize(payload);
@@ -163,6 +159,66 @@ namespace AlertSystem.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Exception in TryTemplateMessage for {PhoneNumber}", phoneNumber);
+                return false;
+            }
+        }
+
+        public async Task<bool> SendTemplateAsync(string phoneNumber, string templateName, string languageCode, IDictionary<string, string>? variables = null)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(_accessToken) || string.IsNullOrWhiteSpace(_phoneNumberId))
+                {
+                    _logger.LogError("WhatsApp configuration missing - cannot send template");
+                    return false;
+                }
+
+                var cleanPhoneNumber = CleanPhoneNumber(phoneNumber);
+                if (string.IsNullOrWhiteSpace(cleanPhoneNumber))
+                {
+                    _logger.LogError("Invalid phone number: {PhoneNumber}", phoneNumber);
+                    return false;
+                }
+
+                object template;
+                var components = new List<object>();
+                if (variables != null && variables.Count > 0)
+                {
+                    // Body parameters (text placeholders)
+                    var bodyParams = variables
+                        .Where(kv => kv.Key != null && !kv.Key.Equals("confirm_url", StringComparison.OrdinalIgnoreCase))
+                        .Select(kv => new { type = "text", text = kv.Value })
+                        .ToArray();
+                    if (bodyParams.Length > 0)
+                    {
+                        components.Add(new { type = "body", parameters = bodyParams });
+                    }
+                    // URL button parameter if present
+                    if (variables.TryGetValue("confirm_url", out var url))
+                    {
+                        components.Add(new { type = "button", sub_type = "url", index = 0, parameters = new object[] { new { type = "text", text = url } } });
+                    }
+                }
+                template = components.Count > 0
+                    ? new { name = templateName, language = new { code = languageCode }, components }
+                    : new { name = templateName, language = new { code = languageCode } };
+
+                var payload = new { messaging_product = "whatsapp", to = cleanPhoneNumber, type = "template", template };
+                var json = JsonSerializer.Serialize(payload);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                _logger.LogInformation("=== WHATSAPP TEMPLATE SEND (dynamic) === To: {PhoneNumber}, Template: {Template}", cleanPhoneNumber, templateName);
+                _logger.LogInformation("WA payload(template-dyn): {Payload}", json);
+
+                var response = await _httpClient.PostAsync($"{_phoneNumberId}/messages", content);
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                _logger.LogInformation("WhatsApp Template Response - Status: {StatusCode}, Content: {Content}", response.StatusCode, responseContent);
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Exception in SendTemplateAsync for {PhoneNumber}", phoneNumber);
                 return false;
             }
         }

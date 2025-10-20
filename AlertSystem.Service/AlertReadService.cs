@@ -17,8 +17,9 @@ namespace AlertSystem.Service
 
         public async Task<int> GetUnreadCountAsync()
         {
+            // 1 = Non Lu
             return await _db.HistoriqueAlertes
-                .Where(d => d.EtatAlerte == "Non Lu" || d.DateLecture == null)
+                .Where(d => d.EtatAlerteId == 1 || d.DateLecture == null)
                 .CountAsync();
         }
 
@@ -33,21 +34,21 @@ namespace AlertSystem.Service
 
         public async Task<int> GetConfirmedMandatoryCountAsync()
         {
-            // Obligatoires confirmées = acquittement nécessaire ET lu/confirmé
+            // Obligatoires confirmées = acquittement nécessaire ET lu/confirmé (EtatAlerteId = 2)
             return await _db.HistoriqueAlertes
                 .Join(_db.Alerte, d => d.AlerteId, a => a.AlerteId, (d, a) => new { d, a })
                 .Join(_db.AlertType, x => x.a.AlertTypeId, at => at.AlertTypeId, (x, at) => new { x.d, x.a, at })
-                .Where(x => x.at.AlertTypeName == "acquittementNécessaire" && (x.d.EtatAlerte == "Lu" || x.d.DateLecture != null))
+                .Where(x => x.at.AlertTypeName == "acquittementNécessaire" && (x.d.EtatAlerteId == 2 || x.d.DateLecture != null))
                 .CountAsync();
         }
 
         public async Task<int> GetMandatoryPendingCountAsync()
         {
-            // Obligatoires en attente = acquittement nécessaire ET non lu/non confirmé
+            // Obligatoires en attente = acquittement nécessaire ET non lu (EtatAlerteId != 2 et DateLecture NULL)
             return await _db.HistoriqueAlertes
                 .Join(_db.Alerte, d => d.AlerteId, a => a.AlerteId, (d, a) => new { d, a })
                 .Join(_db.AlertType, x => x.a.AlertTypeId, at => at.AlertTypeId, (x, at) => new { x.d, x.a, at })
-                .Where(x => x.at.AlertTypeName == "acquittementNécessaire" && (x.d.EtatAlerte != "Lu" && x.d.DateLecture == null))
+                .Where(x => x.at.AlertTypeName == "acquittementNécessaire" && (x.d.EtatAlerteId != 2 && x.d.DateLecture == null))
                 .CountAsync();
         }
 
@@ -107,7 +108,7 @@ namespace AlertSystem.Service
                     status = a.Statut != null ? a.Statut.StatutName : "Unknown",
                     createdAt = a.DateCreationAlerte,
                     recipientCount = a.HistoriqueAlertes.Count,
-                    confirmedCount = a.HistoriqueAlertes.Count(d => d.EtatAlerte == "Lu" || d.DateLecture != null)
+                    confirmedCount = a.HistoriqueAlertes.Count(d => d.EtatAlerteId == 2 || d.DateLecture != null)
                 })
                 .ToListAsync();
 
@@ -136,7 +137,7 @@ namespace AlertSystem.Service
                 createdAt = alert.DateCreationAlerte,
                 // sender removed from UI
                 recipients = alert.HistoriqueAlertes
-                    .Select(h => new { h.DestinataireId, h.DestinataireUserId, fullName = h.User != null ? h.User.FullName : string.Empty, email = h.DestinataireEmail, phone = h.DestinatairePhoneNumber, desktop = h.DestinataireDesktop, etat = h.EtatAlerte, luLe = h.DateLecture })
+                    .Select(h => new { h.DestinataireId, h.DestinataireUserId, fullName = h.User != null ? h.User.FullName : string.Empty, email = h.DestinataireEmail, phone = h.DestinatairePhoneNumber, desktop = h.DestinataireDesktop, etatId = h.EtatAlerteId, luLe = h.DateLecture })
                     .ToList()
             };
         }

@@ -1,3 +1,66 @@
+# AlertSystem - Production-ready
+
+## Run
+
+1) Prérequis: .NET 9 SDK, SQL Server LocalDB
+2) Restaurer et build:
+```
+dotnet restore
+dotnet build -v:m
+```
+3) Appliquer la base (EF migrations) pour LocalDB:
+```
+dotnet tool install -g dotnet-ef # si besoin
+dotnet-ef database update --project AlertSystem.DataLayer.DB --startup-project AlertSystem.API
+```
+4) Lancer:
+```
+cmd /c "set ASPNETCORE_URLS=http://localhost:5186 && dotnet run --project AlertSystem.API --no-build"
+cmd /c "set ASPNETCORE_URLS=http://localhost:5185 && dotnet run --project AlertSystem.WEB --no-build"
+cmd /c "dotnet run --project AlertSystem.Worker --no-build"
+```
+
+WEB: http://localhost:5185
+API: http://localhost:5186
+
+## Configuration
+- `appsettings.json` (WEB/API/Worker): ConnectionStrings.DefaultConnection, SMTP, WhatsApp, WebPush, Serilog.
+
+## Données de référence
+- Seeding idempotent via API/WEB au démarrage (Statut, Etat, AlertType, Plateforme, ApiClient test).
+- Scripts SQL supplémentaires: `scripts/seed-core-data.sql`.
+
+## Tests
+```
+dotnet test -v:m
+```
+Couverture:
+- Flux d’envoi manuel (succès/échec) -> statut Envoyé/Échoué, Historique créé, `EtatAlerteId`.
+- Vérifications unitaires de base.
+
+## Worker
+- Cadence: 1 minute.
+- Sélection: `StatutId IN (En Cours, Échoué)`; ignore `Annulé`.
+- Mise à jour: Envoyé (2) si anySuccess, sinon Échoué (4).
+- Journal: Serilog + table `AlertSendLog`.
+
+## Sécurité API
+- Middleware `ApiKeyMiddleware`: header `X-Api-Key` obligatoire pour ingestion, validé sur `ApiClient` (hashé).
+
+## Déploiement
+- WEB/API: IIS/Kestrel (Windows) avec variables `ASPNETCORE_URLS`.
+- Worker: Service Windows (UseWindowsService), config via `appsettings.json`.
+- Logs:
+  - Serilog Console + fichiers/config selon appsettings.
+
+## Notes Schéma
+- `HistoriqueAlerte.EtatAlerteId` (FK -> `Etat(EtatAlerteId)`), remplace l’ancienne colonne texte.
+- `Alerte.StatutId`: 1 En Cours, 2 Envoyé, 3 Annulé, 4 Échoué.
+
+## Scripts utiles
+- `scripts/test-email-and-whatsapp.sql`: insérer une alerte test (StatutId=1) pour worker.
+- `scripts/curl-tests.ps1`: exemples d’appels API avec clé.
+
 # AlertSystem - Multi-Channel Alert Management System
 
 ## Overview

@@ -17,12 +17,12 @@ namespace AlertSystem.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.9")
+                .HasAnnotation("ProductVersion", "9.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("AlertSystem.Models.Entities.AlertType", b =>
+            modelBuilder.Entity("AlertSystem.Entities.Entities.AlertType", b =>
                 {
                     b.Property<int>("AlertTypeId")
                         .ValueGeneratedOnAdd()
@@ -40,7 +40,7 @@ namespace AlertSystem.Migrations
                     b.ToTable("AlertType", (string)null);
                 });
 
-            modelBuilder.Entity("AlertSystem.Models.Entities.Alerte", b =>
+            modelBuilder.Entity("AlertSystem.Entities.Entities.Alerte", b =>
                 {
                     b.Property<int>("AlerteId")
                         .ValueGeneratedOnAdd()
@@ -99,7 +99,7 @@ namespace AlertSystem.Migrations
                     b.ToTable("Alerte", (string)null);
                 });
 
-            modelBuilder.Entity("AlertSystem.Models.Entities.ApiClient", b =>
+            modelBuilder.Entity("AlertSystem.Entities.Entities.ApiClient", b =>
                 {
                     b.Property<int>("ApiClientId")
                         .ValueGeneratedOnAdd()
@@ -129,7 +129,7 @@ namespace AlertSystem.Migrations
                     b.ToTable("ApiClients");
                 });
 
-            modelBuilder.Entity("AlertSystem.Models.Entities.Etat", b =>
+            modelBuilder.Entity("AlertSystem.Entities.Entities.Etat", b =>
                 {
                     b.Property<int>("EtatAlerteId")
                         .ValueGeneratedOnAdd()
@@ -147,7 +147,7 @@ namespace AlertSystem.Migrations
                     b.ToTable("Etat", (string)null);
                 });
 
-            modelBuilder.Entity("AlertSystem.Models.Entities.ExpedType", b =>
+            modelBuilder.Entity("AlertSystem.Entities.Entities.ExpedType", b =>
                 {
                     b.Property<int>("ExpedTypeId")
                         .ValueGeneratedOnAdd()
@@ -165,7 +165,7 @@ namespace AlertSystem.Migrations
                     b.ToTable("ExpedType", (string)null);
                 });
 
-            modelBuilder.Entity("AlertSystem.Models.Entities.HistoriqueAlerte", b =>
+            modelBuilder.Entity("AlertSystem.Entities.Entities.HistoriqueAlerte", b =>
                 {
                     b.Property<int>("DestinataireId")
                         .ValueGeneratedOnAdd()
@@ -206,7 +206,7 @@ namespace AlertSystem.Migrations
                     b.ToTable("HistoriqueAlerte", (string)null);
                 });
 
-            modelBuilder.Entity("AlertSystem.Models.Entities.PlateformeEnvoie", b =>
+            modelBuilder.Entity("AlertSystem.Entities.Entities.PlateformeEnvoie", b =>
                 {
                     b.Property<int>("PlateformeId")
                         .ValueGeneratedOnAdd()
@@ -224,7 +224,7 @@ namespace AlertSystem.Migrations
                     b.ToTable("PlateformeEnvoie", (string)null);
                 });
 
-            modelBuilder.Entity("AlertSystem.Models.Entities.RappelSuivant", b =>
+            modelBuilder.Entity("AlertSystem.Entities.Entities.RappelSuivant", b =>
                 {
                     b.Property<int>("RappelId")
                         .ValueGeneratedOnAdd()
@@ -251,7 +251,7 @@ namespace AlertSystem.Migrations
                     b.ToTable("RappelSuivant", (string)null);
                 });
 
-            modelBuilder.Entity("AlertSystem.Models.Entities.Statut", b =>
+            modelBuilder.Entity("AlertSystem.Entities.Entities.Statut", b =>
                 {
                     b.Property<int>("StatutId")
                         .ValueGeneratedOnAdd()
@@ -269,7 +269,7 @@ namespace AlertSystem.Migrations
                     b.ToTable("Statut", (string)null);
                 });
 
-            modelBuilder.Entity("AlertSystem.Models.Entities.User", b =>
+            modelBuilder.Entity("AlertSystem.Entities.Entities.User", b =>
                 {
                     b.Property<int>("UserId")
                         .ValueGeneratedOnAdd()
@@ -302,7 +302,7 @@ namespace AlertSystem.Migrations
                     b.ToTable("Users", (string)null);
                 });
 
-            modelBuilder.Entity("AlertSystem.Models.Entities.WebPushSubscription", b =>
+            modelBuilder.Entity("AlertSystem.Entities.Entities.WebPushSubscription", b =>
                 {
                     b.Property<int>("WebPushSubscriptionId")
                         .ValueGeneratedOnAdd()
@@ -336,37 +336,37 @@ namespace AlertSystem.Migrations
                     b.ToTable("WebPushSubscriptions", (string)null);
                 });
 
-            modelBuilder.Entity("AlertSystem.Models.Entities.Alerte", b =>
+            modelBuilder.Entity("AlertSystem.Entities.Entities.Alerte", b =>
                 {
-                    b.HasOne("AlertSystem.Models.Entities.AlertType", "AlertType")
+                    b.HasOne("AlertSystem.Entities.Entities.AlertType", "AlertType")
                         .WithMany()
                         .HasForeignKey("AlertTypeId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.HasOne("AlertSystem.Models.Entities.User", "Destinataire")
+                    b.HasOne("AlertSystem.Entities.Entities.User", "Destinataire")
                         .WithMany()
                         .HasForeignKey("DestinataireId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("AlertSystem.Models.Entities.Etat", "Etat")
+                    b.HasOne("AlertSystem.Entities.Entities.Etat", "Etat")
                         .WithMany()
                         .HasForeignKey("EtatAlerteId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.HasOne("AlertSystem.Models.Entities.ExpedType", "ExpedType")
+                    b.HasOne("AlertSystem.Entities.Entities.ExpedType", "ExpedType")
                         .WithMany()
                         .HasForeignKey("ExpedTypeId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.HasOne("AlertSystem.Models.Entities.PlateformeEnvoie", "PlateformeEnvoie")
+                    b.HasOne("AlertSystem.Entities.Entities.PlateformeEnvoie", "PlateformeEnvoie")
                         .WithMany("Alertes")
                         .HasForeignKey("PlateformeEnvoieId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("AlertSystem.Models.Entities.Statut", "Statut")
+                    b.HasOne("AlertSystem.Entities.Entities.Statut", "Statut")
                         .WithMany()
                         .HasForeignKey("StatutId")
                         .OnDelete(DeleteBehavior.NoAction)
@@ -385,15 +385,15 @@ namespace AlertSystem.Migrations
                     b.Navigation("Statut");
                 });
 
-            modelBuilder.Entity("AlertSystem.Models.Entities.HistoriqueAlerte", b =>
+            modelBuilder.Entity("AlertSystem.Entities.Entities.HistoriqueAlerte", b =>
                 {
-                    b.HasOne("AlertSystem.Models.Entities.Alerte", "Alerte")
+                    b.HasOne("AlertSystem.Entities.Entities.Alerte", "Alerte")
                         .WithMany("HistoriqueAlertes")
                         .HasForeignKey("AlerteId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("AlertSystem.Models.Entities.User", "User")
+                    b.HasOne("AlertSystem.Entities.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("DestinataireUserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -404,9 +404,9 @@ namespace AlertSystem.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("AlertSystem.Models.Entities.RappelSuivant", b =>
+            modelBuilder.Entity("AlertSystem.Entities.Entities.RappelSuivant", b =>
                 {
-                    b.HasOne("AlertSystem.Models.Entities.Alerte", "Alerte")
+                    b.HasOne("AlertSystem.Entities.Entities.Alerte", "Alerte")
                         .WithMany("Rappels")
                         .HasForeignKey("AlerteId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -415,14 +415,14 @@ namespace AlertSystem.Migrations
                     b.Navigation("Alerte");
                 });
 
-            modelBuilder.Entity("AlertSystem.Models.Entities.Alerte", b =>
+            modelBuilder.Entity("AlertSystem.Entities.Entities.Alerte", b =>
                 {
                     b.Navigation("HistoriqueAlertes");
 
                     b.Navigation("Rappels");
                 });
 
-            modelBuilder.Entity("AlertSystem.Models.Entities.PlateformeEnvoie", b =>
+            modelBuilder.Entity("AlertSystem.Entities.Entities.PlateformeEnvoie", b =>
                 {
                     b.Navigation("Alertes");
                 });

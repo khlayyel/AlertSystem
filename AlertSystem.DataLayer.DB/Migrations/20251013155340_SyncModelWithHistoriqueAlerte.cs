@@ -11,8 +11,13 @@ namespace AlertSystem.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "Destinataire");
+            // Drop legacy table only if it exists (guard for fresh DB)
+            migrationBuilder.Sql(@"
+                IF OBJECT_ID(N'[Destinataire]', N'U') IS NOT NULL
+                BEGIN
+                    DROP TABLE [Destinataire];
+                END
+            ");
 
             migrationBuilder.DropIndex(
                 name: "IX_Users_Username",
@@ -42,25 +47,45 @@ namespace AlertSystem.Migrations
                 name: "WhatsAppNumber",
                 table: "Users");
 
-            migrationBuilder.DropColumn(
-                name: "DateLecture",
-                table: "Alerte");
+            // Guarded removal of legacy columns from Alerte for fresh DBs
+            migrationBuilder.Sql(@"
+                IF OBJECT_ID(N'[Alerte]', N'U') IS NOT NULL
+                BEGIN
+                    IF COL_LENGTH('Alerte','DateLecture') IS NOT NULL
+                    BEGIN
+                        DECLARE @c1 sysname;
+                        SELECT @c1 = [d].[name]
+                        FROM [sys].[default_constraints] [d]
+                        INNER JOIN [sys].[columns] [c] ON [d].[parent_column_id] = [c].[column_id] AND [d].[parent_object_id] = [c].[object_id]
+                        WHERE ([d].[parent_object_id] = OBJECT_ID(N'[Alerte]') AND [c].[name] = N'DateLecture');
+                        IF @c1 IS NOT NULL EXEC(N'ALTER TABLE [Alerte] DROP CONSTRAINT [' + @c1 + ']');
+                        ALTER TABLE [Alerte] DROP COLUMN [DateLecture];
+                    END
 
-            migrationBuilder.DropColumn(
-                name: "RappelSuivant",
-                table: "Alerte");
+                    IF COL_LENGTH('Alerte','RappelSuivant') IS NOT NULL
+                        ALTER TABLE [Alerte] DROP COLUMN [RappelSuivant];
 
-            migrationBuilder.DropColumn(
-                name: "destinataireMail",
-                table: "Alerte");
+                    IF COL_LENGTH('Alerte','destinataireMail') IS NOT NULL
+                        ALTER TABLE [Alerte] DROP COLUMN [destinataireMail];
 
-            migrationBuilder.DropColumn(
-                name: "destinatairedesktop",
-                table: "Alerte");
+                    IF COL_LENGTH('Alerte','destinatairedesktop') IS NOT NULL
+                        ALTER TABLE [Alerte] DROP COLUMN [destinatairedesktop];
 
-            migrationBuilder.DropColumn(
-                name: "destinatairenum",
-                table: "Alerte");
+                    IF COL_LENGTH('Alerte','destinatairenum') IS NOT NULL
+                        ALTER TABLE [Alerte] DROP COLUMN [destinatairenum];
+                END
+            ");
+
+            // Ensure Alerte table exists for FK (minimal schema if missing)
+            migrationBuilder.Sql(@"
+                IF OBJECT_ID(N'[Alerte]', N'U') IS NULL
+                BEGIN
+                    CREATE TABLE [Alerte] (
+                        [AlerteId] INT NOT NULL IDENTITY(1,1),
+                        CONSTRAINT [PK_Alerte] PRIMARY KEY ([AlerteId])
+                    );
+                END
+            ");
 
             migrationBuilder.CreateTable(
                 name: "HistoriqueAlerte",

@@ -8,11 +8,15 @@ namespace AlertSystem.WEB.Controllers
     {
         private readonly IAlertCrudService _service;
         private readonly IAlertSendService _sendService;
+        private readonly ICurrentUserAccessor _currentUser;
+        private readonly ILogger<AlertsCrudController> _logger;
 
-        public AlertsCrudController(IAlertCrudService service, IAlertSendService sendService)
+        public AlertsCrudController(IAlertCrudService service, IAlertSendService sendService, ICurrentUserAccessor currentUser, ILogger<AlertsCrudController> logger)
         {
             _service = service;
             _sendService = sendService;
+            _currentUser = currentUser;
+            _logger = logger;
         }
 
         [HttpGet]
@@ -41,21 +45,41 @@ namespace AlertSystem.WEB.Controllers
         [HttpPost]
         public async Task<IActionResult> Send([FromBody] SendDto dto)
         {
-            if (string.IsNullOrWhiteSpace(dto.Title)) return BadRequest("title required");
-            if (string.IsNullOrWhiteSpace(dto.Message)) dto.Message = string.Empty;
+            try
+            {
+                Console.WriteLine($"AlertsCrudController.Send called with title: {dto.Title}, emails: {dto.Emails?.Length ?? 0}, platforms: {dto.Platforms?.Email}");
+                if (string.IsNullOrWhiteSpace(dto.Title)) return BadRequest("title required");
+                if (string.IsNullOrWhiteSpace(dto.Message)) dto.Message = string.Empty;
 
-            var (alerteId, ok) = await _sendService.SendManualAsync(
-                dto.Title,
-                dto.Message,
-                dto.Emails ?? Array.Empty<string>(),
-                dto.Phones ?? Array.Empty<string>(),
-                dto.Platforms?.Email ?? false,
-                dto.Platforms?.WhatsApp ?? false,
-                dto.Platforms?.Desktop ?? false,
-                dto.UserIds,
-                dto.AlertTypeId
-            );
-            return Json(new { success = ok, alerteId });
+                // Desktop fallback: if Desktop selected and no userIds provided, use current logged-in user
+                int[]? userIds = dto.UserIds;
+                if ((dto.Platforms?.Desktop ?? false) && (userIds == null || userIds.Length == 0))
+                {
+                    var uid = _currentUser.GetUserId();
+                    if (uid.HasValue && uid.Value > 0)
+                    {
+                        userIds = new[] { uid.Value };
+                    }
+                }
+
+                var (alerteId, ok) = await _sendService.SendManualAsync(
+                    dto.Title,
+                    dto.Message,
+                    dto.Emails ?? Array.Empty<string>(),
+                    dto.Phones ?? Array.Empty<string>(),
+                    dto.Platforms?.Email ?? false,
+                    dto.Platforms?.WhatsApp ?? false,
+                    dto.Platforms?.Desktop ?? false,
+                    userIds,
+                    dto.AlertTypeId
+                );
+                return Json(new { success = ok, alerteId });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "AlertsCrud/Send failed with exception");
+                return StatusCode(500, ex.Message);
+            }
         }
 
         public sealed class CreateFromTemplateDto

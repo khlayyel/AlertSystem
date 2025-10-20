@@ -13,27 +13,38 @@ namespace AlertSystem.Migrations
         {
             // Nettoyer les duplications dans la table Destinataire
             migrationBuilder.Sql(@"
-                -- Supprimer les doublons en gardant seulement le premier enregistrement pour chaque AlerteId
-                WITH CTE AS (
-                    SELECT DestinataireId, 
-                           ROW_NUMBER() OVER (PARTITION BY AlerteId ORDER BY DestinataireId) as rn
-                    FROM Destinataire
-                )
-                DELETE FROM CTE WHERE rn > 1;
+                IF OBJECT_ID(N'[Destinataire]', N'U') IS NOT NULL
+                BEGIN
+                    WITH CTE AS (
+                        SELECT DestinataireId, 
+                               ROW_NUMBER() OVER (PARTITION BY AlerteId ORDER BY DestinataireId) as rn
+                        FROM Destinataire
+                    )
+                    DELETE FROM CTE WHERE rn > 1;
+                END
             ");
 
             // Mettre à jour ExternalRecipientId avec DestinataireId
             migrationBuilder.Sql(@"
-                UPDATE Destinataire 
-                SET ExternalRecipientId = CAST(DestinataireId AS NVARCHAR(50));
+                IF OBJECT_ID(N'[Destinataire]', N'U') IS NOT NULL AND COL_LENGTH('Destinataire','ExternalRecipientId') IS NOT NULL
+                BEGIN
+                    UPDATE Destinataire 
+                    SET ExternalRecipientId = CAST(DestinataireId AS NVARCHAR(50));
+                END
             ");
 
             // Ajouter une contrainte unique pour éviter les futures duplications
-            migrationBuilder.CreateIndex(
-                name: "IX_Destinataire_AlerteId_Unique",
-                table: "Destinataire",
-                column: "AlerteId",
-                unique: true);
+            if (migrationBuilder != null)
+            {
+                migrationBuilder.Sql(@"
+                    IF OBJECT_ID(N'[Destinataire]', N'U') IS NOT NULL AND NOT EXISTS (
+                        SELECT 1 FROM sys.indexes WHERE name = 'IX_Destinataire_AlerteId_Unique' AND object_id = OBJECT_ID('Destinataire')
+                    )
+                    BEGIN
+                        CREATE UNIQUE INDEX IX_Destinataire_AlerteId_Unique ON Destinataire(AlerteId);
+                    END
+                ");
+            }
         }
 
         /// <inheritdoc />

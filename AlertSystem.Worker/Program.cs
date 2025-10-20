@@ -4,8 +4,17 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using AlertSystem.Worker;
 using AlertSystem.Worker.Services;
+using Serilog;
+DotNetEnv.Env.Load();
+
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(new ConfigurationBuilder().AddJsonFile("appsettings.json", optional: true).Build())
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .CreateLogger();
 
 var builder = Host.CreateApplicationBuilder(args);
+builder.Services.AddLogging(lb => lb.AddSerilog());
 
 builder.Services.AddWindowsService(options => options.ServiceName = "AlertSystem Alert Worker");
 

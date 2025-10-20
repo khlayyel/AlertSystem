@@ -1,6 +1,16 @@
 using Microsoft.EntityFrameworkCore;
+using Serilog;
+
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(new ConfigurationBuilder().AddJsonFile("appsettings.json", optional: true).Build())
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .CreateLogger();
 
 var builder = WebApplication.CreateBuilder(args);
+DotNetEnv.Env.Load();
+builder.Host.UseSerilog();
+builder.Configuration.AddEnvironmentVariables();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
@@ -18,6 +28,11 @@ builder.Services.AddScoped<AlertSystem.Services.IWebPushService, AlertSystem.Ser
 builder.Services.AddScoped<AlertSystem.Service.AlertAuditService>();
 builder.Services.AddSingleton<AlertSystem.Service.ReminderConfiguration>();
 builder.Services.AddScoped<AlertSystem.Service.IAlertSendService, AlertSystem.Service.AlertSendService>();
+builder.Services.AddScoped<AlertSystem.Service.ConfirmationTokenService>(provider => 
+    new AlertSystem.Service.ConfirmationTokenService(provider.GetRequiredService<IConfiguration>()["TOKEN_SECRET"] ?? "dev-secret-change-me"));
+builder.Services.AddScoped<AlertSystem.Service.IEmailTemplateService, AlertSystem.Service.EmailTemplateService>();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<AlertSystem.Services.ICurrentUserAccessor, AlertSystem.Services.CurrentUserAccessor>();
 
 // Add EF DbContext for services (before Build)
 builder.Services.AddDbContext<AlertSystem.Data.ApplicationDbContext>(options =>
@@ -36,7 +51,12 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-// DbContext configured above
+// Auto-seed reference data on startup (idempotent)
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AlertSystem.Data.ApplicationDbContext>();
+    await AlertSystem.DbSeeder.SeedAsync(db);
+}
 
 app.UseHttpsRedirection();
 app.UseRouting();

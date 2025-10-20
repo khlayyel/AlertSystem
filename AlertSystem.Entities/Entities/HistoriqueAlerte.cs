@@ -7,8 +7,8 @@ namespace AlertSystem.Entities.Entities
     {
         public int DestinataireId { get; set; }
         public int AlerteId { get; set; }
-        public int DestinataireUserId { get; set; }
-        public string? EtatAlerte { get; set; }
+        public int? DestinataireUserId { get; set; }
+        public int EtatAlerteId { get; set; }
         public DateTime? DateLecture { get; set; }
         public DateTime? RappelSuivant { get; set; }
         public string? DestinataireEmail { get; set; }
@@ -17,5 +17,6 @@ namespace AlertSystem.Entities.Entities
 
         public Alerte? Alerte { get; set; }
         public User? User { get; set; }
+        public Etat? Etat { get; set; }
     }
 }

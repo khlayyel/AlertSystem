@@ -9,6 +9,9 @@ namespace AlertSystem.Service
 
         // Convenience alias that calls SendAsync under the hood.
         Task SendEmailAsync(string toEmail, string subject, string message);
+
+        // Sends an HTML email to a recipient with subject/html content.
+        Task SendHtmlEmailAsync(string toEmail, string subject, string htmlContent);
     }
 }
 

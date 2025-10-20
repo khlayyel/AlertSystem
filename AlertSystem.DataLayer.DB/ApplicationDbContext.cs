@@ -86,8 +86,11 @@ namespace AlertSystem.Data
             {
                 b.ToTable("HistoriqueAlerte");
                 b.HasKey(x => x.DestinataireId);
+                // Column is EtatAlerteId in DB
+                // No custom column name mapping required
                 b.HasOne(x => x.Alerte).WithMany(a => a.HistoriqueAlertes).HasForeignKey(x => x.AlerteId).OnDelete(DeleteBehavior.Cascade);
                 b.HasOne(x => x.User).WithMany().HasForeignKey(x => x.DestinataireUserId).OnDelete(DeleteBehavior.Cascade);
+                b.HasOne(x => x.Etat).WithMany().HasForeignKey(x => x.EtatAlerteId).OnDelete(DeleteBehavior.NoAction);
             });
 
             modelBuilder.Entity<RappelSuivant>(b =>

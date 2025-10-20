@@ -2,8 +2,18 @@ using Microsoft.EntityFrameworkCore;
 using AlertSystem.Service;
 using AlertSystem.API.Middleware;
 using AlertSystem.Services;
+using Serilog;
+
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(new ConfigurationBuilder().AddJsonFile("appsettings.json", optional: true).Build())
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .CreateLogger();
 
 var builder = WebApplication.CreateBuilder(args);
+DotNetEnv.Env.Load();
+builder.Host.UseSerilog();
+builder.Configuration.AddEnvironmentVariables();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -33,5 +43,12 @@ app.UseHttpsRedirection();
 app.UseMiddleware<ApiKeyMiddleware>();
 
 app.MapControllers();
+
+// Auto-seed reference data on startup (idempotent)
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AlertSystem.Data.ApplicationDbContext>();
+    await AlertSystem.DbSeeder.SeedAsync(db);
+}
 
 app.Run();

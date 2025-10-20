@@ -12,9 +12,12 @@ namespace AlertSystem.Migrations
         {
             // Mettre à jour ExternalRecipientId avec DestinataireId pour les enregistrements existants
             migrationBuilder.Sql(@"
-                UPDATE Destinataire 
-                SET ExternalRecipientId = CAST(DestinataireId AS NVARCHAR(50))
-                WHERE ExternalRecipientId IS NULL OR ExternalRecipientId != CAST(DestinataireId AS NVARCHAR(50));
+                IF OBJECT_ID(N'[Destinataire]', N'U') IS NOT NULL AND COL_LENGTH('Destinataire','ExternalRecipientId') IS NOT NULL
+                BEGIN
+                    UPDATE Destinataire 
+                    SET ExternalRecipientId = CAST(DestinataireId AS NVARCHAR(50))
+                    WHERE ExternalRecipientId IS NULL OR ExternalRecipientId != CAST(DestinataireId AS NVARCHAR(50));
+                END
             ");
         }
 
