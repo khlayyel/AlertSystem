@@ -14,12 +14,21 @@ Log.Logger = new LoggerConfiguration()
     .CreateLogger();
 
 var builder = Host.CreateApplicationBuilder(args);
-builder.Services.AddLogging(lb => lb.AddSerilog());
+builder.Services.AddLogging(lb => 
+{
+    lb.AddSerilog();
+    lb.AddEventLog(new Microsoft.Extensions.Logging.EventLog.EventLogSettings
+    {
+        SourceName = "AlertSystemWorker",
+        LogName = "Application"
+    });
+});
 
 builder.Services.AddWindowsService(options => options.ServiceName = "AlertSystem Alert Worker");
 
 builder.Configuration
     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
     .AddEnvironmentVariables();
 
 builder.Services.AddHttpClient();

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using AlertSystem.Worker.Models;
 using AlertSystem.Worker.Services;
 
@@ -13,28 +14,19 @@ namespace AlertSystem.Worker
 {
     public class AlertePollingWorker : BackgroundService
     {
+        private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<AlertePollingWorker> _logger;
-        private readonly IAlertRepository _alertRepository;
-        private readonly IEmailSender _emailSender;
-        private readonly IWhatsAppSender _whatsAppSender;
-        private readonly IWebPushNotifier _webPushNotifier;
         private readonly IConfiguration _configuration;
         private readonly int _reminderIntervalMinutes;
         private readonly int _maxReminderAttempts;
 
         public AlertePollingWorker(
+            IServiceScopeFactory scopeFactory,
             ILogger<AlertePollingWorker> logger,
-            IAlertRepository alertRepository,
-            IEmailSender emailSender,
-            IWhatsAppSender whatsAppSender,
-            IWebPushNotifier webPushNotifier,
             IConfiguration configuration)
         {
+            _scopeFactory = scopeFactory;
             _logger = logger;
-            _alertRepository = alertRepository;
-            _emailSender = emailSender;
-            _whatsAppSender = whatsAppSender;
-            _webPushNotifier = webPushNotifier;
             _configuration = configuration;
             _reminderIntervalMinutes = _configuration.GetValue<int>("REMINDER__INTERVAL_MINUTES", 60);
             _maxReminderAttempts = _configuration.GetValue<int>("REMINDER__MAX_ATTEMPTS", 5);
@@ -48,28 +40,44 @@ namespace AlertSystem.Worker
 
             while (!stoppingToken.IsCancellationRequested)
             {
-                try
+                _logger.LogInformation("Worker checking for alerts at: {time}", DateTimeOffset.Now);
+
+                using (var scope = _scopeFactory.CreateScope())
                 {
-                    await ProcessUnprocessedAlerts(stoppingToken);
-                    await ProcessReminderAlerts(stoppingToken);
-                    await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken); // Poll every 1 minute
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error in AlertePollingWorker main loop");
-                    await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken); // Wait longer on error
-                }
+                    try
+                    {
+                        _logger.LogInformation("Creating service scope and resolving dependencies");
+                        var alertRepository = scope.ServiceProvider.GetRequiredService<IAlertRepository>();
+                        var emailSender = scope.ServiceProvider.GetRequiredService<IEmailSender>();
+                        var whatsAppSender = scope.ServiceProvider.GetRequiredService<IWhatsAppSender>();
+                        var webPushNotifier = scope.ServiceProvider.GetRequiredService<IWebPushNotifier>();
+
+                        _logger.LogInformation("Services resolved successfully, starting alert processing");
+                        await ProcessUnprocessedAlerts(alertRepository, emailSender, whatsAppSender, webPushNotifier, stoppingToken);
+                        await ProcessReminderAlerts(alertRepository, emailSender, whatsAppSender, webPushNotifier, stoppingToken);
+                        _logger.LogInformation("Alert processing cycle completed");
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "An error occurred while processing alerts: {Message}", ex.Message);
+                    }
+                } // Scope (and scoped services like DbContext) are disposed here
+
+                _logger.LogInformation("Waiting 1 minute before next check");
+                await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken); // Wait for next cycle
             }
 
             _logger.LogInformation("AlertePollingWorker stopped");
         }
 
-        private async Task ProcessUnprocessedAlerts(CancellationToken cancellationToken)
+        private async Task ProcessUnprocessedAlerts(IAlertRepository alertRepository, IEmailSender emailSender, IWhatsAppSender whatsAppSender, IWebPushNotifier webPushNotifier, CancellationToken cancellationToken)
         {
-            var unprocessedAlerts = await _alertRepository.GetUnprocessedAlertsAsync(cancellationToken);
+            _logger.LogInformation("Querying database for unprocessed alerts");
+            var unprocessedAlerts = await alertRepository.GetUnprocessedAlertsAsync(cancellationToken);
 
             if (unprocessedAlerts.Count == 0)
             {
+                _logger.LogInformation("No unprocessed alerts found");
                 return; // No new alerts to process
             }
 
@@ -79,23 +87,24 @@ namespace AlertSystem.Worker
             {
                 try
                 {
-                    await ProcessSingleAlert(alert, cancellationToken);
-                    await _alertRepository.MarkAlertAsProcessedAsync(alert.AlerteId, cancellationToken);
+                    _logger.LogInformation("Processing alert {AlerteId}: {Title}", alert.AlerteId, alert.TitreAlerte);
+                    await ProcessSingleAlert(alert, alertRepository, emailSender, whatsAppSender, webPushNotifier, cancellationToken);
+                    _logger.LogInformation("Successfully processed alert {AlerteId}", alert.AlerteId);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Failed to process alert {AlerteId}", alert.AlerteId);
+                    _logger.LogError(ex, "Failed to process alert {AlerteId}: {Message}", alert.AlerteId, ex.Message);
                     // Don't mark as processed if there was an error - will retry on next poll
                 }
             }
         }
 
-        private async Task ProcessSingleAlert(AlerteModel alert, CancellationToken cancellationToken)
+        private async Task ProcessSingleAlert(AlerteModel alert, IAlertRepository alertRepository, IEmailSender emailSender, IWhatsAppSender whatsAppSender, IWebPushNotifier webPushNotifier, CancellationToken cancellationToken)
         {
             _logger.LogInformation("Processing alert {AlerteId}: {Title}", alert.AlerteId, alert.TitreAlerte);
 
             // Determine recipients
-            var recipients = await GetRecipientsForAlert(alert, cancellationToken);
+            var recipients = await GetRecipientsForAlert(alert, alertRepository, cancellationToken);
 
             if (recipients.Count == 0)
             {
@@ -103,30 +112,32 @@ namespace AlertSystem.Worker
                 return;
             }
 
-            // Determine channels to use
-            var channels = GetChannelsForAlert(alert);
-
             var totalAttempts = 0;
             var totalSuccess = 0;
+            var channelCount = GetChannelsForAlert(alert).Count;
             // Send to each recipient via each channel
             foreach (var recipient in recipients)
             {
-                // Create HistoriqueAlerte entry
-                await _alertRepository.CreateHistoriqueAlerteAsync(
-                    alert.AlerteId, 
-                    recipient.UserId, 
-                    recipient.Email ?? string.Empty, 
-                    recipient.PhoneNumber ?? string.Empty, 
-                    recipient.DesktopDeviceToken ?? string.Empty, 
-                    cancellationToken);
+                // Determine channels to use for this alert (and per-recipient)
+                var channels = GetChannelsForAlert(alert);
 
-                // Send via each channel
                 foreach (var channel in channels)
                 {
                     try
                     {
+                        // Create HistoriqueAlerte per attempted platform
+                        var plateformeId = channel switch { "Email" => 1, "WhatsApp" => 2, "Desktop" => 3, _ => 0 };
+                        var historiqueId = await alertRepository.CreateHistoriqueAlerteAsync(
+                            alert.AlerteId,
+                            recipient.UserId,
+                            plateformeId,
+                            recipient.Email,
+                            recipient.PhoneNumber,
+                            recipient.DesktopDeviceToken,
+                            cancellationToken);
+
                         totalAttempts++;
-                        await SendViaChannel(channel, recipient, alert.TitreAlerte, alert.DescriptionAlerte, cancellationToken);
+                        await SendViaChannel(channel, recipient, alert.TitreAlerte, alert.DescriptionAlerte, emailSender, whatsAppSender, webPushNotifier, cancellationToken);
                         totalSuccess++;
                     }
                     catch (Exception ex)
@@ -138,35 +149,35 @@ namespace AlertSystem.Worker
             }
 
             _logger.LogInformation("Completed processing alert {AlerteId} for {RecipientCount} recipients via {ChannelCount} channels", 
-                alert.AlerteId, recipients.Count, channels.Count);
+                alert.AlerteId, recipients.Count, channelCount);
 
             if (totalAttempts > 0 && totalSuccess > 0)
             {
-                await _alertRepository.MarkAlertAsProcessedAsync(alert.AlerteId, cancellationToken);
+                await alertRepository.MarkAlertAsProcessedAsync(alert.AlerteId, cancellationToken);
                 
                 // Set initial reminder for acquittementNécessaire alerts
-                if (alert.AlertTypeId == 2) // Assuming 2 = acquittementNécessaire
+                if (alert.AlertTypeId == 3) // 3 = acquittementNécessaire
                 {
-                    await _alertRepository.SetInitialReminderAsync(alert.AlerteId, _reminderIntervalMinutes, cancellationToken);
+                    await alertRepository.SetInitialReminderAsync(alert.AlerteId, _reminderIntervalMinutes, cancellationToken);
                 }
             }
             else
             {
-                await _alertRepository.MarkAlertAsFailedAsync(alert.AlerteId, cancellationToken);
+                await alertRepository.MarkAlertAsFailedAsync(alert.AlerteId, cancellationToken);
             }
         }
 
-        private async Task<List<UserModel>> GetRecipientsForAlert(AlerteModel alert, CancellationToken cancellationToken)
+        private async Task<List<UserModel>> GetRecipientsForAlert(AlerteModel alert, IAlertRepository alertRepository, CancellationToken cancellationToken)
         {
             // If specific recipient is set, get only that user
             if (alert.DestinataireId.HasValue)
             {
-                var specificUser = await _alertRepository.GetUserByIdAsync(alert.DestinataireId.Value, cancellationToken);
+                var specificUser = await alertRepository.GetUserByIdAsync(alert.DestinataireId.Value, cancellationToken);
                 return specificUser != null ? new List<UserModel> { specificUser } : new List<UserModel>();
             }
 
             // Otherwise, get all active users
-            return await _alertRepository.GetActiveUsersAsync(cancellationToken);
+            return await alertRepository.GetActiveUsersAsync(cancellationToken);
         }
 
         private static List<string> GetChannelsForAlert(AlerteModel alert)
@@ -187,26 +198,26 @@ namespace AlertSystem.Worker
             return new List<string> { "Email", "WhatsApp", "Desktop" };
         }
 
-        private async Task SendViaChannel(string channel, UserModel recipient, string title, string message, CancellationToken cancellationToken)
+        private async Task SendViaChannel(string channel, UserModel recipient, string title, string message, IEmailSender emailSender, IWhatsAppSender whatsAppSender, IWebPushNotifier webPushNotifier, CancellationToken cancellationToken)
         {
             switch (channel)
             {
                 case "Email":
                     if (!string.IsNullOrWhiteSpace(recipient.Email))
                     {
-                        await _emailSender.SendAsync(recipient.Email, recipient.FullName, title, message, cancellationToken);
+                        await emailSender.SendAsync(recipient.Email, recipient.FullName, title, message, cancellationToken);
                     }
                     break;
 
                 case "WhatsApp":
                     if (!string.IsNullOrWhiteSpace(recipient.PhoneNumber))
                     {
-                        await _whatsAppSender.SendAsync(recipient.PhoneNumber, title, message, cancellationToken);
+                        await whatsAppSender.SendAsync(recipient.PhoneNumber, title, message, cancellationToken);
                     }
                     break;
 
                 case "Desktop":
-                    await _webPushNotifier.SendAsync(recipient.UserId, title, message, cancellationToken);
+                    await webPushNotifier.SendAsync(recipient.UserId, title, message, cancellationToken);
                     break;
 
                 default:
@@ -215,11 +226,11 @@ namespace AlertSystem.Worker
             }
         }
 
-        private async Task ProcessReminderAlerts(CancellationToken cancellationToken)
+        private async Task ProcessReminderAlerts(IAlertRepository alertRepository, IEmailSender emailSender, IWhatsAppSender whatsAppSender, IWebPushNotifier webPushNotifier, CancellationToken cancellationToken)
         {
             try
             {
-                var reminderAlerts = await _alertRepository.GetReminderAlertsAsync(cancellationToken);
+                var reminderAlerts = await alertRepository.GetReminderAlertsAsync(cancellationToken);
                 
                 if (reminderAlerts.Count == 0)
                 {
@@ -232,7 +243,7 @@ namespace AlertSystem.Worker
                 {
                     try
                     {
-                        await ProcessReminderAlert(alert, cancellationToken);
+                        await ProcessReminderAlert(alert, alertRepository, emailSender, whatsAppSender, webPushNotifier, cancellationToken);
                     }
                     catch (Exception ex)
                     {
@@ -246,12 +257,12 @@ namespace AlertSystem.Worker
             }
         }
 
-        private async Task ProcessReminderAlert(AlerteModel alert, CancellationToken cancellationToken)
+        private async Task ProcessReminderAlert(AlerteModel alert, IAlertRepository alertRepository, IEmailSender emailSender, IWhatsAppSender whatsAppSender, IWebPushNotifier webPushNotifier, CancellationToken cancellationToken)
         {
             _logger.LogInformation("Processing reminder for alert {AlerteId}: {Title}", alert.AlerteId, alert.TitreAlerte);
 
             // Get unconfirmed recipients for this alert
-            var unconfirmedRecipients = await _alertRepository.GetUnconfirmedRecipientsAsync(alert.AlerteId, cancellationToken);
+            var unconfirmedRecipients = await alertRepository.GetUnconfirmedRecipientsAsync(alert.AlerteId, cancellationToken);
             if (unconfirmedRecipients.Count == 0)
             {
                 _logger.LogInformation("All recipients confirmed for alert {AlerteId}, stopping reminders", alert.AlerteId);
@@ -266,9 +277,10 @@ namespace AlertSystem.Worker
             var reminderAttempts = new Dictionary<int, int>(); // Track attempts per recipient
 
             // Re-send to each unconfirmed recipient via each channel
-            foreach (var recipientId in unconfirmedRecipients)
+            foreach (var pair in unconfirmedRecipients)
             {
-                var recipient = await _alertRepository.GetUserByIdAsync(recipientId, cancellationToken);
+                var recipientId = pair.DestinataireUserId;
+                var recipient = await alertRepository.GetUserByIdAsync(recipientId, cancellationToken);
                 if (recipient == null)
                 {
                     _logger.LogWarning("Recipient {RecipientId} not found for reminder alert {AlerteId}", recipientId, alert.AlerteId);
@@ -280,7 +292,7 @@ namespace AlertSystem.Worker
                     try
                     {
                         totalAttempts++;
-                        await SendViaChannel(channel, recipient, $"[RAPPEL] {alert.TitreAlerte}", alert.DescriptionAlerte, cancellationToken);
+                        await SendViaChannel(channel, recipient, $"[RAPPEL] {alert.TitreAlerte}", alert.DescriptionAlerte, emailSender, whatsAppSender, webPushNotifier, cancellationToken);
                         totalSuccess++;
                         
                         // Track successful attempt for this recipient
@@ -289,9 +301,9 @@ namespace AlertSystem.Worker
                         reminderAttempts[recipientId]++;
                         
                         // Insert reminder history record
-                        await _alertRepository.InsertReminderHistoryAsync(
+                        await alertRepository.InsertReminderHistoryAsync(
                             alert.AlerteId, 
-                            recipientId, // Using recipientId as HistoriqueAlerteId for now
+                            pair.HistoriqueAlerteId,
                             true, 
                             reminderAttempts[recipientId], 
                             null, 
@@ -308,9 +320,9 @@ namespace AlertSystem.Worker
                         reminderAttempts[recipientId]++;
                         
                         // Insert reminder history record for failure
-                        await _alertRepository.InsertReminderHistoryAsync(
+                        await alertRepository.InsertReminderHistoryAsync(
                             alert.AlerteId, 
-                            recipientId, // Using recipientId as HistoriqueAlerteId for now
+                            pair.HistoriqueAlerteId,
                             false, 
                             reminderAttempts[recipientId], 
                             ex.Message, 
@@ -322,7 +334,7 @@ namespace AlertSystem.Worker
             // Update reminder status
             if (totalAttempts > 0)
             {
-                var shouldContinue = await _alertRepository.UpdateReminderStatusAsync(
+                var shouldContinue = await alertRepository.UpdateReminderStatusAsync(
                     alert.AlerteId, 
                     totalSuccess > 0, 
                     _reminderIntervalMinutes, 

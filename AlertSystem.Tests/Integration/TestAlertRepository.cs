@@ -165,7 +165,7 @@ namespace AlertSystem.Tests.Integration
             }
         }
 
-        public async Task CreateHistoriqueAlerteAsync(int alerteId, int userId, string email, string phoneNumber, string desktopToken, CancellationToken cancellationToken = default)
+        public async Task<int> CreateHistoriqueAlerteAsync(int alerteId, int userId, int plateformeEnvoieId, string? email, string? phoneNumber, string? desktopToken, CancellationToken cancellationToken = default)
         {
             var historique = new HistoriqueAlerte
             {
@@ -174,12 +174,14 @@ namespace AlertSystem.Tests.Integration
                 DestinataireEmail = email,
                 DestinatairePhoneNumber = phoneNumber,
                 DestinataireDesktop = desktopToken,
+                PlateformeEnvoieId = plateformeEnvoieId,
                 EtatAlerteId = 1, // Non Lu
                 DateLecture = null
             };
 
             _db.HistoriqueAlertes.Add(historique);
             await _db.SaveChangesAsync(cancellationToken);
+            return historique.DestinataireId;
         }
 
         public async Task<List<AlerteModel>> GetReminderAlertsAsync(CancellationToken cancellationToken = default)
@@ -220,15 +222,20 @@ namespace AlertSystem.Tests.Integration
             await _db.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task<List<int>> GetUnconfirmedRecipientsAsync(int alerteId, CancellationToken cancellationToken = default)
+        public async Task<List<(int HistoriqueAlerteId, int DestinataireUserId)>> GetUnconfirmedRecipientsAsync(int alerteId, CancellationToken cancellationToken = default)
         {
-            var recipients = await _db.HistoriqueAlertes
-                .Where(h => h.AlerteId == alerteId && h.EtatAlerteId == 1) // Non Lu
-                .Select(h => h.DestinataireUserId ?? 0)
-                .Where(userId => userId > 0)
+            var rows = await _db.HistoriqueAlertes
+                .Where(h => h.AlerteId == alerteId && h.EtatAlerteId == 1)
+                .Select(h => new { h.DestinataireId, h.DestinataireUserId })
                 .ToListAsync(cancellationToken);
 
-            return recipients;
+            var list = new List<(int, int)>();
+            foreach (var r in rows)
+            {
+                if ((r.DestinataireUserId ?? 0) > 0)
+                    list.Add((r.DestinataireId, r.DestinataireUserId!.Value));
+            }
+            return list;
         }
     }
 }

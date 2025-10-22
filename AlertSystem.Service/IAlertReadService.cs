@@ -12,6 +12,7 @@ namespace AlertSystem.Service
         Task<object> GetHistoryAsync(string status, int page, int size);
         Task<object> GetSentAsync(int page, int size);
         Task<object?> GetDetailsAsync(int id);
+        Task<bool> MarkAsReadAsync(int alertRecipientId);
     }
 }
 

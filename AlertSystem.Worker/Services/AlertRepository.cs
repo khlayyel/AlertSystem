@@ -34,7 +34,9 @@ namespace AlertSystem.Worker.Services
                 SELECT AlerteId, AlertTypeId, DestinataireId, PlateformeEnvoieId, StatutId,
                        TitreAlerte, DescriptionAlerte, DateCreationAlerte, ProcessedByWorker
                 FROM dbo.Alerte 
-                WHERE StatutId IN (1,4) AND (ProcessedByWorker = 0 OR ProcessedByWorker IS NULL)
+                WHERE StatutId IN (1,4) 
+                  AND ExpedTypeId = 2 
+                  AND (ProcessedByWorker = 0 OR ProcessedByWorker IS NULL)
                 ORDER BY DateCreationAlerte ASC";
 
             using var reader = await command.ExecuteReaderAsync(cancellationToken);
@@ -147,7 +149,7 @@ namespace AlertSystem.Worker.Services
             _logger.LogWarning("Marked alert {AlerteId} as failed", alerteId);
         }
 
-        public async Task CreateHistoriqueAlerteAsync(int alerteId, int userId, string email, string phoneNumber, string desktopToken, CancellationToken cancellationToken = default)
+        public async Task<int> CreateHistoriqueAlerteAsync(int alerteId, int userId, int plateformeEnvoieId, string? email, string? phoneNumber, string? desktopToken, CancellationToken cancellationToken = default)
         {
             using var connection = new SqlConnection(_connectionString);
             await connection.OpenAsync(cancellationToken);
@@ -155,20 +157,23 @@ namespace AlertSystem.Worker.Services
             using var command = connection.CreateCommand();
             command.CommandText = @"
                 INSERT INTO dbo.HistoriqueAlerte 
-                (AlerteId, DestinataireUserId, EtatAlerteId, DateLecture, RappelSuivant, 
-                 DestinataireEmail, DestinatairePhoneNumber, DestinataireDesktop)
+                (AlerteId, DestinataireUserId, EtatAlerteId, DateLecture, RappelSuivant,
+                 DestinataireEmail, DestinatairePhoneNumber, DestinataireDesktop, PlateformeEnvoieId)
+                OUTPUT INSERTED.DestinataireId
                 VALUES 
-                (@AlerteId, @UserId, @EtatAlerteId, NULL, NULL, @Email, @PhoneNumber, @DesktopToken)";
+                (@AlerteId, @UserId, @EtatAlerteId, NULL, NULL, @Email, @PhoneNumber, @DesktopToken, @PlateformeEnvoieId)";
 
             command.Parameters.Add(new SqlParameter("@AlerteId", SqlDbType.Int) { Value = alerteId });
             command.Parameters.Add(new SqlParameter("@UserId", SqlDbType.Int) { Value = userId });
             command.Parameters.Add(new SqlParameter("@EtatAlerteId", SqlDbType.Int) { Value = 1 }); // 1 = Non Lu
-            command.Parameters.Add(new SqlParameter("@Email", SqlDbType.NVarChar) { Value = email ?? (object)DBNull.Value });
-            command.Parameters.Add(new SqlParameter("@PhoneNumber", SqlDbType.NVarChar) { Value = phoneNumber ?? (object)DBNull.Value });
-            command.Parameters.Add(new SqlParameter("@DesktopToken", SqlDbType.NVarChar) { Value = desktopToken ?? (object)DBNull.Value });
+            command.Parameters.Add(new SqlParameter("@Email", SqlDbType.NVarChar) { Value = (object?)email ?? DBNull.Value });
+            command.Parameters.Add(new SqlParameter("@PhoneNumber", SqlDbType.NVarChar) { Value = (object?)phoneNumber ?? DBNull.Value });
+            command.Parameters.Add(new SqlParameter("@DesktopToken", SqlDbType.NVarChar) { Value = (object?)desktopToken ?? DBNull.Value });
+            command.Parameters.Add(new SqlParameter("@PlateformeEnvoieId", SqlDbType.Int) { Value = plateformeEnvoieId });
 
-            await command.ExecuteNonQueryAsync(cancellationToken);
-            _logger.LogDebug("Created HistoriqueAlerte for alert {AlerteId} and user {UserId}", alerteId, userId);
+            var insertedId = (int)await command.ExecuteScalarAsync(cancellationToken);
+            _logger.LogDebug("Created HistoriqueAlerte {HistoriqueId} for alert {AlerteId} and user {UserId} on platform {Platform}", insertedId, alerteId, userId, plateformeEnvoieId);
+            return insertedId;
         }
 
         public async Task<List<AlerteModel>> GetReminderAlertsAsync(CancellationToken cancellationToken = default)
@@ -299,16 +304,16 @@ namespace AlertSystem.Worker.Services
             _logger.LogDebug("Inserted reminder history for alert {AlerteId}, recipient {HistoriqueAlerteId}, attempt {Attempt}", alerteId, historiqueAlerteId, attemptNumber);
         }
 
-        public async Task<List<int>> GetUnconfirmedRecipientsAsync(int alerteId, CancellationToken cancellationToken = default)
+        public async Task<List<(int HistoriqueAlerteId, int DestinataireUserId)>> GetUnconfirmedRecipientsAsync(int alerteId, CancellationToken cancellationToken = default)
         {
-            var recipients = new List<int>();
+            var recipients = new List<(int, int)>();
 
             using var connection = new SqlConnection(_connectionString);
             await connection.OpenAsync(cancellationToken);
 
             using var command = connection.CreateCommand();
             command.CommandText = @"
-                SELECT DestinataireId
+                SELECT DestinataireId, DestinataireUserId
                 FROM dbo.HistoriqueAlerte 
                 WHERE AlerteId = @AlerteId AND EtatAlerteId = 1";
 
@@ -317,7 +322,7 @@ namespace AlertSystem.Worker.Services
             using var reader = await command.ExecuteReaderAsync(cancellationToken);
             while (await reader.ReadAsync(cancellationToken))
             {
-                recipients.Add(reader.GetInt32("DestinataireId"));
+                recipients.Add((reader.GetInt32("DestinataireId"), reader.GetInt32("DestinataireUserId")));
             }
 
             return recipients;

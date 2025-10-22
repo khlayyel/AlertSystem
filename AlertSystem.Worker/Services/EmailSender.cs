@@ -28,15 +28,22 @@ namespace AlertSystem.Worker.Services
             _smtpPass = configuration["Smtp:Pass"] ?? "";
             _smtpFrom = configuration["Smtp:From"] ?? _smtpUser;
             _smtpFromName = configuration["Smtp:FromName"] ?? "AlertSystem";
+            
+            // Log configuration values for debugging
+            _logger.LogInformation("SMTP Configuration - Host: {Host}, Port: {Port}, User: {User}, Pass: {PassMasked}, From: {From}", 
+                _smtpHost, _smtpPort, _smtpUser, string.IsNullOrEmpty(_smtpPass) ? "EMPTY" : "***SET***", _smtpFrom);
         }
 
         public async Task SendAsync(string email, string fullName, string title, string message, CancellationToken cancellationToken = default)
         {
             try
             {
+                _logger.LogInformation("Attempting to send email to {Email} using SMTP {Host}:{Port}", email, _smtpHost, _smtpPort);
+                
                 using var smtp = new SmtpClient(_smtpHost, _smtpPort)
                 {
-                    EnableSsl = true,
+                    EnableSsl = _smtpPort == 587, // SSL only for port 587, not 465
+                    UseDefaultCredentials = false,
                     Credentials = new NetworkCredential(_smtpUser, _smtpPass)
                 };
 
@@ -49,6 +56,7 @@ namespace AlertSystem.Worker.Services
                 };
                 mail.To.Add(email);
 
+                _logger.LogInformation("SMTP client configured, attempting to send email...");
                 await smtp.SendMailAsync(mail, cancellationToken);
                 _logger.LogInformation("Email sent successfully to {Email}", email);
             }

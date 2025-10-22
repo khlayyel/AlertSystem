@@ -89,6 +89,112 @@ dotnet run --project AlertSystem.API
 dotnet run --project AlertSystem.Worker
 ```
 
+## 🖥️ Windows Service Deployment
+
+### Worker Service Installation
+
+The AlertSystem.Worker is configured to run as a Windows Service for production environments.
+
+#### 1. Publish the Worker
+```bash
+# Publish for production
+dotnet publish AlertSystem.Worker -c Release -o ./publish/worker
+
+# Or publish for specific runtime
+dotnet publish AlertSystem.Worker -c Release -r win-x64 --self-contained -o ./publish/worker
+```
+
+#### 2. Configure Environment Variables
+Before installing the service, set the required environment variables:
+
+```cmd
+# Set database connection string
+setx CONNECTIONSTRINGS__DEFAULTCONNECTION "Server=(localdb)\\MSSQLLocalDB;Database=AlertSystemDB;Trusted_Connection=True;TrustServerCertificate=True"
+
+# Set SMTP configuration (if needed)
+setx SMTP__HOST "smtp.gmail.com"
+setx SMTP__PORT "587"
+setx SMTP__USER "your-email@gmail.com"
+setx SMTP__PASSWORD "your-app-password"
+setx SMTP__FROM "your-email@gmail.com"
+
+# Set WhatsApp configuration (if needed)
+setx WHATSAPP__ACCESSTOKEN "your-meta-access-token"
+setx WHATSAPP__PHONENUMBERID "your-phone-number-id"
+
+# Restart command prompt to load new environment variables
+```
+
+#### 3. Install as Windows Service
+```cmd
+# Create the service
+sc.exe create "AlertSystemWorker" binPath="C:\path\to\publish\worker\AlertSystem.Worker.exe" start=auto
+
+# Set service description
+sc.exe description "AlertSystemWorker" "AlertSystem Background Worker Service for automated alert processing and reminders"
+
+# Start the service
+sc.exe start "AlertSystemWorker"
+
+# Check service status
+sc.exe query "AlertSystemWorker"
+```
+
+#### 3. Service Management Commands
+```cmd
+# Start service
+sc.exe start "AlertSystemWorker"
+
+# Stop service
+sc.exe stop "AlertSystemWorker"
+
+# Restart service
+sc.exe stop "AlertSystemWorker" && sc.exe start "AlertSystemWorker"
+
+# Delete service (when uninstalling)
+sc.exe delete "AlertSystemWorker"
+```
+
+#### 4. Service Configuration
+The service will automatically:
+- Start when Windows boots (start=auto)
+- Restart on failure
+- Log to Windows Event Log
+- Use the configuration from `appsettings.json` and `.env` files
+
+#### 5. Service Logs
+Monitor service logs through:
+- **Windows Event Viewer**: Applications and Services Logs → AlertSystemWorker
+- **Application Logs**: Check the configured log file path in `appsettings.json`
+- **Console Output**: When running manually with `dotnet run`
+
+#### 6. Service Dependencies
+Ensure the following are available:
+- SQL Server connection (configured in connection string)
+- SMTP server access (for email notifications)
+- Meta Business API access (for WhatsApp)
+- Network connectivity for external API calls
+
+#### 7. Troubleshooting Service Issues
+```cmd
+# Check service status and error details
+sc.exe query "AlertSystemWorker"
+
+# View recent Windows Event Log entries
+eventvwr.msc
+
+# Test configuration manually
+cd C:\path\to\publish\worker
+AlertSystem.Worker.exe --environment=Production
+```
+
+#### 8. Production Considerations
+- **Service Account**: Run under a dedicated service account with minimal privileges
+- **Resource Limits**: Monitor memory and CPU usage
+- **Network Security**: Ensure firewall allows outbound connections
+- **Backup**: Include service configuration in backup procedures
+- **Updates**: Plan maintenance windows for service updates
+
 ## 🔧 Configuration
 
 ### Database Configuration

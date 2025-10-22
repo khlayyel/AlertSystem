@@ -295,8 +295,13 @@ function renderInboxList(containerId, items){
       default: readBadge = ''; readClass = ''; break;
     }
     
+    // Check if this alert requires confirmation and is unread
+    const requiresConfirmation = (a.type === 'acquittementNécessaire' || a.type === 'acquittementNécessaire');
+    const isUnread = (a.etatAlerteId === 1 || a.readStateId === 1);
+    const showConfirmButton = requiresConfirmation && isUnread;
+    
     return `
-    <div class="gmail-alert-row" data-id="${a.id}">
+    <div class="gmail-alert-row" data-id="${a.id}" data-historique-id="${a.id}">
       <div class="row-left title-col">
         <div class="d-flex align-items-center">
           <div class="flex-grow-1">
@@ -309,7 +314,10 @@ function renderInboxList(containerId, items){
         </div>
       </div>
       <div class="row-main desc-col">${preview}</div>
-      <div class="row-right date-col">${dateText}</div>
+      <div class="row-right actions-col">
+        ${showConfirmButton ? `<button class="btn btn-success btn-sm me-2" onclick="confirmAlert(${a.historiqueId || a.id})">Confirmer</button>` : ''}
+        <span class="text-muted small">${dateText}</span>
+      </div>
     </div>`;
   }).join('');
   
@@ -769,9 +777,12 @@ function getSelectedUsersData(){
 
 // Compose send (with undo functionality)
 const sendBtn = document.getElementById('composeSendBtn');
+let isSending = false;
 if (sendBtn){
   dbg('SendButton: Setting up click handler');
   sendBtn.addEventListener('click', async ()=>{
+    if (isSending) { dbg('SendButton: Already sending - ignored'); return; }
+    sendBtn.disabled = true; isSending = true;
     dbg('SendButton: Clicked, starting send process');
     
     const title = document.getElementById('composeTitle')?.value || '';
@@ -858,7 +869,14 @@ if (sendBtn){
       const r = await fetch('/AlertsCrud/Send', { 
         method:'POST', 
         headers:{'Content-Type':'application/json'}, 
-        body: JSON.stringify({ title, message, emails, phones, platforms }) 
+        body: JSON.stringify({ 
+          title, 
+          message, 
+          emails: combinedEmails, 
+          phones: combinedPhones, 
+          userIds: desktopUserIds, 
+          platforms 
+        }) 
       });
       
       dbg('SendButton: Received response', { 
@@ -902,6 +920,7 @@ if (sendBtn){
       hideSendingNotification();
       alert("Échec de création d'alerte: " + err.message);
     }
+    finally { isSending = false; sendBtn.disabled = false; }
   });
 } else {
   dbg('SendButton: Send button not found');
@@ -930,12 +949,14 @@ function setupTagInputs(){
 function makeTagInput(inputId, separatorRegex, normalizer){
   const input = document.getElementById(inputId);
   if (!input) return;
+  if (input.dataset.tagInit === '1') { dbg('tag:init:already', { inputId }); return; }
   const wrap = document.createElement('div');
   wrap.className = 'tag-input form-control';
   input.parentNode.insertBefore(wrap, input);
   input.style.display = 'none';
   const list = document.createElement('div'); list.className = 'tags'; wrap.appendChild(list);
   const editor = document.createElement('input'); editor.type = 'text'; editor.className = 'tag-editor'; wrap.appendChild(editor);
+  input.dataset.tagInit = '1';
   const addTag = (raw)=>{
     let v = (raw||'').trim();
     if (!v) return;
@@ -1126,6 +1147,128 @@ function showFinalStatusToast(message, type) {
   
   // Remove toast after it's hidden
   toast.addEventListener('hidden.bs.toast', () => toast.remove());
+}
+
+// Function to confirm an alert (for alerts requiring acknowledgment)
+async function confirmAlert(alertId) {
+  try {
+    dbg('confirmAlert: Starting confirmation for alert', { alertId });
+    
+    // Show loading state
+    const button = event.target;
+    const originalText = button.textContent;
+    button.disabled = true;
+    button.textContent = 'Confirmation...';
+    
+    // Get the historique ID from the row
+    const row = button.closest('.gmail-alert-row');
+    const historiqueId = row ? row.getAttribute('data-historique-id') : alertId;
+    
+    dbg('confirmAlert: Using historiqueId', { historiqueId, alertId });
+    
+    // Make API call to confirm the alert
+    const response = await fetch('/Alerts/MarkRead', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: `alertRecipientId=${historiqueId}`
+    });
+    
+    dbg('confirmAlert: API response', {
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok
+    });
+    
+    if (response.ok) {
+      // Success - update UI in real-time
+      showFinalStatusToast('Alerte confirmée avec succès', 'success');
+      
+      // Find and update the specific alert row
+      const row = button.closest('.gmail-alert-row');
+      if (row) {
+        // Update the badge to show "Lu" with green color
+        const badge = row.querySelector('.badge');
+        if (badge) {
+          badge.textContent = 'Lu';
+          badge.className = 'badge bg-success me-1';
+        }
+        
+        // Remove the confirm button and show confirmation time
+        const actionsCol = row.querySelector('.actions-col');
+        if (actionsCol) {
+          actionsCol.innerHTML = `<span class="text-muted small">Confirmé ${new Date().toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' })}</span>`;
+        }
+        
+        // Add visual feedback - briefly highlight the row
+        row.style.transition = 'background-color 0.3s ease';
+        row.style.backgroundColor = '#d4edda';
+        setTimeout(() => {
+          row.style.backgroundColor = '';
+        }, 1000);
+      }
+      
+      // Update the sidebar counts in real-time
+      updateSidebarCounts();
+      
+      logSuccess('confirmAlert: Alert confirmed successfully', { alertId });
+    } else {
+      const errorText = await response.text();
+      logError('confirmAlert: Server error response', new Error(`HTTP ${response.status}: ${errorText}`), {
+        status: response.status,
+        statusText: response.statusText,
+        responseText: errorText
+      });
+      showFinalStatusToast('Erreur lors de la confirmation', 'danger');
+    }
+  } catch (error) {
+    logError('confirmAlert: Network or other error', error, { alertId });
+    showFinalStatusToast('Erreur lors de la confirmation', 'danger');
+  } finally {
+    // Restore button state
+    if (event && event.target) {
+      const button = event.target;
+      button.disabled = false;
+      button.textContent = originalText;
+    }
+  }
+}
+
+// Function to update sidebar counts in real-time
+async function updateSidebarCounts() {
+  try {
+    // Update unread count
+    const unreadResponse = await fetch('/Alerts/UnreadCount');
+    if (unreadResponse.ok) {
+      const unreadCount = await unreadResponse.json();
+      const unreadBadge = document.querySelector('.sidebar .badge-danger');
+      if (unreadBadge) {
+        unreadBadge.textContent = unreadCount;
+      }
+    }
+    
+    // Update pending count
+    const pendingResponse = await fetch('/Alerts/MandatoryPendingCount');
+    if (pendingResponse.ok) {
+      const pendingCount = await pendingResponse.json();
+      const pendingBadge = document.querySelector('.sidebar .badge-warning');
+      if (pendingBadge) {
+        pendingBadge.textContent = pendingCount;
+      }
+    }
+    
+    // Update confirmed count
+    const confirmedResponse = await fetch('/Alerts/ConfirmedMandatoryCount');
+    if (confirmedResponse.ok) {
+      const confirmedCount = await confirmedResponse.json();
+      // You can update any confirmed count display here if needed
+    }
+    
+    dbg('updateSidebarCounts: Updated sidebar counts successfully');
+  } catch (error) {
+    logError('updateSidebarCounts: Failed to update sidebar counts', error);
+  }
 }
 
 

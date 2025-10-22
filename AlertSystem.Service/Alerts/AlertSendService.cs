@@ -142,10 +142,44 @@ namespace AlertSystem.Service
             _db.Alerte.Add(alerte);
             await _db.SaveChangesAsync();
 
+            // If userIds provided, enrich emails/phones from Users based on selected platforms
+            var emailSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var phoneSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var e in (emails ?? Array.Empty<string>())) if (!string.IsNullOrWhiteSpace(e)) emailSet.Add(e.Trim());
+            foreach (var p in (phones ?? Array.Empty<string>())) if (!string.IsNullOrWhiteSpace(p)) phoneSet.Add(p.Trim());
+
+            if (userIds != null)
+            {
+                var idArray = userIds.Where(id => id > 0).Distinct().ToArray();
+                if (idArray.Length > 0)
+                {
+                    var users = await _db.Users
+                        .Where(u => idArray.Contains(u.UserId))
+                        .Select(u => new { u.UserId, u.Email, u.PhoneNumber })
+                        .ToListAsync();
+                    if (sendEmail)
+                    {
+                        foreach (var u in users)
+                        {
+                            var e = (u.Email ?? string.Empty).Trim();
+                            if (!string.IsNullOrWhiteSpace(e)) emailSet.Add(e);
+                        }
+                    }
+                    if (sendWhatsApp)
+                    {
+                        foreach (var u in users)
+                        {
+                            var ph = (u.PhoneNumber ?? string.Empty).Trim();
+                            if (!string.IsNullOrWhiteSpace(ph)) phoneSet.Add(ph);
+                        }
+                    }
+                }
+            }
+
             if (sendEmail)
             {
-                Console.WriteLine($"Starting email sending for {emails?.Count() ?? 0} emails");
-                foreach (var e in (emails ?? Array.Empty<string>()))
+                Console.WriteLine($"Starting email sending for {emailSet.Count} emails");
+                foreach (var e in emailSet)
                 {
                     var email = (e ?? string.Empty).Trim();
                     Console.WriteLine($"Processing email: '{email}'");
@@ -169,7 +203,8 @@ namespace AlertSystem.Service
                     {
                         AlerteId = alerte.AlerteId,
                         DestinataireEmail = email,
-                        EtatAlerteId = 1
+                        EtatAlerteId = 1,
+                        PlateformeEnvoieId = 1
                     });
                     
                     try 
@@ -190,7 +225,7 @@ namespace AlertSystem.Service
 
             if (sendWhatsApp)
             {
-                foreach (var p in (phones ?? Array.Empty<string>()))
+                foreach (var p in phoneSet)
                 {
                     var phone = (p ?? string.Empty).Trim();
                     if (string.IsNullOrWhiteSpace(phone)) continue;
@@ -198,7 +233,8 @@ namespace AlertSystem.Service
                     {
                         AlerteId = alerte.AlerteId,
                         DestinatairePhoneNumber = phone,
-                        EtatAlerteId = 1
+                        EtatAlerteId = 1,
+                        PlateformeEnvoieId = 2
                     });
                     try {
                         // Build confirmation tokenized URL for WA template button (if template supports URL variable)
@@ -264,7 +300,8 @@ namespace AlertSystem.Service
                     {
                         AlerteId = alerte.AlerteId,
                         DestinataireUserId = uid,
-                        EtatAlerteId = 1
+                        EtatAlerteId = 1,
+                        PlateformeEnvoieId = 3
                     });
                         try { 
                             var success = await _notify.SendPushNotificationAsync(uid, title, message);

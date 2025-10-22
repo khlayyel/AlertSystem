@@ -68,5 +68,30 @@ namespace AlertSystem.WEB.Controllers
             if (result == null) return NotFound();
             return Json(result);
         }
+
+        [HttpPost]
+        public async Task<IActionResult> MarkRead([FromForm] int alertRecipientId)
+        {
+            try
+            {
+                Console.WriteLine($"MarkRead: Received alertRecipientId: {alertRecipientId}");
+                var success = await _alertReadService.MarkAsReadAsync(alertRecipientId);
+                if (success)
+                {
+                    Console.WriteLine($"MarkRead: Successfully marked alert {alertRecipientId} as read");
+                    return Json(new { success = true, message = "Alerte marquée comme lue" });
+                }
+                else
+                {
+                    Console.WriteLine($"MarkRead: Failed to mark alert {alertRecipientId} as read");
+                    return BadRequest(new { success = false, message = "Impossible de marquer l'alerte comme lue" });
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"MarkRead: Exception occurred: {ex.Message}");
+                return StatusCode(500, new { success = false, message = "Erreur interne du serveur", error = ex.Message });
+            }
+        }
     }
 }

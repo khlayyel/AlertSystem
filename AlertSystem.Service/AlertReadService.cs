@@ -3,16 +3,19 @@ using System.Linq;
 using System.Threading.Tasks;
 using AlertSystem.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace AlertSystem.Service
 {
     public sealed class AlertReadService : IAlertReadService
     {
         private readonly ApplicationDbContext _db;
+        private readonly ILogger<AlertReadService> _logger;
 
-        public AlertReadService(ApplicationDbContext db)
+        public AlertReadService(ApplicationDbContext db, ILogger<AlertReadService> logger)
         {
             _db = db;
+            _logger = logger;
         }
 
         public async Task<int> GetUnreadCountAsync()
@@ -78,6 +81,7 @@ namespace AlertSystem.Service
                 .Select(h => new
                 {
                     id = h.AlerteId,
+                    historiqueId = h.HistoriqueAlerteId,
                     title = h.Alerte!.TitreAlerte,
                     message = h.Alerte.DescriptionAlerte,
                     type = h.Alerte.AlertType != null ? h.Alerte.AlertType.AlertTypeName : "Unknown",
@@ -184,6 +188,48 @@ namespace AlertSystem.Service
                     .Select(h => new { h.DestinataireId, h.DestinataireUserId, fullName = h.User != null ? h.User.FullName : string.Empty, email = h.DestinataireEmail, phone = h.DestinatairePhoneNumber, desktop = h.DestinataireDesktop, etatId = h.EtatAlerteId, luLe = h.DateLecture })
                     .ToList()
             };
+        }
+
+        public async Task<bool> MarkAsReadAsync(int alertRecipientId)
+        {
+            try
+            {
+                _logger.LogInformation("MarkAsReadAsync: Attempting to mark alert {AlertRecipientId} as read", alertRecipientId);
+                
+                // First try to find by HistoriqueAlerteId (if it's properly set)
+                var historique = await _db.HistoriqueAlertes
+                    .FirstOrDefaultAsync(h => h.HistoriqueAlerteId == alertRecipientId);
+
+                // If not found, try to find by AlerteId (temporary workaround)
+                if (historique == null)
+                {
+                    _logger.LogInformation("MarkAsReadAsync: Not found by HistoriqueAlerteId, trying by AlerteId {AlerteId}", alertRecipientId);
+                    historique = await _db.HistoriqueAlertes
+                        .FirstOrDefaultAsync(h => h.AlerteId == alertRecipientId);
+                }
+
+                if (historique == null) 
+                {
+                    _logger.LogWarning("MarkAsReadAsync: HistoriqueAlerte with AlerteId {AlertRecipientId} not found", alertRecipientId);
+                    return false;
+                }
+
+                _logger.LogInformation("MarkAsReadAsync: Found HistoriqueAlerte with AlerteId {AlertRecipientId}, current EtatAlerteId: {EtatAlerteId}", 
+                    alertRecipientId, historique.EtatAlerteId);
+
+                // Mark as read (EtatAlerteId = 2) and set read date
+                historique.EtatAlerteId = 2; // Lu
+                historique.DateLecture = DateTime.UtcNow;
+
+                await _db.SaveChangesAsync();
+                _logger.LogInformation("MarkAsReadAsync: Successfully marked HistoriqueAlerte with AlerteId {AlertRecipientId} as read", alertRecipientId);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "MarkAsReadAsync: Error marking alert {AlertRecipientId} as read", alertRecipientId);
+                return false;
+            }
         }
     }
 }

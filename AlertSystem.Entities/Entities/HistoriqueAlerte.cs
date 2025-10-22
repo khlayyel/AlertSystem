@@ -5,6 +5,7 @@ namespace AlertSystem.Entities.Entities
 {
     public sealed class HistoriqueAlerte
     {
+        public int HistoriqueAlerteId { get; set; }
         public int DestinataireId { get; set; }
         public int AlerteId { get; set; }
         public int? DestinataireUserId { get; set; }
