@@ -33,6 +33,16 @@ namespace AlertSystem.Services
 
         public bool IsAdmin() => string.Equals(GetRole(), "Admin", StringComparison.OrdinalIgnoreCase);
         public bool IsSuperUser() => string.Equals(GetRole(), "SuperUser", StringComparison.OrdinalIgnoreCase);
+        
+        public string? GetUserName()
+        {
+            return _http.HttpContext?.User?.FindFirst(ClaimTypes.Name)?.Value;
+        }
+        
+        public string? GetUserEmail()
+        {
+            return _http.HttpContext?.User?.FindFirst(ClaimTypes.Email)?.Value;
+        }
     }
 }
 

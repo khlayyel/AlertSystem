@@ -14,9 +14,11 @@ namespace AlertSystem.Entities.Entities
         public string? DestinataireEmail { get; set; }
         public string? DestinatairePhoneNumber { get; set; }
         public string? DestinataireDesktop { get; set; }
+        public int? PlateformeEnvoieId { get; set; }
 
         public Alerte? Alerte { get; set; }
         public User? User { get; set; }
         public Etat? Etat { get; set; }
+        public PlateformeEnvoie? PlateformeEnvoie { get; set; }
     }
 }

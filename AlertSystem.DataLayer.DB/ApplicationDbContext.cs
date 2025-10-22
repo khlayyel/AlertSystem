@@ -1,9 +1,10 @@
 using AlertSystem.Entities.Entities;
 using Microsoft.EntityFrameworkCore;
+using AlertSystem.DataLayer.Interfaces;
 
 namespace AlertSystem.Data
 {
-    public sealed class ApplicationDbContext : DbContext
+    public sealed class ApplicationDbContext : DbContext, IDbContext
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         {
@@ -46,6 +47,7 @@ namespace AlertSystem.Data
                 b.HasOne(x => x.ExpedType).WithMany().HasForeignKey(x => x.ExpedTypeId).OnDelete(DeleteBehavior.NoAction);
                 b.HasOne(x => x.Statut).WithMany().HasForeignKey(x => x.StatutId).OnDelete(DeleteBehavior.NoAction);
                 b.HasOne(x => x.Etat).WithMany().HasForeignKey(x => x.EtatAlerteId).OnDelete(DeleteBehavior.NoAction);
+                b.HasOne(x => x.Expediteur).WithMany().HasForeignKey(x => x.ExpediteurId).OnDelete(DeleteBehavior.SetNull);
                 
                 // Nouvelles relations
                 b.HasOne(x => x.PlateformeEnvoie).WithMany(p => p.Alertes).HasForeignKey(x => x.PlateformeEnvoieId).OnDelete(DeleteBehavior.SetNull);
@@ -91,13 +93,17 @@ namespace AlertSystem.Data
                 b.HasOne(x => x.Alerte).WithMany(a => a.HistoriqueAlertes).HasForeignKey(x => x.AlerteId).OnDelete(DeleteBehavior.Cascade);
                 b.HasOne(x => x.User).WithMany().HasForeignKey(x => x.DestinataireUserId).OnDelete(DeleteBehavior.Cascade);
                 b.HasOne(x => x.Etat).WithMany().HasForeignKey(x => x.EtatAlerteId).OnDelete(DeleteBehavior.NoAction);
+                b.HasOne(x => x.PlateformeEnvoie).WithMany().HasForeignKey(x => x.PlateformeEnvoieId).OnDelete(DeleteBehavior.SetNull);
             });
 
             modelBuilder.Entity<RappelSuivant>(b =>
             {
                 b.ToTable("RappelSuivant");
                 b.HasKey(x => x.RappelId);
+                b.Property(x => x.DateRappel).HasDefaultValueSql("GETUTCDATE()");
+                b.Property(x => x.StatutRappel).HasMaxLength(50);
                 b.HasOne(x => x.Alerte).WithMany(a => a.Rappels).HasForeignKey(x => x.AlerteId).OnDelete(DeleteBehavior.Cascade);
+                b.HasOne(x => x.Historique).WithMany().HasForeignKey(x => x.HistoriqueAlerteId).OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<User>(b =>

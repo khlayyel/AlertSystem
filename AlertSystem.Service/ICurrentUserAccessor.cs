@@ -7,6 +7,8 @@ namespace AlertSystem.Services
         int? GetDepartmentId();
         bool IsAdmin();
         bool IsSuperUser();
+        string? GetUserName();
+        string? GetUserEmail();
     }
 }
 

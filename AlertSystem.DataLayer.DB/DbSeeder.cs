@@ -1,6 +1,7 @@
 using AlertSystem.Data;
 using AlertSystem.Entities.Entities;
 using Microsoft.EntityFrameworkCore;
+using AlertSystem.Utils.Crypto;
 
 namespace AlertSystem
 {
@@ -48,7 +49,47 @@ namespace AlertSystem
                 );
             }
 
+            // Seed ApiClients with multiple test clients
+            if (!await context.ApiClients.AnyAsync())
+            {
+                context.ApiClients.AddRange(
+                    new ApiClient 
+                    { 
+                        Name = "Hotel Riviera - Production", 
+                        ApiKeyHash = CryptoUtils.ComputeSha256("hotel-riviera-prod-key-2024-abc123def456"),
+                        IsActive = true,
+                        RateLimitPerMinute = 1000,
+                        CreatedAt = DateTime.UtcNow
+                    },
+                    new ApiClient 
+                    { 
+                        Name = "Hotel Paradise - Staging", 
+                        ApiKeyHash = CryptoUtils.ComputeSha256("hotel-paradise-staging-key-2024-xyz789uvw012"),
+                        IsActive = true,
+                        RateLimitPerMinute = 500,
+                        CreatedAt = DateTime.UtcNow
+                    },
+                    new ApiClient 
+                    { 
+                        Name = "Hotel Oasis - Development", 
+                        ApiKeyHash = CryptoUtils.ComputeSha256("hotel-oasis-dev-key-2024-mno345pqr678"),
+                        IsActive = true,
+                        RateLimitPerMinute = 200,
+                        CreatedAt = DateTime.UtcNow
+                    },
+                    new ApiClient 
+                    { 
+                        Name = "Hotel Sunset - Testing", 
+                        ApiKeyHash = CryptoUtils.ComputeSha256("hotel-sunset-test-key-2024-stu901vwx234"),
+                        IsActive = false, // Inactive for testing
+                        RateLimitPerMinute = 100,
+                        CreatedAt = DateTime.UtcNow
+                    }
+                );
+            }
+
             await context.SaveChangesAsync();
         }
+
     }
 }

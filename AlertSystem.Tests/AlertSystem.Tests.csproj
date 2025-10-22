@@ -28,6 +28,7 @@
     <ProjectReference Include="..\AlertSystem.DataLayer.DB\AlertSystem.DataLayer.DB.csproj" />
     <ProjectReference Include="..\AlertSystem.WEB\AlertSystem.WEB.csproj" />
     <ProjectReference Include="..\AlertSystem.API\AlertSystem.API.csproj" />
+    <ProjectReference Include="..\AlertSystem.Worker\AlertSystem.Worker.csproj" />
   </ItemGroup>
 
 </Project>

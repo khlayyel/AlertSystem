@@ -3,6 +3,8 @@ using AlertSystem.Service;
 using AlertSystem.API.Middleware;
 using AlertSystem.Services;
 using Serilog;
+using AlertSystem.DataLayer.Interfaces;
+using AlertSystem.Repository.Implementations;
 
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(new ConfigurationBuilder().AddJsonFile("appsettings.json", optional: true).Build())
@@ -25,13 +27,29 @@ builder.Services.AddDbContext<AlertSystem.Data.ApplicationDbContext>(opts =>
     opts.UseSqlServer(cs);
 });
 
+// Register IDbContext abstraction
+builder.Services.AddScoped<AlertSystem.DataLayer.Interfaces.IDbContext>(provider => 
+    provider.GetRequiredService<AlertSystem.Data.ApplicationDbContext>());
+
 // DI registrations
 builder.Services.AddScoped<AlertSystem.Services.INotificationService, NotificationService>();
 builder.Services.AddScoped<AlertSystem.Service.IEmailSender, AlertSystem.Services.SmtpEmailSender>();
+builder.Services.AddScoped<AlertSystem.Service.IEmailTemplateService, AlertSystem.Service.EmailTemplateService>();
+builder.Services.AddScoped<ConfirmationTokenService>(provider =>
+    new ConfirmationTokenService(provider.GetRequiredService<IConfiguration>()?["TOKEN_SECRET"] ?? "dev-secret-change-me"));
 builder.Services.AddHttpClient<AlertSystem.Services.WhatsAppService>();
 builder.Services.AddScoped<AlertSystem.Services.IWhatsAppService, AlertSystem.Services.WhatsAppService>();
 builder.Services.AddScoped<IAlertSendService, AlertSendService>();
 builder.Services.AddScoped<IApiKeyValidator, ApiKeyValidator>();
+
+// Register Repository Interfaces
+builder.Services.AddScoped<IAlerteRepository, AlerteRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IHistoriqueAlerteRepository, HistoriqueAlerteRepository>();
+builder.Services.AddScoped<IRappelSuivantRepository, RappelSuivantRepository>();
+builder.Services.AddScoped<IApiClientRepository, ApiClientRepository>();
+builder.Services.AddScoped<IReferenceDataRepository, ReferenceDataRepository>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 var app = builder.Build();
 

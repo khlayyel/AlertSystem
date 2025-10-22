@@ -8,6 +8,7 @@ namespace AlertSystem.Service
         Task<int> GetTodayCountAsync();
         Task<int> GetConfirmedMandatoryCountAsync();
         Task<int> GetMandatoryPendingCountAsync();
+        Task<object> GetInboxAsync(int page, int size, string status = "all");
         Task<object> GetHistoryAsync(string status, int page, int size);
         Task<object> GetSentAsync(int page, int size);
         Task<object?> GetDetailsAsync(int id);

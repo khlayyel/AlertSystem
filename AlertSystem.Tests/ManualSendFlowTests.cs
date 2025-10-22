@@ -1,11 +1,15 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Http;
 using AlertSystem.Data;
 using AlertSystem.Entities.Entities;
 using AlertSystem.Service;
 using AlertSystem.Services;
 using Microsoft.EntityFrameworkCore;
+using Xunit;
+using AlertSystem.Tests.Integration;
 
 namespace AlertSystem.Tests;
 
@@ -40,19 +44,19 @@ public class ManualSendFlowTests
         var config = new ConfigurationBuilder().Build();
         var tokens = new ConfirmationTokenService("test-secret");
         var emailTemplate = new EmailTemplateService();
-        var service = new AlertSendService(db, notify, null, config, tokens, emailTemplate);
+        var service = new AlertSendService(db, notify, new StubWhatsAppService(), config, tokens, emailTemplate, new HttpContextAccessor(), new LoggerFactory().CreateLogger<AlertSendService>());
 
-        var (alertId, anySuccess) = await service.SendManualAsync(
+        var response = await service.SendManualAsync(
             "Title", "Body",
             emails: new[] { "t@test.com" },
             phones: new[] { "+21611111111" },
             sendEmail: true, sendWhatsApp: true, sendDesktop: false,
             userIds: null, alertTypeId: 1);
 
-        Assert.True(anySuccess);
-        var alert = await db.Alerte.FirstAsync(a => a.AlerteId == alertId);
+        Assert.True(response.OverallSuccess);
+        var alert = await db.Alerte.FirstAsync(a => a.AlerteId == response.AlerteId);
         Assert.Equal(2, alert.StatutId); // Envoyé
-        Assert.True(await db.HistoriqueAlertes.Where(h => h.AlerteId == alertId).AnyAsync());
+        Assert.True(await db.HistoriqueAlertes.Where(h => h.AlerteId == response.AlerteId).AnyAsync());
     }
 
     [Fact]
@@ -63,17 +67,17 @@ public class ManualSendFlowTests
         var config = new ConfigurationBuilder().Build();
         var tokens = new ConfirmationTokenService("test-secret");
         var emailTemplate = new EmailTemplateService();
-        var service = new AlertSendService(db, notify, null, config, tokens, emailTemplate);
+        var service = new AlertSendService(db, notify, new StubWhatsAppService(), config, tokens, emailTemplate, new HttpContextAccessor(), new LoggerFactory().CreateLogger<AlertSendService>());
 
-        var (alertId, anySuccess) = await service.SendManualAsync(
+        var response = await service.SendManualAsync(
             "Title", "Body",
             emails: new[] { "t@test.com" },
             phones: new[] { "+21611111111" },
             sendEmail: true, sendWhatsApp: true, sendDesktop: false,
             userIds: null, alertTypeId: 1);
 
-        Assert.False(anySuccess);
-        var alert = await db.Alerte.FirstAsync(a => a.AlerteId == alertId);
+        Assert.False(response.OverallSuccess);
+        var alert = await db.Alerte.FirstAsync(a => a.AlerteId == response.AlerteId);
         Assert.Equal(4, alert.StatutId); // Échoué
     }
 }

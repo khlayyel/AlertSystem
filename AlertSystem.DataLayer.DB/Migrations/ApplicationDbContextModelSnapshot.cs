@@ -92,6 +92,8 @@ namespace AlertSystem.Migrations
 
                     b.HasIndex("ExpedTypeId");
 
+                    b.HasIndex("ExpediteurId");
+
                     b.HasIndex("PlateformeEnvoieId");
 
                     b.HasIndex("StatutId");
@@ -188,11 +190,14 @@ namespace AlertSystem.Migrations
                     b.Property<string>("DestinatairePhoneNumber")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("DestinataireUserId")
+                    b.Property<int?>("DestinataireUserId")
                         .HasColumnType("int");
 
-                    b.Property<string>("EtatAlerte")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("EtatAlerteId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("PlateformeEnvoieId")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("RappelSuivant")
                         .HasColumnType("datetime2");
@@ -202,6 +207,10 @@ namespace AlertSystem.Migrations
                     b.HasIndex("AlerteId");
 
                     b.HasIndex("DestinataireUserId");
+
+                    b.HasIndex("EtatAlerteId");
+
+                    b.HasIndex("PlateformeEnvoieId");
 
                     b.ToTable("HistoriqueAlerte", (string)null);
                 });
@@ -236,10 +245,19 @@ namespace AlertSystem.Migrations
                         .HasColumnType("int");
 
                     b.Property<DateTime>("DateRappel")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("DetailsErreur")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("HistoriqueAlerteId")
+                        .HasColumnType("int");
 
                     b.Property<string>("StatutRappel")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<int>("Tentative")
                         .HasColumnType("int");
@@ -247,6 +265,8 @@ namespace AlertSystem.Migrations
                     b.HasKey("RappelId");
 
                     b.HasIndex("AlerteId");
+
+                    b.HasIndex("HistoriqueAlerteId");
 
                     b.ToTable("RappelSuivant", (string)null);
                 });
@@ -361,6 +381,11 @@ namespace AlertSystem.Migrations
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
+                    b.HasOne("AlertSystem.Entities.Entities.User", "Expediteur")
+                        .WithMany()
+                        .HasForeignKey("ExpediteurId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("AlertSystem.Entities.Entities.PlateformeEnvoie", "PlateformeEnvoie")
                         .WithMany("Alertes")
                         .HasForeignKey("PlateformeEnvoieId")
@@ -380,6 +405,8 @@ namespace AlertSystem.Migrations
 
                     b.Navigation("ExpedType");
 
+                    b.Navigation("Expediteur");
+
                     b.Navigation("PlateformeEnvoie");
 
                     b.Navigation("Statut");
@@ -396,10 +423,24 @@ namespace AlertSystem.Migrations
                     b.HasOne("AlertSystem.Entities.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("DestinataireUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("AlertSystem.Entities.Entities.Etat", "Etat")
+                        .WithMany()
+                        .HasForeignKey("EtatAlerteId")
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
+                    b.HasOne("AlertSystem.Entities.Entities.PlateformeEnvoie", "PlateformeEnvoie")
+                        .WithMany()
+                        .HasForeignKey("PlateformeEnvoieId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.Navigation("Alerte");
+
+                    b.Navigation("Etat");
+
+                    b.Navigation("PlateformeEnvoie");
 
                     b.Navigation("User");
                 });
@@ -412,7 +453,15 @@ namespace AlertSystem.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("AlertSystem.Entities.Entities.HistoriqueAlerte", "Historique")
+                        .WithMany()
+                        .HasForeignKey("HistoriqueAlerteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Alerte");
+
+                    b.Navigation("Historique");
                 });
 
             modelBuilder.Entity("AlertSystem.Entities.Entities.Alerte", b =>

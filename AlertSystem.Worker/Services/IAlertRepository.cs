@@ -16,5 +16,7 @@ namespace AlertSystem.Worker.Services
         Task<List<AlerteModel>> GetReminderAlertsAsync(CancellationToken cancellationToken = default);
         Task SetInitialReminderAsync(int alerteId, int intervalMinutes, CancellationToken cancellationToken = default);
         Task<bool> UpdateReminderStatusAsync(int alerteId, bool success, int intervalMinutes, int maxAttempts, CancellationToken cancellationToken = default);
+        Task InsertReminderHistoryAsync(int alerteId, int historiqueAlerteId, bool success, int attemptNumber, string? errorDetails, CancellationToken cancellationToken = default);
+        Task<List<int>> GetUnconfirmedRecipientsAsync(int alerteId, CancellationToken cancellationToken = default);
     }
 }

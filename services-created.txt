@@ -1,3 +1,0 @@
-AlertSystem.Service/INotificationService.cs (restored)
-AlertSystem.Service/IWhatsAppService.cs (restored)
-AlertSystem.Service/Notifications/IWebPushService.cs (restored interface from old project)

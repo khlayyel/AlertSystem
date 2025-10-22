@@ -1,0 +1,411 @@
+@{
+    ViewData["Title"] = "Boîte de réception";
+}
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="bi bi-inbox me-2 text-primary"></i>Boîte de réception
+        <span id="unreadCount" class="badge bg-danger ms-2">0</span>
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-download me-1"></i>Exporter
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Inbox KPIs -->
+<div class="row g-4 mb-4">
+    <div class="col-12 col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center">
+                <div class="d-flex align-items-center justify-content-center mb-3">
+                    <div class="bg-primary bg-opacity-10 rounded-circle p-3 me-3">
+                        <i class="bi bi-calendar-day text-primary fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small text-uppercase fw-semibold">REÇUES AUJOURD'HUI</div>
+                        <div class="display-6 fw-bold text-primary" id="receivedTodayCount">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center">
+                <div class="d-flex align-items-center justify-content-center mb-3">
+                    <div class="bg-danger bg-opacity-10 rounded-circle p-3 me-3">
+                        <i class="bi bi-exclamation-triangle text-danger fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small text-uppercase fw-semibold">NON LUS</div>
+                        <div class="display-6 fw-bold text-danger" id="unreadAlertsCount">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center">
+                <div class="d-flex align-items-center justify-content-center mb-3">
+                    <div class="bg-warning bg-opacity-10 rounded-circle p-3 me-3">
+                        <i class="bi bi-clock text-warning fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small text-uppercase fw-semibold">EN ATTENTE</div>
+                        <div class="display-6 fw-bold text-warning" id="pendingConfirmationCount">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filters -->
+<div class="card mb-4 border-0 shadow-sm">
+    <div class="card-body">
+        <div class="row g-3 align-items-center">
+            <div class="col-md-8">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input id="alertSearch" class="form-control form-control-lg" placeholder="Rechercher une alerte (titre, expéditeur, contenu, destinataire)..." />
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary" type="button">
+                        <i class="bi bi-funnel me-1"></i>Filtres
+                    </button>
+                    <button class="btn btn-outline-secondary" type="button">
+                        <i class="bi bi-arrow-clockwise me-1"></i>Actualiser
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Inbox List -->
+<div class="card border-0 shadow-sm">
+    <div id="inboxPagination" class="gmail-pagination" style="display:none;">
+        <div class="d-flex justify-content-between align-items-center">
+            <span class="gmail-pagination-info">
+                <span id="inboxRangeStart">1</span>-<span id="inboxRangeEnd">50</span> sur <span id="inboxTotal">0</span>
+            </span>
+            <div class="gmail-pagination-controls">
+                <button id="inboxPrevBtn" class="btn btn-sm btn-outline-secondary me-2" disabled>
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+                <button id="inboxNextBtn" class="btn btn-sm btn-outline-secondary" disabled>
+                    <i class="bi bi-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    <div id="inboxList" class="gmail-list">
+        <div class="gmail-loading">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Chargement...</span>
+            </div>
+            <span class="ms-2">Chargement des alertes...</span>
+        </div>
+    </div>
+</div>
+
+<div class="gmail-compose-fab" id="composeFab">
+    <button type="button" class="btn btn-primary btn-lg rounded-pill shadow-lg" data-bs-toggle="modal" data-bs-target="#newAlertModal">
+        <i class="bi bi-plus-lg me-2"></i>Composer
+    </button>
+</div>
+
+<!-- Compose Modal -->
+<div class="modal fade" id="newAlertModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">
+          <i class="bi bi-plus-circle me-2"></i>Nouvelle alerte
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Alertes rapides -->
+        <div class="card mb-4 border-0 shadow-sm">
+          <div class="card-header bg-info text-white">
+            <i class="bi bi-lightning me-2"></i>Alertes rapides
+          </div>
+          <div class="card-body">
+            <div class="row g-3 align-items-center">
+              <div class="col-12 col-md-8">
+                <select id="quickTemplate" class="form-select form-select-lg">
+                  <option value="">-- Sélectionner une alerte rapide --</option>
+                </select>
+              </div>
+              <div class="col-12 col-md-4 text-muted small">
+                <i class="bi bi-info-circle me-1"></i>Sélectionnez pour remplir automatiquement
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Titre & message -->
+        <div class="row g-4 mb-4">
+          <div class="col-12">
+            <label class="form-label fw-semibold">
+              <i class="bi bi-tag me-1"></i>Titre de l'alerte *
+            </label>
+            <input id="composeTitle" class="form-control form-control-lg" placeholder="Entrez le titre de l'alerte..." />
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold">
+              <i class="bi bi-chat-text me-1"></i>Message
+            </label>
+            <textarea id="composeMessage" rows="6" class="form-control" placeholder="Entrez le message de l'alerte..."></textarea>
+          </div>
+        </div>
+
+        <!-- Type d'alerte -->
+        <div class="row g-4 mb-4">
+          <div class="col-12">
+            <label class="form-label fw-semibold">
+              <i class="bi bi-exclamation-triangle me-1"></i>Type d'alerte
+            </label>
+            <select id="composeType" class="form-select form-select-lg">
+              <option value="Information">
+                <i class="bi bi-info-circle me-1"></i>Information
+              </option>
+              <option value="Avertissement">
+                <i class="bi bi-exclamation-triangle me-1"></i>Avertissement
+              </option>
+              <option value="Obligatoire">
+                <i class="bi bi-shield-exclamation me-1"></i>Obligatoire
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Plateformes d'envoi -->
+        <div class="card mb-4 border-0 shadow-sm">
+          <div class="card-header bg-success text-white">
+            <i class="bi bi-broadcast me-2"></i>Plateformes d'envoi
+          </div>
+          <div class="card-body">
+            <div class="mb-3 fw-semibold">Sélectionnez les moyens d'envoi :</div>
+            <div class="row g-3">
+              <div class="col-auto">
+                <div class="form-check form-check-lg">
+                  <input class="form-check-input" type="checkbox" id="platformEmail">
+                  <label class="form-check-label fw-semibold" for="platformEmail">
+                    <i class="bi bi-envelope me-1"></i>Email
+                  </label>
+                </div>
+              </div>
+              <div class="col-auto">
+                <div class="form-check form-check-lg">
+                  <input class="form-check-input" type="checkbox" id="platformWhatsApp">
+                  <label class="form-check-label fw-semibold" for="platformWhatsApp">
+                    <i class="bi bi-whatsapp me-1"></i>WhatsApp
+                  </label>
+                </div>
+              </div>
+              <div class="col-auto">
+                <div class="form-check form-check-lg">
+                  <input class="form-check-input" type="checkbox" id="platformDesktop">
+                  <label class="form-check-label fw-semibold" for="platformDesktop">
+                    <i class="bi bi-bell me-1"></i>Notification Desktop
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div class="form-text">
+              <i class="bi bi-info-circle me-1"></i>Sélectionnez une ou plusieurs plateformes.
+            </div>
+          </div>
+        </div>
+
+        <!-- Coordonnées des destinataires -->
+        <div class="card mb-4 border-0 shadow-sm">
+          <div class="card-header bg-warning text-dark">
+            <i class="bi bi-people me-2"></i>Coordonnées des destinataires
+          </div>
+          <div class="card-body">
+            <!-- Sélection d'utilisateurs existants -->
+            <div class="row g-4 mb-4">
+              <div class="col-12">
+                <label class="form-label fw-semibold">
+                  <i class="bi bi-person-check me-1"></i>Utilisateurs du système
+                </label>
+                <select id="selectedUsers" class="form-select" multiple size="4">
+                  <option value="">Chargement des utilisateurs...</option>
+                </select>
+                <div class="form-text">
+                  <i class="bi bi-info-circle me-1"></i>Sélectionnez un ou plusieurs utilisateurs. Leurs coordonnées seront utilisées selon les plateformes sélectionnées.
+                </div>
+              </div>
+            </div>
+            
+            <div class="row g-4">
+              <div class="col-12 col-md-6">
+                <label class="form-label fw-semibold">
+                  <i class="bi bi-envelope me-1"></i>Emails
+                </label>
+                <input id="destEmails" class="form-control" placeholder="ex: a@ex.com, b@ex.com" />
+                <div class="form-text">Séparés par des virgules</div>
+              </div>
+              <div class="col-12 col-md-6">
+                <label class="form-label fw-semibold">
+                  <i class="bi bi-phone me-1"></i>Téléphones WhatsApp
+                </label>
+                <input id="destPhones" class="form-control" placeholder="ex: +21612345678, +21698765432" />
+                <div class="form-text">Format international requis</div>
+              </div>
+            </div>
+            <div class="form-text mt-2">
+              <i class="bi bi-info-circle me-1"></i>Ces champs apparaissent selon les plateformes sélectionnées.
+            </div>
+          </div>
+        </div>
+
+        <!-- Configuration API -->
+        <div class="card mb-2 border-0 shadow-sm">
+          <div class="card-header bg-secondary text-white">
+            <i class="bi bi-gear me-2"></i>Configuration API
+          </div>
+          <div class="card-body">
+            <div class="row g-3 align-items-center">
+              <div class="col-12 col-md-8">
+                <label class="form-label fw-semibold">
+                  <i class="bi bi-key me-1"></i>Clé API
+                </label>
+                <input id="apiKey" class="form-control" placeholder="Entrez votre clé API..." />
+                <div class="form-text">La clé API est nécessaire pour envoyer des alertes via l'API</div>
+              </div>
+              <div class="col-12 col-md-4">
+                <div class="d-grid gap-2">
+                  <button type="button" id="apiSaveBtn" class="btn btn-outline-primary">
+                    <i class="bi bi-save me-1"></i>Sauvegarder
+                  </button>
+                  <button type="button" id="apiTestBtn" class="btn btn-outline-success">
+                    <i class="bi bi-check-circle me-1"></i>Tester
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer bg-light">
+        <div>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-circle me-1"></i>Annuler
+          </button>
+        </div>
+        <div class="d-flex gap-2">
+          <button type="button" id="saveQuickBtn" class="btn btn-outline-primary">
+            <i class="bi bi-bookmark me-1"></i>Enregistrer comme alerte rapide
+          </button>
+          <button type="button" id="composeSendBtn" class="btn btn-primary btn-lg">
+            <i class="bi bi-send me-1"></i>Envoyer l'alerte
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Details Modal -->
+<div class="modal fade" id="alertDetailsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header bg-info text-white">
+        <h5 class="modal-title">
+          <i class="bi bi-eye me-2"></i>Détails de l'alerte
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-4">
+          <div class="col-12">
+            <div class="card border-0 shadow-sm">
+              <div class="card-header bg-light">
+                <h6 class="mb-0 fw-semibold">
+                  <i class="bi bi-tag me-1"></i>Titre
+                </h6>
+              </div>
+              <div class="card-body">
+                <div id="detailTitle" class="text-body fw-semibold"></div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-12">
+            <div class="card border-0 shadow-sm">
+              <div class="card-header bg-light">
+                <h6 class="mb-0 fw-semibold">
+                  <i class="bi bi-chat-text me-1"></i>Message
+                </h6>
+              </div>
+              <div class="card-body">
+                <pre id="detailMessage" class="mb-0" style="white-space:pre-wrap; font-family: inherit;"></pre>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+              <div class="card-header bg-light">
+                <h6 class="mb-0 fw-semibold">
+                  <i class="bi bi-exclamation-triangle me-1"></i>Type
+                </h6>
+              </div>
+              <div class="card-body text-center">
+                <span id="detailType" class="badge bg-info fs-6"></span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+              <div class="card-header bg-light">
+                <h6 class="mb-0 fw-semibold">
+                  <i class="bi bi-check-circle me-1"></i>Statut
+                </h6>
+              </div>
+              <div class="card-body text-center">
+                <span id="detailStatus" class="badge bg-success fs-6"></span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+              <div class="card-header bg-light">
+                <h6 class="mb-0 fw-semibold">
+                  <i class="bi bi-calendar me-1"></i>Créée le
+                </h6>
+              </div>
+              <div class="card-body text-center">
+                <div id="detailCreatedAt" class="text-muted"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer bg-light">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x-circle me-1"></i>Fermer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+@section Scripts {
+<script src="~/js/gmail-dashboard.js"></script>
+}

@@ -250,11 +250,11 @@ namespace AlertSystem.Worker
         {
             _logger.LogInformation("Processing reminder for alert {AlerteId}: {Title}", alert.AlerteId, alert.TitreAlerte);
 
-            // Get recipients for this alert
-            var recipients = await GetRecipientsForAlert(alert, cancellationToken);
-            if (recipients.Count == 0)
+            // Get unconfirmed recipients for this alert
+            var unconfirmedRecipients = await _alertRepository.GetUnconfirmedRecipientsAsync(alert.AlerteId, cancellationToken);
+            if (unconfirmedRecipients.Count == 0)
             {
-                _logger.LogWarning("No recipients found for reminder alert {AlerteId}", alert.AlerteId);
+                _logger.LogInformation("All recipients confirmed for alert {AlerteId}, stopping reminders", alert.AlerteId);
                 return;
             }
 
@@ -263,10 +263,18 @@ namespace AlertSystem.Worker
 
             var totalAttempts = 0;
             var totalSuccess = 0;
+            var reminderAttempts = new Dictionary<int, int>(); // Track attempts per recipient
 
-            // Re-send to each recipient via each channel
-            foreach (var recipient in recipients)
+            // Re-send to each unconfirmed recipient via each channel
+            foreach (var recipientId in unconfirmedRecipients)
             {
+                var recipient = await _alertRepository.GetUserByIdAsync(recipientId, cancellationToken);
+                if (recipient == null)
+                {
+                    _logger.LogWarning("Recipient {RecipientId} not found for reminder alert {AlerteId}", recipientId, alert.AlerteId);
+                    continue;
+                }
+
                 foreach (var channel in channels)
                 {
                     try
@@ -274,11 +282,39 @@ namespace AlertSystem.Worker
                         totalAttempts++;
                         await SendViaChannel(channel, recipient, $"[RAPPEL] {alert.TitreAlerte}", alert.DescriptionAlerte, cancellationToken);
                         totalSuccess++;
+                        
+                        // Track successful attempt for this recipient
+                        if (!reminderAttempts.ContainsKey(recipientId))
+                            reminderAttempts[recipientId] = 0;
+                        reminderAttempts[recipientId]++;
+                        
+                        // Insert reminder history record
+                        await _alertRepository.InsertReminderHistoryAsync(
+                            alert.AlerteId, 
+                            recipientId, // Using recipientId as HistoriqueAlerteId for now
+                            true, 
+                            reminderAttempts[recipientId], 
+                            null, 
+                            cancellationToken);
                     }
                     catch (Exception ex)
                     {
                         _logger.LogWarning(ex, "Failed to send reminder for alert {AlerteId} to user {UserId} via {Channel}", 
                             alert.AlerteId, recipient.UserId, channel);
+                        
+                        // Track failed attempt for this recipient
+                        if (!reminderAttempts.ContainsKey(recipientId))
+                            reminderAttempts[recipientId] = 0;
+                        reminderAttempts[recipientId]++;
+                        
+                        // Insert reminder history record for failure
+                        await _alertRepository.InsertReminderHistoryAsync(
+                            alert.AlerteId, 
+                            recipientId, // Using recipientId as HistoriqueAlerteId for now
+                            false, 
+                            reminderAttempts[recipientId], 
+                            ex.Message, 
+                            cancellationToken);
                     }
                 }
             }

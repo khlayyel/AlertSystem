@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using AlertSystem.Services;
 using System.Text.RegularExpressions;
 using AlertSystem.Entities.Entities;
+using AlertSystem.Service;
 
 namespace AlertSystem.Controllers.Api.V1
 {
@@ -13,12 +14,14 @@ namespace AlertSystem.Controllers.Api.V1
     {
         private readonly ApplicationDbContext _db;
         private readonly INotificationService _notificationService;
+        private readonly IAlertSendService _alertSendService;
         private readonly ILogger<AlertsController> _logger;
 
-        public AlertsController(ApplicationDbContext db, INotificationService notificationService, ILogger<AlertsController> logger)
+        public AlertsController(ApplicationDbContext db, INotificationService notificationService, IAlertSendService alertSendService, ILogger<AlertsController> logger)
         { 
             _db = db; 
             _notificationService = notificationService;
+            _alertSendService = alertSendService;
             _logger = logger;
         }
 
@@ -64,7 +67,7 @@ namespace AlertSystem.Controllers.Api.V1
                 if (alert == null) return NotFound(new { error = "Alert not found" });
                 return Ok(alert);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return StatusCode(500, new { error = "Internal server error" });
             }
@@ -140,7 +143,7 @@ namespace AlertSystem.Controllers.Api.V1
 
                 return Ok(new { items, total, page, size, sort, order });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return StatusCode(500, new { error = "Internal server error" });
             }
@@ -177,7 +180,10 @@ namespace AlertSystem.Controllers.Api.V1
                     return BadRequest(new { error = "valid_appId_required" });
 
                 // Validate and categorize recipients
-                var validatedRecipients = new List<ValidatedRecipient>();
+                var emails = new List<string>();
+                var phones = new List<string>();
+                var deviceIds = new List<string>();
+                
                 if (dto.Recipients != null && dto.Recipients.Length > 0)
                 {
                     foreach (var r in dto.Recipients)
@@ -187,26 +193,26 @@ namespace AlertSystem.Controllers.Api.V1
                         var recipient = ValidateRecipient(r.RecipientId.Trim());
                         if (recipient != null)
                         {
-                            validatedRecipients.Add(recipient);
+                            switch (recipient.Type)
+                            {
+                                case RecipientType.Email:
+                                    emails.Add(recipient.Id);
+                                    break;
+                                case RecipientType.WhatsApp:
+                                    phones.Add(recipient.Id);
+                                    break;
+                                case RecipientType.Device:
+                                    deviceIds.Add(recipient.Id);
+                                    break;
+                            }
                         }
                     }
                 }
 
-                _logger.LogInformation("[DEBUG] Validated {Count} recipients", validatedRecipients.Count);
+                _logger.LogInformation("[DEBUG] Validated {EmailCount} emails, {PhoneCount} phones, {DeviceCount} devices", 
+                    emails.Count, phones.Count, deviceIds.Count);
 
-                // Get reference IDs
-                var expedTypeId = await _db.ExpedType.AsNoTracking()
-                    .Where(x => x.ExpedTypeName == dto.ExpedType)
-                    .Select(x => x.ExpedTypeId)
-                    .FirstOrDefaultAsync();
-                if (expedTypeId == 0)
-                {
-                    expedTypeId = await _db.ExpedType.AsNoTracking()
-                        .Where(x => x.ExpedTypeName == "Service")
-                        .Select(x => x.ExpedTypeId)
-                        .FirstAsync();
-                }
-
+                // Get alert type ID
                 var alertTypeId = await _db.AlertType.AsNoTracking()
                     .Where(t => t.AlertTypeName == dto.AlertType)
                     .Select(t => t.AlertTypeId)
@@ -218,89 +224,26 @@ namespace AlertSystem.Controllers.Api.V1
                         .FirstAsync();
                 }
 
-                var statutId = await _db.Statut.AsNoTracking()
-                    .Where(s => s.StatutName == "En Cours")
-                    .Select(s => s.StatutId)
-                    .FirstAsync();
+                // Use AlertSendService for robust sending
+                var response = await _alertSendService.SendManualAsync(
+                    dto.Title,
+                    dto.Message,
+                    emails,
+                    phones,
+                    emails.Count > 0, // sendEmail
+                    phones.Count > 0, // sendWhatsApp
+                    false, // sendDesktop (not implemented for API yet)
+                    null, // userIds
+                    alertTypeId
+                );
 
-                var etatId = await _db.Etat.AsNoTracking()
-                    .Where(e => e.EtatAlerteName == "Non Lu")
-                    .Select(e => e.EtatAlerteId)
-                    .FirstAsync();
-
-                // Create alert
-                var alert = new Alerte
-                {
-                    TitreAlerte = dto.Title,
-                    DescriptionAlerte = dto.Message,
-                    AlertTypeId = alertTypeId,
-                    AppId = dto.AppId,
-                    ExpedTypeId = expedTypeId,
-                    ExpediteurId = dto.ExpediteurId,
-                    DateCreationAlerte = DateTime.UtcNow,
-                    StatutId = statutId,
-                    EtatAlerteId = etatId
-                };
-
-                _db.Alerte.Add(alert);
-                await _db.SaveChangesAsync();
-
-                _logger.LogInformation("[DEBUG] Alert created with ID: {AlertId}", alert.AlerteId);
-
-                // Create single recipient record per alert
-                var historiqueAlerte = new HistoriqueAlerte
-                {
-                    AlerteId = alert.AlerteId,
-                    DestinataireUserId = 1, // TODO: Utiliser le vrai UserId du destinataire
-                    EtatAlerteId = etatId,
-                    DestinataireEmail = "test@example.com", // TODO: Récupérer depuis Users ou Recipients
-                    DestinatairePhoneNumber = "+21699414008", // TODO: Récupérer depuis Users ou Recipients
-                    DestinataireDesktop = "desktop-token" // TODO: Récupérer depuis Users ou Recipients
-                };
-                _db.HistoriqueAlertes.Add(historiqueAlerte);
-                await _db.SaveChangesAsync();
-
-                // Send notifications
-                var notificationResults = new List<string>();
-                foreach (var recipient in validatedRecipients)
-                {
-                    try
-                    {
-                        bool success = false;
-                        switch (recipient.Type)
-                        {
-                            case RecipientType.Email:
-                                success = await _notificationService.SendEmailAsync(recipient.Id, dto.Title, dto.Message);
-                                if (success) notificationResults.Add($"Email sent to {recipient.Id}");
-                                break;
-                            case RecipientType.WhatsApp:
-                                success = await _notificationService.SendWhatsAppAsync(recipient.Id, $"🚨 {dto.Title}\n\n{dto.Message}");
-                                if (success) notificationResults.Add($"WhatsApp sent to {recipient.Id}");
-                                break;
-                            case RecipientType.Device:
-                                // For now, log as desktop notification (implement WebPush later)
-                                _logger.LogInformation("Desktop notification would be sent to device: {DeviceId}", recipient.Id);
-                                notificationResults.Add($"Desktop notification queued for {recipient.Id}");
-                                break;
-                        }
-
-                        if (!success)
-                        {
-                            _logger.LogWarning("Failed to send {Type} notification to {Recipient}", recipient.Type, recipient.Id);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Error sending notification to {Recipient}", recipient.Id);
-                    }
-                }
-
-                return CreatedAtAction(nameof(GetById), new { id = alert.AlerteId }, new 
+                // Return 200 OK if all succeeded, 207 Multi-Status if partial success
+                var statusCode = response.OverallSuccess ? 200 : 207;
+                return StatusCode(statusCode, new 
                 { 
-                    alertId = alert.AlerteId,
-                    recipientsCreated = 1, // Un seul destinataire par alerte
-                    notificationsSent = notificationResults.Count,
-                    notifications = notificationResults
+                    alertId = response.AlerteId,
+                    overallSuccess = response.OverallSuccess,
+                    results = response.Results
                 });
             }
             catch (Exception ex)

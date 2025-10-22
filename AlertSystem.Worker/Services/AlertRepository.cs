@@ -276,5 +276,51 @@ namespace AlertSystem.Worker.Services
             var result = await command.ExecuteScalarAsync(cancellationToken);
             return Convert.ToBoolean(result);
         }
+
+        public async Task InsertReminderHistoryAsync(int alerteId, int historiqueAlerteId, bool success, int attemptNumber, string? errorDetails, CancellationToken cancellationToken = default)
+        {
+            using var connection = new SqlConnection(_connectionString);
+            await connection.OpenAsync(cancellationToken);
+
+            using var command = connection.CreateCommand();
+            command.CommandText = @"
+                INSERT INTO dbo.RappelSuivant 
+                (AlerteId, HistoriqueAlerteId, DateRappel, StatutRappel, Tentative, DetailsErreur)
+                VALUES 
+                (@AlerteId, @HistoriqueAlerteId, GETUTCDATE(), @StatutRappel, @Tentative, @DetailsErreur)";
+
+            command.Parameters.Add(new SqlParameter("@AlerteId", SqlDbType.Int) { Value = alerteId });
+            command.Parameters.Add(new SqlParameter("@HistoriqueAlerteId", SqlDbType.Int) { Value = historiqueAlerteId });
+            command.Parameters.Add(new SqlParameter("@StatutRappel", SqlDbType.NVarChar, 50) { Value = success ? "Envoyé" : "Échoué" });
+            command.Parameters.Add(new SqlParameter("@Tentative", SqlDbType.Int) { Value = attemptNumber });
+            command.Parameters.Add(new SqlParameter("@DetailsErreur", SqlDbType.NVarChar) { Value = errorDetails ?? (object)DBNull.Value });
+
+            await command.ExecuteNonQueryAsync(cancellationToken);
+            _logger.LogDebug("Inserted reminder history for alert {AlerteId}, recipient {HistoriqueAlerteId}, attempt {Attempt}", alerteId, historiqueAlerteId, attemptNumber);
+        }
+
+        public async Task<List<int>> GetUnconfirmedRecipientsAsync(int alerteId, CancellationToken cancellationToken = default)
+        {
+            var recipients = new List<int>();
+
+            using var connection = new SqlConnection(_connectionString);
+            await connection.OpenAsync(cancellationToken);
+
+            using var command = connection.CreateCommand();
+            command.CommandText = @"
+                SELECT DestinataireId
+                FROM dbo.HistoriqueAlerte 
+                WHERE AlerteId = @AlerteId AND EtatAlerteId = 1";
+
+            command.Parameters.Add(new SqlParameter("@AlerteId", SqlDbType.Int) { Value = alerteId });
+
+            using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                recipients.Add(reader.GetInt32("DestinataireId"));
+            }
+
+            return recipients;
+        }
     }
 }

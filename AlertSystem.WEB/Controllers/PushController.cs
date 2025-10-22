@@ -24,13 +24,13 @@ namespace AlertSystem.WEB.Controllers
         public sealed class SubscribeDto{ public string Endpoint { get; set; } = string.Empty; public string P256dh { get; set; } = string.Empty; public string Auth { get; set; } = string.Empty; }
 
         [HttpPost]
-        public async Task<IActionResult> Subscribe([FromBody] SubscribeDto dto)
+        public IActionResult Subscribe([FromBody] SubscribeDto dto)
         {
             return BadRequest(new { error = "Use /api/v1/webpush/subscribe instead" });
         }
 
         [HttpPost]
-        public async Task<IActionResult> Unsubscribe([FromBody] SubscribeDto dto)
+        public IActionResult Unsubscribe([FromBody] SubscribeDto dto)
         {
             return BadRequest(new { error = "Use /api/v1/webpush/unsubscribe instead" });
         }

@@ -5,12 +5,29 @@ using System.Threading.Tasks;
 using AlertSystem.Data;
 using AlertSystem.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 
 namespace AlertSystem.Service
 {
+    public class SendResult
+    {
+        public string Type { get; set; } = string.Empty; // "email", "whatsapp", "desktop"
+        public string Recipient { get; set; } = string.Empty; // email, phone, or userId
+        public bool Success { get; set; }
+        public string? Error { get; set; }
+    }
+
+    public class SendResponse
+    {
+        public bool OverallSuccess { get; set; }
+        public int AlerteId { get; set; }
+        public List<SendResult> Results { get; set; } = new();
+    }
+
     public interface IAlertSendService
     {
-        Task<(int alerteId, bool anySuccess)> SendManualAsync(
+        Task<SendResponse> SendManualAsync(
             string title,
             string message,
             IEnumerable<string> emails,
@@ -30,8 +47,18 @@ namespace AlertSystem.Service
         private readonly Microsoft.Extensions.Configuration.IConfiguration _cfg;
         private readonly ConfirmationTokenService _tokens;
         private readonly IEmailTemplateService _emailTemplate;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly ILogger<AlertSendService> _logger;
 
-        public AlertSendService(ApplicationDbContext db, INotificationService notify, AlertSystem.Services.IWhatsAppService wa, Microsoft.Extensions.Configuration.IConfiguration cfg, ConfirmationTokenService tokens, IEmailTemplateService emailTemplate)
+        public AlertSendService(
+            ApplicationDbContext db, 
+            INotificationService notify, 
+            AlertSystem.Services.IWhatsAppService wa, 
+            Microsoft.Extensions.Configuration.IConfiguration cfg, 
+            ConfirmationTokenService tokens, 
+            IEmailTemplateService emailTemplate,
+            IHttpContextAccessor httpContextAccessor,
+            ILogger<AlertSendService> logger)
         {
             _db = db;
             _notify = notify;
@@ -39,9 +66,11 @@ namespace AlertSystem.Service
             _cfg = cfg;
             _tokens = tokens;
             _emailTemplate = emailTemplate;
+            _httpContextAccessor = httpContextAccessor;
+            _logger = logger;
         }
 
-        public async Task<(int alerteId, bool anySuccess)> SendManualAsync(
+        public async Task<SendResponse> SendManualAsync(
             string title,
             string message,
             IEnumerable<string> emails,
@@ -54,6 +83,33 @@ namespace AlertSystem.Service
         {
             Console.WriteLine($"SendManualAsync called: sendEmail={sendEmail}, emails={emails?.Count() ?? 0}, phones={phones?.Count() ?? 0}");
             var now = DateTime.UtcNow;
+            var results = new List<SendResult>();
+            
+            // TODO: Integrate with "Base X" here.
+            // Use the apiClientId retrieved from HttpContext.Items["ApiClientId"]
+            // to query the central repository and fetch HotelName, ApplicationName, etc.
+            // These details can then be added to the alert message or used for routing.
+            var apiClientId = _httpContextAccessor.HttpContext?.Items["ApiClientId"] as int?;
+            var apiClientName = _httpContextAccessor.HttpContext?.Items["ApiClientName"] as string;
+            
+            if (apiClientId.HasValue)
+            {
+                _logger.LogInformation("Alert originated from Client ID: {ApiClientId}, Name: {ApiClientName}", 
+                    apiClientId.Value, apiClientName ?? "Unknown");
+                
+                // TODO: Uncomment when Base X integration is ready:
+                // string hotelName = await _baseXService.GetHotelNameForClientAsync(apiClientId.Value);
+                // string applicationName = await _baseXService.GetApplicationNameForClientAsync(apiClientId.Value);
+                // string hotelTimezone = await _baseXService.GetHotelTimezoneAsync(apiClientId.Value);
+                
+                // TODO: Use hotel details to customize alert content:
+                // title = $"[{hotelName}] {title}";
+                // message = $"From {applicationName}: {message}";
+                
+                // TODO: Use hotel timezone for proper time handling:
+                // now = TimeZoneInfo.ConvertTimeFromUtc(now, hotelTimezone);
+            }
+            
             // Resolve default ExpedTypeId to Service to satisfy FK
             var expedTypeId = await _db.ExpedType
                 .AsNoTracking()
@@ -86,8 +142,6 @@ namespace AlertSystem.Service
             _db.Alerte.Add(alerte);
             await _db.SaveChangesAsync();
 
-            var success = false;
-
             if (sendEmail)
             {
                 Console.WriteLine($"Starting email sending for {emails?.Count() ?? 0} emails");
@@ -100,6 +154,7 @@ namespace AlertSystem.Service
                         Console.WriteLine("Skipping empty email");
                         continue;
                     }
+                    
                     // Generate confirmation token for this email recipient
                     var baseUrl = _cfg["BASE_URL"]?.TrimEnd('/') ?? "http://localhost:5185";
                     var confirmToken = _tokens.Generate(new ConfirmPayload 
@@ -122,11 +177,13 @@ namespace AlertSystem.Service
                         // Create professional email template
                         var senderName = "Système d'Alerte";
                         var emailHtml = _emailTemplate.CreateAlertEmailTemplate(title, message, senderName, alerte.DateCreationAlerte, confirmUrl);
-                        success = success || await _notify.SendHtmlEmailAsync(email, $"🚨 {title}", emailHtml); 
+                        var success = await _notify.SendHtmlEmailAsync(email, $"🚨 {title}", emailHtml);
+                        results.Add(new SendResult { Type = "email", Recipient = email, Success = success, Error = success ? null : "Email sending failed" });
                     }
                     catch (Exception ex) { 
                         // Log the email sending error but continue with other emails
                         Console.WriteLine($"Email sending failed for {email}: {ex.Message}");
+                        results.Add(new SendResult { Type = "email", Recipient = email, Success = false, Error = ex.Message });
                     }
                 }
             }
@@ -181,12 +238,13 @@ namespace AlertSystem.Service
                             {
                                 delivered = await _wa.SendTemplateAsync(phone, "hello_world", templateLang, null);
                             }
-                        }
-                        success = success || delivered;
+                            }
+                            results.Add(new SendResult { Type = "whatsapp", Recipient = phone, Success = delivered, Error = delivered ? null : "WhatsApp sending failed" });
                     }
                     catch (Exception ex) { 
                         // Log the WhatsApp sending error but continue with other phones
                         Console.WriteLine($"WhatsApp sending failed for {phone}: {ex.Message}");
+                        results.Add(new SendResult { Type = "whatsapp", Recipient = phone, Success = false, Error = ex.Message });
                     }
                 }
             }
@@ -208,18 +266,29 @@ namespace AlertSystem.Service
                         DestinataireUserId = uid,
                         EtatAlerteId = 1
                     });
-                    try { success = success || await _notify.SendPushNotificationAsync(uid, title, message); }
-                    catch { }
+                        try { 
+                            var success = await _notify.SendPushNotificationAsync(uid, title, message);
+                            results.Add(new SendResult { Type = "desktop", Recipient = uid.ToString(), Success = success, Error = success ? null : "Desktop notification failed" });
+                        }
+                        catch (Exception ex) {
+                            results.Add(new SendResult { Type = "desktop", Recipient = uid.ToString(), Success = false, Error = ex.Message });
+                        }
                 }
                 // If no existing user IDs, do not insert desktop history to avoid FK violation
             }
 
             await _db.SaveChangesAsync();
 
-            alerte.StatutId = success ? 2 : 4; // Envoyé : Échoué
+            var overallSuccess = results.Count == 0 || results.All(r => r.Success);
+            alerte.StatutId = overallSuccess ? 2 : 4; // Envoyé : Échoué
             await _db.SaveChangesAsync();
 
-            return (alerte.AlerteId, success);
+            return new SendResponse 
+            { 
+                OverallSuccess = overallSuccess, 
+                AlerteId = alerte.AlerteId, 
+                Results = results 
+            };
         }
     }
 }

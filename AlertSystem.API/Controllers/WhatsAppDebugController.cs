@@ -159,7 +159,7 @@ namespace AlertSystem.Controllers.Api.V1
                     StatusCode = (int)response.StatusCode,
                     Response = responseContent,
                     Type = "FreeForm",
-                    ErrorDetails = response.IsSuccessStatusCode ? null : await ParseWhatsAppError(responseContent)
+                    ErrorDetails = response.IsSuccessStatusCode ? null : ParseWhatsAppError(responseContent)
                 };
             }
             catch (Exception ex)
@@ -207,7 +207,7 @@ namespace AlertSystem.Controllers.Api.V1
                     StatusCode = (int)response.StatusCode,
                     Response = responseContent,
                     Type = "Template",
-                    ErrorDetails = response.IsSuccessStatusCode ? null : await ParseWhatsAppError(responseContent)
+                    ErrorDetails = response.IsSuccessStatusCode ? null : ParseWhatsAppError(responseContent)
                 };
             }
             catch (Exception ex)
@@ -223,7 +223,7 @@ namespace AlertSystem.Controllers.Api.V1
             }
         }
 
-        private async Task<object?> ParseWhatsAppError(string responseContent)
+        private object? ParseWhatsAppError(string responseContent)
         {
             try
             {

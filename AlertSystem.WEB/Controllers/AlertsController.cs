@@ -41,6 +41,13 @@ namespace AlertSystem.WEB.Controllers
         }
 
         [HttpGet]
+        public async Task<IActionResult> InboxData(string status = "all", int page = 1, int size = 10)
+        {
+            var result = await _alertReadService.GetInboxAsync(page, size, status);
+            return Json(result);
+        }
+
+        [HttpGet]
         public async Task<IActionResult> HistoryData(string status = "all", int page = 1, int size = 10)
         {
             var result = await _alertReadService.GetHistoryAsync(status, page, size);

@@ -1,406 +1,472 @@
-# AlertSystem - Production-ready
+# AlertSystem - Production-Ready Alert Management System
 
-## Run
+A comprehensive, enterprise-grade alert management system built with .NET 9, featuring multi-channel notifications (Email, WhatsApp, Desktop), robust API integration, and advanced reminder capabilities.
 
-1) Prérequis: .NET 9 SDK, SQL Server LocalDB
-2) Restaurer et build:
-```
-dotnet restore
-dotnet build -v:m
-```
-3) Appliquer la base (EF migrations) pour LocalDB:
-```
-dotnet tool install -g dotnet-ef # si besoin
-dotnet-ef database update --project AlertSystem.DataLayer.DB --startup-project AlertSystem.API
-```
-4) Lancer:
-```
-cmd /c "set ASPNETCORE_URLS=http://localhost:5186 && dotnet run --project AlertSystem.API --no-build"
-cmd /c "set ASPNETCORE_URLS=http://localhost:5185 && dotnet run --project AlertSystem.WEB --no-build"
-cmd /c "dotnet run --project AlertSystem.Worker --no-build"
-```
+## 🚀 Features
 
-WEB: http://localhost:5185
-API: http://localhost:5186
+### Core Functionality
+- **Multi-Channel Notifications**: Email (SMTP), WhatsApp (Meta Business API), Desktop Push Notifications
+- **Dynamic Alert Management**: Create, send, and track alerts with real-time status updates
+- **Confirmation System**: Token-based confirmation flow with secure URL generation
+- **Reminder Engine**: Automated hourly reminders for critical alerts until confirmed
+- **API Integration**: RESTful API with API key authentication and rate limiting
+- **Background Processing**: Worker service for automated alert processing and reminders
 
-## Configuration
-- `appsettings.json` (WEB/API/Worker): ConnectionStrings.DefaultConnection, SMTP, WhatsApp, WebPush, Serilog.
+### Advanced Features
+- **Clean Architecture**: SOLID principles with Domain, Application, Infrastructure, and Presentation layers
+- **Entity Framework Core**: Code-first migrations with SQL Server integration
+- **Dependency Injection**: Comprehensive DI container configuration
+- **Structured Logging**: Serilog integration with console and file logging
+- **Configuration Management**: Secure .env file handling with DotNetEnv
+- **Comprehensive Testing**: Unit tests, integration tests, and end-to-end testing
 
-## Données de référence
-- Seeding idempotent via API/WEB au démarrage (Statut, Etat, AlertType, Plateforme, ApiClient test).
-- Scripts SQL supplémentaires: `scripts/seed-core-data.sql`.
+## 📋 Prerequisites
 
-## Tests
-```
-dotnet test -v:m
-```
-Couverture:
-- Flux d’envoi manuel (succès/échec) -> statut Envoyé/Échoué, Historique créé, `EtatAlerteId`.
-- Vérifications unitaires de base.
+- .NET 9 SDK
+- SQL Server (LocalDB, Express, or Full)
+- Node.js (for frontend development)
+- Meta Business Account (for WhatsApp integration)
+- SMTP Server (Gmail, Outlook, or custom)
 
-## Worker
-- Cadence: 1 minute.
-- Sélection: `StatutId IN (En Cours, Échoué)`; ignore `Annulé`.
-- Mise à jour: Envoyé (2) si anySuccess, sinon Échoué (4).
-- Journal: Serilog + table `AlertSendLog`.
+## 🛠️ Installation & Setup
 
-## Sécurité API
-- Middleware `ApiKeyMiddleware`: header `X-Api-Key` obligatoire pour ingestion, validé sur `ApiClient` (hashé).
-
-## Déploiement
-- WEB/API: IIS/Kestrel (Windows) avec variables `ASPNETCORE_URLS`.
-- Worker: Service Windows (UseWindowsService), config via `appsettings.json`.
-- Logs:
-  - Serilog Console + fichiers/config selon appsettings.
-
-## Notes Schéma
-- `HistoriqueAlerte.EtatAlerteId` (FK -> `Etat(EtatAlerteId)`), remplace l’ancienne colonne texte.
-- `Alerte.StatutId`: 1 En Cours, 2 Envoyé, 3 Annulé, 4 Échoué.
-
-## Scripts utiles
-- `scripts/test-email-and-whatsapp.sql`: insérer une alerte test (StatutId=1) pour worker.
-- `scripts/curl-tests.ps1`: exemples d’appels API avec clé.
-
-# AlertSystem - Multi-Channel Alert Management System
-
-## Overview
-
-AlertSystem is a comprehensive ASP.NET Core 9.0 application designed for multi-channel alert management with real-time capabilities. It supports Email, WhatsApp, and Desktop notifications through a unified API-first architecture.
-
-## Features
-
-- **Multi-Channel Notifications**: Email (SMTP), WhatsApp (Facebook Graph API), Desktop (WebPush/SignalR)
-- **API-First Architecture**: RESTful API with Swagger documentation
-- **Real-Time Dashboard**: SignalR-powered live updates
-- **API Key Management**: Secure authentication with rate limiting
-- **Reminder System**: Automated follow-up notifications
-- **Comprehensive Logging**: Debug-friendly with extensive console logging
-
-## Quick Start
-
-### Prerequisites
-
-- .NET 9.0 SDK
-- SQL Server LocalDB
-- Visual Studio 2022 or VS Code with C# extension
-
-### Installation
-
-1. **Clone and Build**
+### 1. Clone Repository
    ```bash
    git clone <repository-url>
    cd AlertSystem
-   dotnet restore
-   dotnet build
-   ```
-
-2. **Database Setup**
-   The application uses SQL Server LocalDB with automatic migrations. The database will be created automatically on first run.
-
-3. **Configuration**
-   Update `appsettings.json` with your settings:
-   ```json
-   {
-     "ConnectionStrings": {
-       "DefaultConnection": "Server=(localdb)\\MSSQLLocalDB;Database=AlertSystemDB;Trusted_Connection=True;TrustServerCertificate=True"
-     },
-     "Smtp": {
-       "Host": "smtp.gmail.com",
-       "Port": 465,
-       "User": "your-email@gmail.com",
-       "Pass": "your-app-password",
-       "From": "your-email@gmail.com"
-     },
-     "WhatsApp": {
-       "AccessToken": "your-whatsapp-business-token",
-       "PhoneNumberId": "your-phone-number-id",
-       "ApiVersion": "v22.0"
-     }
-   }
-   ```
-
-4. **Run the Application**
-   ```bash
-   dotnet run
-   ```
-   
-   The application will be available at:
-   - Dashboard: `https://localhost:7297`
-   - API Documentation: `https://localhost:7297/swagger`
-
-## API Usage
-
-### 1. Create an API Client
-
-First, create an API client to get your API key:
-
-```bash
-curl -X POST "https://localhost:7297/api/v1/clients" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "My Application",
-    "rateLimitPerMinute": 100
-  }'
 ```
 
-**Response:**
-```json
+### 2. Database Setup
+```bash
+# Update connection string in appsettings.json
+# Run migrations
+dotnet ef database update --project AlertSystem.DataLayer.DB
+```
+
+### 3. Environment Configuration
+Create `.env` file in project root:
+```env
+# Database
+CONNECTION_STRING="Server=(localdb)\\MSSQLLocalDB;Database=AlertSystemDB;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=True;Connect Timeout=30"
+
+# Email Configuration
+SMTP_HOST="smtp.gmail.com"
+SMTP_PORT="587"
+SMTP_USERNAME="your-email@gmail.com"
+SMTP_PASSWORD="your-app-password"
+SMTP_USE_TLS="true"
+
+# WhatsApp Configuration
+WHATSAPP_ACCESS_TOKEN="your-meta-access-token"
+WHATSAPP_PHONE_NUMBER_ID="your-phone-number-id"
+WHATSAPP_BUSINESS_ACCOUNT_ID="your-business-account-id"
+WHATSAPP_DEFAULT_TEMPLATE_NAME="alert_notification"
+WHATSAPP_DEFAULT_TEMPLATE_LANG="en_US"
+
+# Application Configuration
+BASE_URL="http://localhost:5185"
+TOKEN_SECRET="your-secure-token-secret-key"
+
+# Reminder Configuration
+REMINDER_INTERVAL_MINUTES="60"
+MAX_REMINDER_ATTEMPTS="24"
+```
+
+### 4. Install Dependencies
+```bash
+   dotnet restore
+```
+
+### 5. Run Applications
+```bash
+# Start Web Application
+dotnet run --project AlertSystem.WEB
+
+# Start API (separate terminal)
+dotnet run --project AlertSystem.API
+
+# Start Worker Service (separate terminal)
+dotnet run --project AlertSystem.Worker
+```
+
+## 🔧 Configuration
+
+### Database Configuration
+The system uses Entity Framework Core with SQL Server. Key entities:
+- `Alerte`: Main alert records
+- `HistoriqueAlerte`: Recipient tracking and status
+- `RappelSuivant`: Reminder history and attempts
+- `ApiClients`: API key management
+- `Users`: User management and desktop notifications
+
+### Email Configuration
+Supports multiple SMTP providers:
+- **Gmail**: Use App Password (2FA required)
+- **Outlook**: Use App Password
+- **Custom SMTP**: Configure host, port, and credentials
+
+### WhatsApp Configuration
+Requires Meta Business Account setup:
+1. Create Meta Business Account
+2. Add WhatsApp Business API
+3. Get Access Token and Phone Number ID
+4. Create message templates (approval required)
+
+### API Key Management
+The system uses **SHA256 hashing** for API key security. Generate API keys using provided scripts:
+```powershell
+# Generate new API key
+.\scripts\generate-api-key.ps1 -Name "Production Client"
+
+# Rotate existing key
+.\scripts\rotate-api-key.ps1 -ApiClientId 1
+
+# Deactivate key
+.\scripts\deactivate-api-key.ps1 -ApiClientId 1
+```
+
+#### Pre-configured Test API Keys
+The system comes with multiple test API clients for realistic testing:
+
+| Client Name | API Key | Environment | Rate Limit |
+|-------------|---------|-------------|------------|
+| Hotel Riviera - Production | `hotel-riviera-prod-key-2024-abc123def456` | Production | 1000/min |
+| Hotel Paradise - Staging | `hotel-paradise-staging-key-2024-xyz789uvw012` | Staging | 500/min |
+| Hotel Oasis - Development | `hotel-oasis-dev-key-2024-mno345pqr678` | Development | 200/min |
+| Hotel Sunset - Testing | `hotel-sunset-test-key-2024-stu901vwx234` | Testing (Inactive) | 100/min |
+
+## 📡 API Documentation
+
+### Authentication
+All API endpoints require API key authentication:
+```http
+X-API-KEY: your-api-key-here
+```
+
+### Endpoints
+
+#### Create Alert
+```http
+POST /api/v1/alerts
+Content-Type: application/json
+X-API-KEY: your-api-key
+
 {
-  "clientId": 1,
-  "name": "My Application",
-  "apiKey": "a1b2c3d4e5f6...", // Save this key!
-  "isActive": true,
-  "createdAt": "2025-10-13T10:00:00Z",
-  "rateLimitPerMinute": 100
+  "title": "System Alert",
+  "message": "Critical system issue detected",
+  "alertType": "acquittementNécessaire",
+  "expedType": "Service",
+  "appId": 1,
+  "recipients": [
+    {
+      "recipientId": "user@example.com",
+      "type": "email"
+    },
+    {
+      "recipientId": "+1234567890",
+      "type": "whatsapp"
+    }
+  ]
 }
 ```
 
-⚠️ **Important**: The API key is only shown once during creation. Save it securely!
+#### Example API Calls with Different Clients
 
-### 2. Validate Your API Key
-
+**Hotel Riviera (Production):**
 ```bash
-curl -X GET "https://localhost:7297/api/v1/keys/validate" \
-  -H "X-Api-Key: your-api-key-here"
-```
-
-### 3. Send an Alert
-
-```bash
-curl -X POST "https://localhost:7297/api/v1/alerts" \
+curl -X POST "http://localhost:5002/api/v1/alerts" \
   -H "Content-Type: application/json" \
-  -H "X-Api-Key: your-api-key-here" \
+  -H "X-API-KEY: hotel-riviera-prod-key-2024-abc123def456" \
   -d '{
-    "title": "System Maintenance",
-    "message": "Scheduled maintenance will begin at 2 AM UTC",
-    "alertType": "acquittementNonNécessaire",
+    "title": "Guest Check-in Alert",
+    "message": "VIP guest has arrived and requires special attention",
+    "alertType": "acquittementNécessaire",
     "expedType": "Service",
     "appId": 1,
     "recipients": [
-      {"externalRecipientId": "admin@company.com"},
-      {"externalRecipientId": "+21612345678"},
-      {"externalRecipientId": "device-admin-001"}
+      {"recipientId": "manager@hotelriviera.com", "type": "email"},
+      {"recipientId": "+1234567890", "type": "whatsapp"}
     ]
   }'
 ```
 
-### 4. Query Alerts
+**Hotel Paradise (Staging):**
+```bash
+curl -X POST "http://localhost:5002/api/v1/alerts" \
+  -H "Content-Type: application/json" \
+  -H "X-API-KEY: hotel-paradise-staging-key-2024-xyz789uvw012" \
+  -d '{
+    "title": "Maintenance Alert",
+    "message": "Pool maintenance scheduled for tomorrow",
+    "alertType": "acquittementNonNécessaire",
+    "expedType": "Service",
+    "appId": 1,
+    "recipients": [
+      {"recipientId": "staff@hotelparadise.com", "type": "email"}
+    ]
+  }'
+```
+
+**Hotel Oasis (Development):**
+```bash
+curl -X POST "http://localhost:5002/api/v1/alerts" \
+  -H "Content-Type: application/json" \
+  -H "X-API-KEY: hotel-oasis-dev-key-2024-mno345pqr678" \
+  -d '{
+    "title": "Test Alert",
+    "message": "This is a development test alert",
+    "alertType": "acquittementNécessaire",
+    "expedType": "Service",
+    "appId": 1,
+    "recipients": [
+      {"recipientId": "dev@hoteloasis.com", "type": "email"},
+      {"recipientId": "+9876543210", "type": "whatsapp"}
+    ]
+  }'
+```
+
+#### Response Format
+```json
+{
+  "alertId": 123,
+  "overallSuccess": true,
+  "results": [
+    {
+      "type": "email",
+      "recipient": "user@example.com",
+      "success": true,
+      "error": null
+    },
+    {
+      "type": "whatsapp",
+      "recipient": "+1234567890",
+      "success": false,
+      "error": "Template not approved"
+    }
+  ]
+}
+```
+
+### Status Codes
+- `200 OK`: All notifications sent successfully
+- `207 Multi-Status`: Partial success (some notifications failed)
+- `400 Bad Request`: Invalid request data
+- `401 Unauthorized`: Missing or invalid API key
+- `403 Forbidden`: API key inactive or rate limited
+- `500 Internal Server Error`: Server error
+
+## 🧪 Testing
+
+### Run Tests
+```bash
+# Run all tests
+dotnet test
+
+# Run specific test project
+dotnet test AlertSystem.Tests
+
+# Run with coverage
+dotnet test --collect:"XPlat Code Coverage"
+```
+
+### Test Categories
+- **Unit Tests**: Individual component testing
+- **Integration Tests**: Database and service integration
+- **API Tests**: Endpoint testing with authentication
+- **Worker Tests**: Background service testing
+
+### Test Data
+Tests use in-memory databases and mock services for isolation and speed.
+
+## 🔄 Background Processing
+
+### Worker Service
+The `AlertePollingWorker` runs continuously and:
+1. Processes alerts with `StatutId` 1 (En Cours) or 4 (Échoué)
+2. Ignores alerts with `StatutId` 3 (Annulé)
+3. Sends notifications via configured channels
+4. Updates alert status to 2 (Envoyé) or 4 (Échoué)
+5. Manages reminder scheduling for `acquittementNécessaire` alerts
+
+### Reminder System
+- **Trigger**: Alerts with `AlertTypeId` = 2 (acquittementNécessaire)
+- **Frequency**: Configurable interval (default: 60 minutes)
+- **Max Attempts**: Configurable limit (default: 24 attempts)
+- **Stop Conditions**: All recipients confirmed or max attempts reached
+- **History**: Complete audit trail in `RappelSuivant` table
+
+## 🔐 Security
+
+### API Key Security
+- Keys are hashed using SHA256 before storage
+- Rate limiting per client (configurable)
+- Inactive key detection and blocking
+- Key rotation capabilities
+
+### Token Security
+- JWT-based confirmation tokens
+- Configurable expiration times
+- Secure random generation
+- URL-safe encoding
+
+### Data Protection
+- Connection strings in environment variables
+- Sensitive configuration in `.env` files
+- `.env` files excluded from version control
+- Secure SMTP and API credentials
+
+## 📊 Monitoring & Logging
+
+### Structured Logging
+- **Serilog** integration with multiple sinks
+- **Console** output for development
+- **File** logging for production
+- **Structured** data for analysis
+
+### Log Levels
+- **Information**: Normal operations
+- **Warning**: Non-critical issues
+- **Error**: Failed operations
+- **Debug**: Detailed debugging information
+
+### Key Metrics
+- Alert processing times
+- Notification success rates
+- API response times
+- Worker service health
+- Database connection status
+
+## 🚀 Deployment
+
+### Production Checklist
+- [ ] Update connection strings for production database
+- [ ] Configure production SMTP settings
+- [ ] Set up Meta Business Account for WhatsApp
+- [ ] Generate production API keys
+- [ ] Configure logging for production
+- [ ] Set up monitoring and alerting
+- [ ] Configure SSL/TLS certificates
+- [ ] Set up backup procedures
+
+### Deployment Options
+
+#### Docker Deployment
+The project includes Dockerfiles for all components:
 
 ```bash
-curl -X GET "https://localhost:7297/api/v1/alerts?page=1&size=10&sort=dateCreation&order=desc" \
-  -H "X-Api-Key: your-api-key-here"
+# Build and run with Docker Compose
+docker-compose up -d
+
+# Or build individual components
+docker build -f AlertSystem.WEB/Dockerfile -t alertsystem-web .
+docker build -f AlertSystem.API/Dockerfile -t alertsystem-api .
+docker build -f AlertSystem.Worker/Dockerfile -t alertsystem-worker .
 ```
 
-## Dashboard Usage
-
-### 1. Access the Dashboard
-
-Navigate to `https://localhost:7297` to access the web dashboard.
-
-### 2. Configure API Key
-
-1. Click "Nouvelle alerte" to open the alert modal
-2. Scroll to the "Configuration API" section
-3. Enter your API key and click "Sauvegarder"
-4. Click "Tester" to validate the key
-
-### 3. Send Alerts
-
-1. Fill in the alert title and message
-2. Select alert type (Information/Obligatoire)
-3. Choose delivery platforms (Email/WhatsApp/Desktop)
-4. Add recipients using the tag input fields
-5. Click "Envoyer l'alerte"
-
-## Recipient Format
-
-The system automatically detects recipient types:
-
-- **Email**: `user@domain.com`
-- **WhatsApp**: `+21612345678` (international format)
-- **Device ID**: `device-abc123` (8-64 alphanumeric characters)
-
-## API Endpoints
-
-### Clients Management
-- `POST /api/v1/clients` - Create API client
-- `GET /api/v1/clients` - List clients
-- `GET /api/v1/clients/{id}` - Get client details
-- `PATCH /api/v1/clients/{id}/activate` - Activate client
-- `PATCH /api/v1/clients/{id}/deactivate` - Deactivate client
-- `PATCH /api/v1/clients/{id}/rate-limit` - Update rate limit
-- `DELETE /api/v1/clients/{id}` - Delete client
-
-### API Key Validation
-- `GET /api/v1/keys/validate` - Validate API key (requires X-Api-Key header)
-- `POST /api/v1/keys/test` - Test API key (key in request body)
-
-### Alerts Management
-- `POST /api/v1/alerts` - Create alert
-- `GET /api/v1/alerts` - Query alerts (with filtering and pagination)
-- `GET /api/v1/alerts/{id}` - Get alert details
-- `POST /api/v1/alerts/{id}/read` - Mark alert as read
-
-## Configuration
-
-### Email (SMTP)
-Configure Gmail or other SMTP providers in `appsettings.json`:
-
-```json
-"Smtp": {
-  "Host": "smtp.gmail.com",
-  "Port": 465,
-  "User": "your-email@gmail.com",
-  "Pass": "your-app-password",
-  "UseStartTls": false
-}
-```
-
-For Gmail, use an App Password instead of your regular password.
-
-### WhatsApp Business API
-1. Set up a WhatsApp Business account
-2. Get your access token and phone number ID from Facebook Developer Console
-3. Configure in `appsettings.json`:
-
-```json
-"WhatsApp": {
-  "AccessToken": "your-token",
-  "PhoneNumberId": "your-phone-id",
-  "ApiVersion": "v22.0"
-}
-```
-
-### WebPush Notifications
-Configure VAPID keys for browser push notifications:
-
-```json
-"WebPush": {
-  "PublicKey": "your-vapid-public-key",
-  "PrivateKey": "your-vapid-private-key",
-  "Subject": "mailto:admin@yourcompany.com"
-}
-```
-
-## Testing
-
-### PowerShell Test Script
-
-Run the included test script to verify API functionality:
-
-```powershell
-.\test-api.ps1
-```
-
-This script will:
-1. Create an API client
-2. Validate the API key
-3. Send a test alert
-4. Query alerts
-5. Retrieve alert details
-
-### Manual Testing
-
-1. **Dashboard Test**: Use the web interface to send alerts
-2. **API Test**: Use curl or Postman with the provided examples
-3. **Notification Test**: Verify emails and WhatsApp messages are delivered
-
-## Deployment
-
-### IIS Deployment
-
-1. **Publish the Application**
+#### IIS Deployment
+1. Publish the applications:
    ```bash
-   dotnet publish -c Release -o C:\inetpub\wwwAlertSystem
-   ```
-
-2. **Configure IIS**
-   - Create application pool (.NET CLR version: No Managed Code)
-   - Create website pointing to published folder
-   - Ensure ASP.NET Core Hosting Bundle is installed
-
-3. **Database Connection**
-   Update connection string for production SQL Server in `appsettings.Production.json`
-
-### Docker Deployment
-
-```dockerfile
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
-WORKDIR /app
-EXPOSE 80
-EXPOSE 443
-
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
-WORKDIR /src
-COPY ["AlertSystem.csproj", "."]
-RUN dotnet restore
-COPY . .
-RUN dotnet build -c Release -o /app/build
-
-FROM build AS publish
-RUN dotnet publish -c Release -o /app/publish
-
-FROM base AS final
-WORKDIR /app
-COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "AlertSystem.dll"]
+dotnet publish AlertSystem.WEB -c Release -o ./publish/web
+dotnet publish AlertSystem.API -c Release -o ./publish/api
+dotnet publish AlertSystem.Worker -c Release -o ./publish/worker
 ```
 
-## Troubleshooting
+2. Configure IIS sites for WEB and API
+3. Set up Windows Service for Worker using NSSM or similar
+
+#### Azure App Service
+1. Create three App Services (WEB, API, Worker)
+2. Configure connection strings in App Settings
+3. Set up Application Insights for monitoring
+4. Configure custom domains and SSL certificates
+
+#### Kubernetes Deployment
+Use the provided Docker images with Kubernetes manifests for:
+- Horizontal Pod Autoscaling
+- Service mesh integration
+- ConfigMaps for configuration
+- Secrets for sensitive data
+
+### Production Logging Configuration
+The system includes production-ready logging configuration in `appsettings.Production.json`:
+
+- **Console Logging**: For containerized environments
+- **File Logging**: Rolling daily logs with 30-day retention
+- **Seq Integration**: Structured logging server (optional)
+- **Log Enrichment**: Machine name, thread ID, and context
+
+### Environment Variables
+All configuration can be overridden via environment variables:
+- `CONNECTION_STRING`
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`
+- `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`
+- `BASE_URL`, `TOKEN_SECRET`
+- `REMINDER_INTERVAL_MINUTES`, `MAX_REMINDER_ATTEMPTS`
+
+## 🤝 Contributing
+
+### Development Setup
+1. Fork the repository
+2. Create feature branch
+3. Make changes with tests
+4. Run test suite
+5. Submit pull request
+
+### Code Standards
+- Follow SOLID principles
+- Write comprehensive tests
+- Use meaningful variable names
+- Document public APIs
+- Follow C# naming conventions
+
+## 📝 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🆘 Support
 
 ### Common Issues
 
-1. **Database Connection Errors**
-   - Ensure SQL Server LocalDB is installed
-   - Check connection string format
-   - Verify database permissions
-
-2. **API Key Issues**
-   - Ensure X-Api-Key header is included
-   - Check if client is active
-   - Verify rate limits
-
-3. **Email Not Sending**
-   - Check SMTP configuration
-   - Verify Gmail App Password
+#### Email Not Sending
+- Verify SMTP credentials
    - Check firewall settings
+- Ensure 2FA is enabled for Gmail
+- Use App Password instead of regular password
 
-4. **WhatsApp Issues**
-   - Verify access token is valid
-   - Check phone number format (+country code)
-   - Ensure WhatsApp Business API is properly configured
+#### WhatsApp Integration
+- Verify Meta Business Account setup
+- Check template approval status
+- Ensure phone number is verified
+- Verify access token permissions
 
-### Debug Logging
+#### Database Issues
+- Check connection string format
+- Verify SQL Server is running
+- Ensure database exists
+- Check user permissions
 
-The application includes extensive debug logging. Check the browser console for detailed information about:
-- API calls and responses
-- Form validation
-- Notification sending
-- Error details
+#### API Authentication
+- Verify API key is active
+- Check key hashing algorithm
+- Ensure proper header format
+- Verify rate limiting settings
 
-### Performance Considerations
+### Getting Help
+- Check logs for detailed error messages
+- Review configuration settings
+- Test with provided scripts
+- Contact support team
 
-- API key validation is cached for 5 minutes
-- Rate limiting uses in-memory cache (sliding window)
-- Database queries use proper indexing
-- SignalR connections are managed automatically
+## 🔄 Changelog
 
-## Security
+### Version 1.0.0
+- Initial production release
+- Multi-channel notification support
+- API integration with authentication
+- Background processing and reminders
+- Comprehensive testing suite
+- Production-ready configuration
 
-- API keys are hashed using BCrypt (work factor 12)
-- Rate limiting prevents abuse
-- Input validation on all endpoints
-- HTTPS enforced in production
-- SQL injection protection via Entity Framework
+---
 
-## Support
-
-For issues and questions:
-1. Check the browser console for debug information
-2. Review application logs
-3. Verify configuration settings
-4. Test with the provided PowerShell script
-
-## License
-
-[Your License Here]
+**AlertSystem** - Reliable, scalable, and secure alert management for modern applications.

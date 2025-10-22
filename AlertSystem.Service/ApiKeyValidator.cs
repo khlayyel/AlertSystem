@@ -1,24 +1,29 @@
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
-using AlertSystem.Data;
-using Microsoft.EntityFrameworkCore;
+using AlertSystem.DataLayer.Interfaces;
+using AlertSystem.Utils.Crypto;
 
 namespace AlertSystem.Service
 {
     public sealed class ApiKeyValidator : IApiKeyValidator
     {
-        private readonly ApplicationDbContext _db;
+        private readonly IApiClientRepository _apiClientRepository;
 
-        public ApiKeyValidator(ApplicationDbContext db)
+        public ApiKeyValidator(IApiClientRepository apiClientRepository)
         {
-            _db = db;
+            _apiClientRepository = apiClientRepository;
         }
 
         public async Task<bool> ValidateAsync(string apiKey)
         {
             if (string.IsNullOrWhiteSpace(apiKey)) return false;
-            // Entities model uses ApiKeyHash only; keep legacy ApiKey if present
-            // Here assume plain ApiKey column may not exist; fall back to hash verify not available here
-            return await _db.ApiClients.AnyAsync(c => c.IsActive && c.ApiKeyHash != null);
+
+            var normalized = apiKey.Trim();
+            var hash = CryptoUtils.ComputeSha256(normalized);
+
+            var client = await _apiClientRepository.GetByApiKeyHashAsync(hash);
+            return client?.IsActive == true;
         }
     }
 }

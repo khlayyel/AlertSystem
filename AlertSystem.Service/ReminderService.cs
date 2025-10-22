@@ -1,5 +1,4 @@
 using AlertSystem.Data;
-using AlertSystem.DataLayer.DB;
 using AlertSystem.Entities.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;

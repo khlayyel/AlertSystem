@@ -20,11 +20,14 @@ namespace AlertSystem.Entities.Entities
         // Nouvelles colonnes ajoutées
         public int? PlateformeEnvoieId { get; set; }  // Clé étrangère vers PlateformeEnvoie
         public int? DestinataireId { get; set; }      // Clé étrangère vers Users
+        
+        
 
         public AlertType? AlertType { get; set; }
         public ExpedType? ExpedType { get; set; }
         public Statut? Statut { get; set; }
         public Etat? Etat { get; set; }
+        public User? Expediteur { get; set; }
         
         // Navigation properties pour les nouvelles colonnes
         public PlateformeEnvoie? PlateformeEnvoie { get; set; }

@@ -52,6 +52,50 @@ namespace AlertSystem.Service
                 .CountAsync();
         }
 
+        public async Task<object> GetInboxAsync(int page, int size, string status = "all")
+        {
+            var query = _db.HistoriqueAlertes
+                .Include(h => h.Alerte)
+                .ThenInclude(a => a!.AlertType)
+                .Include(h => h.Alerte)
+                .ThenInclude(a => a!.Statut)
+                .Include(h => h.Alerte)
+                .ThenInclude(a => a!.Etat)
+                .Include(h => h.Alerte)
+                .ThenInclude(a => a!.Expediteur)
+                .AsQueryable();
+
+            if (!string.Equals(status, "all", StringComparison.OrdinalIgnoreCase))
+            {
+                query = query.Where(h => h.Etat != null && h.Etat.EtatAlerteName == status);
+            }
+
+            var total = await query.CountAsync();
+            var alerts = await query
+                .OrderByDescending(h => h.Alerte!.DateCreationAlerte)
+                .Skip((page - 1) * size)
+                .Take(size)
+                .Select(h => new
+                {
+                    id = h.AlerteId,
+                    title = h.Alerte!.TitreAlerte,
+                    message = h.Alerte.DescriptionAlerte,
+                    type = h.Alerte.AlertType != null ? h.Alerte.AlertType.AlertTypeName : "Unknown",
+                    status = h.Alerte.Statut != null ? h.Alerte.Statut.StatutName : "Unknown",
+                    state = h.Etat != null ? h.Etat.EtatAlerteName : "Unknown",
+                    etatAlerteId = h.EtatAlerteId,
+                    createdAt = h.Alerte.DateCreationAlerte,
+                    readAt = h.DateLecture,
+                    senderName = h.Alerte.Expediteur != null ? h.Alerte.Expediteur.FullName : 
+                                 (h.Alerte.ExpedTypeId == 1 ? "Inconnu" : "Système Automatique"),
+                    sender = h.Alerte.Expediteur != null ? h.Alerte.Expediteur.FullName : 
+                            (h.Alerte.ExpedTypeId == 1 ? "Inconnu" : "Système Automatique")
+                })
+                .ToListAsync();
+
+            return new { items = alerts, total, page, size };
+        }
+
         public async Task<object> GetHistoryAsync(string status, int page, int size)
         {
             var query = _db.Alerte

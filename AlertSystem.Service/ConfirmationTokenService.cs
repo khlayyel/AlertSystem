@@ -26,7 +26,7 @@ namespace AlertSystem.Service
 
         public bool TryValidate(string token, out ConfirmPayload payload)
         {
-            payload = default;
+            payload = new ConfirmPayload();
             try
             {
                 var raw = Encoding.UTF8.GetString(Base64UrlDecode(token));
@@ -35,8 +35,8 @@ namespace AlertSystem.Service
                 var data = Convert.FromBase64String(env.d);
                 var sig = Convert.FromBase64String(env.s);
                 if (!Verify(data, sig)) return false;
-                payload = JsonSerializer.Deserialize<ConfirmPayload>(Encoding.UTF8.GetString(data));
-                if (payload == null) return false;
+                payload = JsonSerializer.Deserialize<ConfirmPayload>(Encoding.UTF8.GetString(data)) ?? new ConfirmPayload();
+                if (payload.AlerteId == 0 && string.IsNullOrEmpty(payload.Kind) && string.IsNullOrEmpty(payload.Value)) return false;
                 if (payload.Exp > 0 && DateTimeOffset.UtcNow.ToUnixTimeSeconds() > payload.Exp) return false;
                 return true;
             }
