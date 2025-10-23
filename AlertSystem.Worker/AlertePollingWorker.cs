@@ -9,6 +9,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using AlertSystem.Worker.Models;
 using AlertSystem.Worker.Services;
+using AlertSystem.Service;
+using Microsoft.AspNetCore.SignalR;
 
 namespace AlertSystem.Worker
 {
@@ -49,12 +51,14 @@ namespace AlertSystem.Worker
                         _logger.LogInformation("Creating service scope and resolving dependencies");
                         var alertRepository = scope.ServiceProvider.GetRequiredService<IAlertRepository>();
                         var emailSender = scope.ServiceProvider.GetRequiredService<IEmailSender>();
+                        var emailTemplate = scope.ServiceProvider.GetRequiredService<IEmailTemplateService>();
                         var whatsAppSender = scope.ServiceProvider.GetRequiredService<IWhatsAppSender>();
+                        var whatsAppTemplate = scope.ServiceProvider.GetRequiredService<AlertSystem.Service.IWhatsAppTemplateService>();
                         var webPushNotifier = scope.ServiceProvider.GetRequiredService<IWebPushNotifier>();
 
                         _logger.LogInformation("Services resolved successfully, starting alert processing");
-                        await ProcessUnprocessedAlerts(alertRepository, emailSender, whatsAppSender, webPushNotifier, stoppingToken);
-                        await ProcessReminderAlerts(alertRepository, emailSender, whatsAppSender, webPushNotifier, stoppingToken);
+                        await ProcessUnprocessedAlerts(alertRepository, emailSender, whatsAppSender, whatsAppTemplate, webPushNotifier, emailTemplate, stoppingToken);
+                        await ProcessReminderAlerts(alertRepository, emailSender, whatsAppSender, whatsAppTemplate, webPushNotifier, emailTemplate, stoppingToken);
                         _logger.LogInformation("Alert processing cycle completed");
                     }
                     catch (Exception ex)
@@ -70,7 +74,7 @@ namespace AlertSystem.Worker
             _logger.LogInformation("AlertePollingWorker stopped");
         }
 
-        private async Task ProcessUnprocessedAlerts(IAlertRepository alertRepository, IEmailSender emailSender, IWhatsAppSender whatsAppSender, IWebPushNotifier webPushNotifier, CancellationToken cancellationToken)
+        private async Task ProcessUnprocessedAlerts(IAlertRepository alertRepository, IEmailSender emailSender, IWhatsAppSender whatsAppSender, AlertSystem.Service.IWhatsAppTemplateService whatsAppTemplate, IWebPushNotifier webPushNotifier, IEmailTemplateService emailTemplate, CancellationToken cancellationToken)
         {
             _logger.LogInformation("Querying database for unprocessed alerts");
             var unprocessedAlerts = await alertRepository.GetUnprocessedAlertsAsync(cancellationToken);
@@ -88,7 +92,7 @@ namespace AlertSystem.Worker
                 try
                 {
                     _logger.LogInformation("Processing alert {AlerteId}: {Title}", alert.AlerteId, alert.TitreAlerte);
-                    await ProcessSingleAlert(alert, alertRepository, emailSender, whatsAppSender, webPushNotifier, cancellationToken);
+                    await ProcessSingleAlert(alert, alertRepository, emailSender, whatsAppSender, whatsAppTemplate, webPushNotifier, emailTemplate, cancellationToken);
                     _logger.LogInformation("Successfully processed alert {AlerteId}", alert.AlerteId);
                 }
                 catch (Exception ex)
@@ -99,7 +103,7 @@ namespace AlertSystem.Worker
             }
         }
 
-        private async Task ProcessSingleAlert(AlerteModel alert, IAlertRepository alertRepository, IEmailSender emailSender, IWhatsAppSender whatsAppSender, IWebPushNotifier webPushNotifier, CancellationToken cancellationToken)
+        private async Task ProcessSingleAlert(AlerteModel alert, IAlertRepository alertRepository, IEmailSender emailSender, IWhatsAppSender whatsAppSender, AlertSystem.Service.IWhatsAppTemplateService whatsAppTemplate, IWebPushNotifier webPushNotifier, IEmailTemplateService emailTemplate, CancellationToken cancellationToken)
         {
             _logger.LogInformation("Processing alert {AlerteId}: {Title}", alert.AlerteId, alert.TitreAlerte);
 
@@ -137,7 +141,7 @@ namespace AlertSystem.Worker
                             cancellationToken);
 
                         totalAttempts++;
-                        await SendViaChannel(channel, recipient, alert.TitreAlerte, alert.DescriptionAlerte, emailSender, whatsAppSender, webPushNotifier, cancellationToken);
+                        await SendViaChannel(channel, recipient, alert.TitreAlerte, alert.DescriptionAlerte, emailSender, whatsAppSender, whatsAppTemplate, webPushNotifier, emailTemplate, cancellationToken);
                         totalSuccess++;
                     }
                     catch (Exception ex)
@@ -198,21 +202,28 @@ namespace AlertSystem.Worker
             return new List<string> { "Email", "WhatsApp", "Desktop" };
         }
 
-        private async Task SendViaChannel(string channel, UserModel recipient, string title, string message, IEmailSender emailSender, IWhatsAppSender whatsAppSender, IWebPushNotifier webPushNotifier, CancellationToken cancellationToken)
+        private async Task SendViaChannel(string channel, UserModel recipient, string title, string message, IEmailSender emailSender, IWhatsAppSender whatsAppSender, AlertSystem.Service.IWhatsAppTemplateService whatsAppTemplate, IWebPushNotifier webPushNotifier, IEmailTemplateService emailTemplate, CancellationToken cancellationToken)
         {
             switch (channel)
             {
                 case "Email":
                     if (!string.IsNullOrWhiteSpace(recipient.Email))
                     {
-                        await emailSender.SendAsync(recipient.Email, recipient.FullName, title, message, cancellationToken);
+                        // Create professional email template
+                        var senderName = "Système d'Alerte";
+                        var confirmUrl = $"https://your-domain.com/confirm?t={Guid.NewGuid()}"; // TODO: Implement proper confirmation URL
+                        var emailHtml = emailTemplate.CreateAlertEmailTemplate(title, message, senderName, DateTime.UtcNow, confirmUrl);
+                        await emailSender.SendHtmlEmailAsync(recipient.Email, $"🚨 {title}", emailHtml);
                     }
                     break;
 
                 case "WhatsApp":
                     if (!string.IsNullOrWhiteSpace(recipient.PhoneNumber))
                     {
-                        await whatsAppSender.SendAsync(recipient.PhoneNumber, title, message, cancellationToken);
+                        // Use the same WhatsApp template service as the main system
+                        var senderName = "Système d'Alerte";
+                        var confirmUrl = $"https://your-domain.com/confirm?t={Guid.NewGuid()}"; // TODO: Implement proper confirmation URL
+                        await whatsAppTemplate.SendAlertTemplateAsync(recipient.PhoneNumber, title, message, senderName, confirmUrl);
                     }
                     break;
 
@@ -226,7 +237,7 @@ namespace AlertSystem.Worker
             }
         }
 
-        private async Task ProcessReminderAlerts(IAlertRepository alertRepository, IEmailSender emailSender, IWhatsAppSender whatsAppSender, IWebPushNotifier webPushNotifier, CancellationToken cancellationToken)
+        private async Task ProcessReminderAlerts(IAlertRepository alertRepository, IEmailSender emailSender, IWhatsAppSender whatsAppSender, AlertSystem.Service.IWhatsAppTemplateService whatsAppTemplate, IWebPushNotifier webPushNotifier, IEmailTemplateService emailTemplate, CancellationToken cancellationToken)
         {
             try
             {
@@ -243,7 +254,7 @@ namespace AlertSystem.Worker
                 {
                     try
                     {
-                        await ProcessReminderAlert(alert, alertRepository, emailSender, whatsAppSender, webPushNotifier, cancellationToken);
+                        await ProcessReminderAlert(alert, alertRepository, emailSender, whatsAppSender, whatsAppTemplate, webPushNotifier, emailTemplate, cancellationToken);
                     }
                     catch (Exception ex)
                     {
@@ -257,7 +268,7 @@ namespace AlertSystem.Worker
             }
         }
 
-        private async Task ProcessReminderAlert(AlerteModel alert, IAlertRepository alertRepository, IEmailSender emailSender, IWhatsAppSender whatsAppSender, IWebPushNotifier webPushNotifier, CancellationToken cancellationToken)
+        private async Task ProcessReminderAlert(AlerteModel alert, IAlertRepository alertRepository, IEmailSender emailSender, IWhatsAppSender whatsAppSender, AlertSystem.Service.IWhatsAppTemplateService whatsAppTemplate, IWebPushNotifier webPushNotifier, IEmailTemplateService emailTemplate, CancellationToken cancellationToken)
         {
             _logger.LogInformation("Processing reminder for alert {AlerteId}: {Title}", alert.AlerteId, alert.TitreAlerte);
 
@@ -292,7 +303,7 @@ namespace AlertSystem.Worker
                     try
                     {
                         totalAttempts++;
-                        await SendViaChannel(channel, recipient, $"[RAPPEL] {alert.TitreAlerte}", alert.DescriptionAlerte, emailSender, whatsAppSender, webPushNotifier, cancellationToken);
+                        await SendViaChannel(channel, recipient, $"[RAPPEL] {alert.TitreAlerte}", alert.DescriptionAlerte, emailSender, whatsAppSender, whatsAppTemplate, webPushNotifier, emailTemplate, cancellationToken);
                         totalSuccess++;
                         
                         // Track successful attempt for this recipient

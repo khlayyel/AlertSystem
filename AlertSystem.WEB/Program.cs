@@ -33,9 +33,11 @@ builder.Services.AddScoped<AlertSystem.Services.IWebPushService, AlertSystem.Ser
 builder.Services.AddScoped<AlertSystem.Service.AlertAuditService>();
 builder.Services.AddSingleton<AlertSystem.Service.ReminderConfiguration>();
 builder.Services.AddScoped<AlertSystem.Service.IAlertSendService, AlertSystem.Service.AlertSendService>();
+builder.Services.AddScoped<AlertSystem.Service.IKpiUpdateService, AlertSystem.Service.KpiUpdateService>();
 builder.Services.AddScoped<AlertSystem.Service.ConfirmationTokenService>(provider => 
     new AlertSystem.Service.ConfirmationTokenService(provider.GetRequiredService<IConfiguration>()["TOKEN_SECRET"] ?? "dev-secret-change-me"));
 builder.Services.AddScoped<AlertSystem.Service.IEmailTemplateService, AlertSystem.Service.EmailTemplateService>();
+builder.Services.AddScoped<AlertSystem.Service.IWhatsAppTemplateService, AlertSystem.Service.WhatsAppTemplateService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<AlertSystem.Services.ICurrentUserAccessor, AlertSystem.Services.CurrentUserAccessor>();
 builder.Services.AddScoped<IDelayedAlertJobService, DelayedAlertJobService>();
@@ -76,6 +78,9 @@ builder.Services.AddHangfire(configuration => configuration
 
 builder.Services.AddHangfireServer();
 
+// Add SignalR
+builder.Services.AddSignalR();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -97,6 +102,9 @@ app.UseHttpsRedirection();
 app.UseRouting();
 
 app.UseAuthorization();
+
+// Map SignalR hub
+app.MapHub<AlertSystem.Hubs.NotificationsHub>("/hubs/notifications");
 
 app.MapStaticAssets();
 

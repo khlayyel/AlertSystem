@@ -44,7 +44,7 @@ public class ManualSendFlowTests
         var config = new ConfigurationBuilder().Build();
         var tokens = new ConfirmationTokenService("test-secret");
         var emailTemplate = new EmailTemplateService();
-        var service = new AlertSendService(db, notify, new StubWhatsAppService(), config, tokens, emailTemplate, new HttpContextAccessor(), new LoggerFactory().CreateLogger<AlertSendService>());
+        var service = new AlertSendService(db, notify, new StubWhatsAppService(), config, tokens, emailTemplate, new MockWhatsAppTemplateService(), new HttpContextAccessor(), new LoggerFactory().CreateLogger<AlertSendService>(), new MockKpiUpdateService());
 
         var response = await service.SendManualAsync(
             "Title", "Body",
@@ -67,7 +67,7 @@ public class ManualSendFlowTests
         var config = new ConfigurationBuilder().Build();
         var tokens = new ConfirmationTokenService("test-secret");
         var emailTemplate = new EmailTemplateService();
-        var service = new AlertSendService(db, notify, new StubWhatsAppService(), config, tokens, emailTemplate, new HttpContextAccessor(), new LoggerFactory().CreateLogger<AlertSendService>());
+        var service = new AlertSendService(db, notify, new StubWhatsAppService(), config, tokens, emailTemplate, new MockWhatsAppTemplateService(), new HttpContextAccessor(), new LoggerFactory().CreateLogger<AlertSendService>(), new MockKpiUpdateService());
 
         var response = await service.SendManualAsync(
             "Title", "Body",
@@ -81,5 +81,19 @@ public class ManualSendFlowTests
         Assert.Equal(4, alert.StatutId); // Échoué
     }
 }
+
+    public class MockKpiUpdateService : IKpiUpdateService
+    {
+        public Task SendInboxKpiUpdateAsync(int userId) => Task.CompletedTask;
+        public Task SendOutboxKpiUpdateAsync(int userId) => Task.CompletedTask;
+        public Task SendAllKpiUpdateAsync(int userId) => Task.CompletedTask;
+        public Task SendOutboxModalUpdateAsync(int userId, int alerteId, object recipientData) => Task.CompletedTask;
+        public Task SendTestOutboxKpiUpdateAsync(int userId, object testData) => Task.CompletedTask;
+    }
+
+    public class MockWhatsAppTemplateService : IWhatsAppTemplateService
+    {
+        public Task<bool> SendAlertTemplateAsync(string phoneNumber, string title, string message, string senderName, string confirmationUrl) => Task.FromResult(true);
+    }
 
 

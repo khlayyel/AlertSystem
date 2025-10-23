@@ -4,6 +4,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using AlertSystem.Worker;
 using AlertSystem.Worker.Services;
+using AlertSystem.Service;
+using AlertSystem.Services;
 using Serilog;
 DotNetEnv.Env.Load();
 
@@ -35,8 +37,10 @@ builder.Services.AddHttpClient();
 
 // Register services
 builder.Services.AddScoped<IAlertRepository, AlertRepository>();
-builder.Services.AddScoped<IEmailSender, EmailSender>();
+builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
+builder.Services.AddScoped<IEmailTemplateService, EmailTemplateService>();
 builder.Services.AddScoped<IWhatsAppSender, WhatsAppSender>();
+builder.Services.AddScoped<AlertSystem.Service.IWhatsAppTemplateService, AlertSystem.Worker.Services.WhatsAppTemplateService>();
 builder.Services.AddScoped<IWebPushNotifier, WebPushNotifier>();
 
 // Register the new polling worker

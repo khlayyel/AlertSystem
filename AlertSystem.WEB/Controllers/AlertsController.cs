@@ -1,15 +1,20 @@
 using Microsoft.AspNetCore.Mvc;
 using AlertSystem.Service;
+using AlertSystem.Services;
 
 namespace AlertSystem.WEB.Controllers
 {
     public sealed class AlertsController : Controller
     {
         private readonly IAlertReadService _alertReadService;
+        private readonly IKpiUpdateService _kpiUpdateService;
+        private readonly ICurrentUserAccessor _currentUserAccessor;
 
-        public AlertsController(IAlertReadService alertReadService)
+        public AlertsController(IAlertReadService alertReadService, IKpiUpdateService kpiUpdateService, ICurrentUserAccessor currentUserAccessor)
         {
             _alertReadService = alertReadService;
+            _kpiUpdateService = kpiUpdateService;
+            _currentUserAccessor = currentUserAccessor;
         }
 
         [HttpGet]
@@ -69,6 +74,7 @@ namespace AlertSystem.WEB.Controllers
             return Json(result);
         }
 
+
         [HttpPost]
         public async Task<IActionResult> MarkRead([FromForm] int alertRecipientId)
         {
@@ -79,6 +85,14 @@ namespace AlertSystem.WEB.Controllers
                 if (success)
                 {
                     Console.WriteLine($"MarkRead: Successfully marked alert {alertRecipientId} as read");
+                    
+                    // Send real-time KPI update
+                    var currentUserId = _currentUserAccessor.GetUserId();
+                    if (currentUserId.HasValue)
+                    {
+                        await _kpiUpdateService.SendInboxKpiUpdateAsync(currentUserId.Value);
+                    }
+                    
                     return Json(new { success = true, message = "Alerte marquée comme lue" });
                 }
                 else

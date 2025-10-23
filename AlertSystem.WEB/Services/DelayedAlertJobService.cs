@@ -14,15 +14,18 @@ namespace AlertSystem.WEB.Services
         private readonly ApplicationDbContext _db;
         private readonly IAlertSendService _alertSendService;
         private readonly ILogger<DelayedAlertJobService> _logger;
+        private readonly IKpiUpdateService _kpiUpdateService;
 
         public DelayedAlertJobService(
             ApplicationDbContext db,
             IAlertSendService alertSendService,
-            ILogger<DelayedAlertJobService> logger)
+            ILogger<DelayedAlertJobService> logger,
+            IKpiUpdateService kpiUpdateService)
         {
             _db = db;
             _alertSendService = alertSendService;
             _logger = logger;
+            _kpiUpdateService = kpiUpdateService;
         }
 
         public async Task ExecuteDelayedSendAsync(int alerteId)
@@ -70,8 +73,9 @@ namespace AlertSystem.WEB.Services
                 var sendWhatsApp = phones.Any();
                 var sendDesktop = historique.Any(h => !string.IsNullOrEmpty(h.DestinataireDesktop));
 
-                // Execute the actual send
-                var response = await _alertSendService.SendManualAsync(
+                // Execute the actual send using existing alert (don't create new one)
+                var response = await _alertSendService.SendExistingAlertAsync(
+                    alert.AlerteId,
                     alert.TitreAlerte,
                     alert.DescriptionAlerte ?? "",
                     emails,
@@ -85,6 +89,18 @@ namespace AlertSystem.WEB.Services
 
                 _logger.LogInformation("Delayed send completed for alert {AlerteId}. Success: {Success}", 
                     alerteId, response.OverallSuccess);
+
+                // Send real-time KPI update after alert is sent
+                try
+                {
+                    // For background jobs, we'll send updates to all connected users
+                    // In a real scenario, you might want to determine which users should receive updates
+                    await _kpiUpdateService.SendOutboxKpiUpdateAsync(1); // Default user for now
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to send outbox KPI update after delayed send");
+                }
 
             }
             catch (Exception ex)

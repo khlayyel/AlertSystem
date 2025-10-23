@@ -37,6 +37,18 @@ namespace AlertSystem.Service
             bool sendDesktop,
             IEnumerable<int>? userIds = null,
             int? alertTypeId = null);
+        
+        Task<SendResponse> SendExistingAlertAsync(
+            int alerteId,
+            string title,
+            string message,
+            IEnumerable<string> emails,
+            IEnumerable<string> phones,
+            bool sendEmail,
+            bool sendWhatsApp,
+            bool sendDesktop,
+            IEnumerable<int>? userIds = null,
+            int? alertTypeId = null);
     }
 
     public sealed class AlertSendService : IAlertSendService
@@ -47,8 +59,10 @@ namespace AlertSystem.Service
         private readonly Microsoft.Extensions.Configuration.IConfiguration _cfg;
         private readonly ConfirmationTokenService _tokens;
         private readonly IEmailTemplateService _emailTemplate;
+        private readonly IWhatsAppTemplateService _whatsAppTemplate;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILogger<AlertSendService> _logger;
+        private readonly IKpiUpdateService _kpiUpdateService;
 
         public AlertSendService(
             ApplicationDbContext db, 
@@ -57,8 +71,10 @@ namespace AlertSystem.Service
             Microsoft.Extensions.Configuration.IConfiguration cfg, 
             ConfirmationTokenService tokens, 
             IEmailTemplateService emailTemplate,
+            IWhatsAppTemplateService whatsAppTemplate,
             IHttpContextAccessor httpContextAccessor,
-            ILogger<AlertSendService> logger)
+            ILogger<AlertSendService> logger,
+            IKpiUpdateService kpiUpdateService)
         {
             _db = db;
             _notify = notify;
@@ -66,8 +82,10 @@ namespace AlertSystem.Service
             _cfg = cfg;
             _tokens = tokens;
             _emailTemplate = emailTemplate;
+            _whatsAppTemplate = whatsAppTemplate;
             _httpContextAccessor = httpContextAccessor;
             _logger = logger;
+            _kpiUpdateService = kpiUpdateService;
         }
 
         public async Task<SendResponse> SendManualAsync(
@@ -241,40 +259,29 @@ namespace AlertSystem.Service
                         var baseUrl = _cfg["BASE_URL"]?.TrimEnd('/') ?? "http://localhost:5185";
                         var tok = _tokens.Generate(new ConfirmPayload { AlerteId = alerte.AlerteId, Kind = "wa", Value = phone });
                         var confirmUrl = $"{baseUrl}/confirm?t={tok}";
-                        var templateName = _cfg["WhatsApp:DefaultTemplateName"];
-                        var templateLang = _cfg["WhatsApp:DefaultTemplateLang"] ?? "en_US";
-
-                        bool delivered;
-                        if (!string.IsNullOrWhiteSpace(templateName))
+                        
+                        // CRITICAL: Clean and validate the URL to remove any unwanted prefixes
+                        confirmUrl = CleanConfirmationUrl(confirmUrl);
+                        
+                        // Debug logging for URL generation
+                        _logger.LogInformation("🔧 URL DEBUG: BaseUrl={BaseUrl}, Token={Token}, FinalUrl={FinalUrl}", 
+                            baseUrl, tok, confirmUrl);
+                        
+                        // Use our specialized WhatsApp template service
+                        var senderName = _httpContextAccessor.HttpContext?.User?.FindFirst("DisplayName")?.Value ?? "Système d'Alerte";
+                        bool delivered = await _whatsAppTemplate.SendAlertTemplateAsync(phone, title, message, senderName, confirmUrl);
+                        
+                        if (!delivered)
                         {
-                            // Force template-first strategy to reach new contacts reliably
-                            var vars = new Dictionary<string, string>
-                            {
-                                { "alert_title", title },
-                                { "alert_body", message },
-                                { "confirm_url", confirmUrl }
-                            };
-                            delivered = await _wa.SendTemplateAsync(phone, templateName!, templateLang, vars);
+                            // Fallback to simple template if our template fails
+                            var templateLang = _cfg["WhatsApp:DefaultTemplateLang"] ?? "en_US";
+                            delivered = await _wa.SendTemplateAsync(phone, "hello_world", templateLang, null);
                             if (!delivered)
                             {
-                                // Fallback to hello_world if dynamic template not approved/available
-                                delivered = await _wa.SendTemplateAsync(phone, "hello_world", templateLang, null);
-                                if (!delivered)
-                                {
-                                    // Last try: free-form within 24h window
-                                    delivered = await _notify.SendWhatsAppAsync(phone, $"{title}\n\n{message}");
-                                }
+                                // Last try: free-form within 24h window
+                                delivered = await _notify.SendWhatsAppAsync(phone, $"{title}\n\n{message}");
                             }
                         }
-                        else
-                        {
-                            // Legacy: free-form then hello_world
-                            delivered = await _notify.SendWhatsAppAsync(phone, $"{title}\n\n{message}");
-                            if (!delivered)
-                            {
-                                delivered = await _wa.SendTemplateAsync(phone, "hello_world", templateLang, null);
-                            }
-                            }
                             results.Add(new SendResult { Type = "whatsapp", Recipient = phone, Success = delivered, Error = delivered ? null : "WhatsApp sending failed" });
                     }
                     catch (Exception ex) { 
@@ -320,12 +327,298 @@ namespace AlertSystem.Service
             alerte.StatutId = overallSuccess ? 2 : 4; // Envoyé : Échoué
             await _db.SaveChangesAsync();
 
+            // Send real-time KPI update for outbox
+            try
+            {
+                var currentUserId = _httpContextAccessor.HttpContext?.User?.FindFirst("UserId")?.Value;
+                if (int.TryParse(currentUserId, out var userId))
+                {
+                    await _kpiUpdateService.SendOutboxKpiUpdateAsync(userId);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to send outbox KPI update after alert send");
+            }
+
             return new SendResponse 
             { 
                 OverallSuccess = overallSuccess, 
                 AlerteId = alerte.AlerteId, 
                 Results = results 
             };
+        }
+
+        public async Task<SendResponse> SendExistingAlertAsync(
+            int alerteId,
+            string title,
+            string message,
+            IEnumerable<string> emails,
+            IEnumerable<string> phones,
+            bool sendEmail,
+            bool sendWhatsApp,
+            bool sendDesktop,
+            IEnumerable<int>? userIds = null,
+            int? alertTypeId = null)
+        {
+            Console.WriteLine($"SendExistingAlertAsync called for existing alert {alerteId}: sendEmail={sendEmail}, emails={emails?.Count() ?? 0}, phones={phones?.Count() ?? 0}");
+            var now = DateTime.UtcNow;
+            var results = new List<SendResult>();
+            
+            // Get the existing alert
+            var alerte = await _db.Alerte.FindAsync(alerteId);
+            if (alerte == null)
+            {
+                throw new InvalidOperationException($"Alert {alerteId} not found");
+            }
+
+            // If userIds provided, enrich emails/phones from Users based on selected platforms
+            var emailSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var phoneSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var e in (emails ?? Array.Empty<string>())) if (!string.IsNullOrWhiteSpace(e)) emailSet.Add(e.Trim());
+            foreach (var p in (phones ?? Array.Empty<string>())) if (!string.IsNullOrWhiteSpace(p)) phoneSet.Add(p.Trim());
+
+            if (userIds != null)
+            {
+                var idArray = userIds.Where(id => id > 0).Distinct().ToArray();
+                if (idArray.Length > 0)
+                {
+                    var users = await _db.Users
+                        .Where(u => idArray.Contains(u.UserId))
+                        .Select(u => new { u.UserId, u.Email, u.PhoneNumber })
+                        .ToListAsync();
+                    if (sendEmail)
+                    {
+                        foreach (var u in users)
+                        {
+                            var e = (u.Email ?? string.Empty).Trim();
+                            if (!string.IsNullOrWhiteSpace(e)) emailSet.Add(e);
+                        }
+                    }
+                    if (sendWhatsApp)
+                    {
+                        foreach (var u in users)
+                        {
+                            var ph = (u.PhoneNumber ?? string.Empty).Trim();
+                            if (!string.IsNullOrWhiteSpace(ph)) phoneSet.Add(ph);
+                        }
+                    }
+                }
+            }
+
+            if (sendEmail)
+            {
+                Console.WriteLine($"Starting email sending for {emailSet.Count} emails");
+                foreach (var e in emailSet)
+                {
+                    var email = (e ?? string.Empty).Trim();
+                    Console.WriteLine($"Processing email: '{email}'");
+                    if (string.IsNullOrWhiteSpace(email)) 
+                    {
+                        Console.WriteLine("Skipping empty email");
+                        continue;
+                    }
+                    
+                    // Generate confirmation token for this email recipient
+                    var baseUrl = _cfg["BASE_URL"]?.TrimEnd('/') ?? "http://localhost:5185";
+                    var confirmToken = _tokens.Generate(new ConfirmPayload 
+                    { 
+                        AlerteId = alerte.AlerteId, 
+                        Kind = "email", 
+                        Value = email 
+                    });
+                    var confirmUrl = $"{baseUrl}/confirm?t={confirmToken}";
+
+                    // Check if HistoriqueAlerte already exists for this email
+                    var existingHistorique = await _db.HistoriqueAlertes
+                        .FirstOrDefaultAsync(h => h.AlerteId == alerteId && h.DestinataireEmail == email);
+                    
+                    if (existingHistorique == null)
+                    {
+                        _db.HistoriqueAlertes.Add(new AlertSystem.Entities.Entities.HistoriqueAlerte
+                        {
+                            AlerteId = alerte.AlerteId,
+                            DestinataireEmail = email,
+                            EtatAlerteId = 1,
+                            PlateformeEnvoieId = 1
+                        });
+                    }
+                    
+                    try 
+                    { 
+                        // Create professional email template
+                        var senderName = "Système d'Alerte";
+                        var emailHtml = _emailTemplate.CreateAlertEmailTemplate(title, message, senderName, alerte.DateCreationAlerte, confirmUrl);
+                        var success = await _notify.SendHtmlEmailAsync(email, $"🚨 {title}", emailHtml);
+                        results.Add(new SendResult { Type = "email", Recipient = email, Success = success, Error = success ? null : "Email sending failed" });
+                    }
+                    catch (Exception ex) { 
+                        // Log the email sending error but continue with other emails
+                        Console.WriteLine($"Email sending failed for {email}: {ex.Message}");
+                        results.Add(new SendResult { Type = "email", Recipient = email, Success = false, Error = ex.Message });
+                    }
+                }
+            }
+
+            if (sendWhatsApp)
+            {
+                foreach (var p in phoneSet)
+                {
+                    var phone = (p ?? string.Empty).Trim();
+                    if (string.IsNullOrWhiteSpace(phone)) continue;
+                    
+                    // Check if HistoriqueAlerte already exists for this phone
+                    var existingHistorique = await _db.HistoriqueAlertes
+                        .FirstOrDefaultAsync(h => h.AlerteId == alerteId && h.DestinatairePhoneNumber == phone);
+                    
+                    if (existingHistorique == null)
+                    {
+                        _db.HistoriqueAlertes.Add(new AlertSystem.Entities.Entities.HistoriqueAlerte
+                        {
+                            AlerteId = alerte.AlerteId,
+                            DestinatairePhoneNumber = phone,
+                            EtatAlerteId = 1,
+                            PlateformeEnvoieId = 2
+                        });
+                    }
+                    
+                    try {
+                        // Build confirmation tokenized URL for WA template button (if template supports URL variable)
+                        var baseUrl = _cfg["BASE_URL"]?.TrimEnd('/') ?? "http://localhost:5185";
+                        var tok = _tokens.Generate(new ConfirmPayload { AlerteId = alerte.AlerteId, Kind = "wa", Value = phone });
+                        var confirmUrl = $"{baseUrl}/confirm?t={tok}";
+                        
+                        // CRITICAL: Clean and validate the URL to remove any unwanted prefixes
+                        confirmUrl = CleanConfirmationUrl(confirmUrl);
+                        
+                        // Debug logging for URL generation
+                        _logger.LogInformation("🔧 URL DEBUG: BaseUrl={BaseUrl}, Token={Token}, FinalUrl={FinalUrl}", 
+                            baseUrl, tok, confirmUrl);
+                        
+                        // Use our specialized WhatsApp template service
+                        var senderName = _httpContextAccessor.HttpContext?.User?.FindFirst("DisplayName")?.Value ?? "Système d'Alerte";
+                        bool delivered = await _whatsAppTemplate.SendAlertTemplateAsync(phone, title, message, senderName, confirmUrl);
+                        
+                        if (!delivered)
+                        {
+                            // Fallback to simple template if our template fails
+                            var templateLang = _cfg["WhatsApp:DefaultTemplateLang"] ?? "en_US";
+                            delivered = await _wa.SendTemplateAsync(phone, "hello_world", templateLang, null);
+                            if (!delivered)
+                            {
+                                // Last try: free-form within 24h window
+                                delivered = await _notify.SendWhatsAppAsync(phone, $"{title}\n\n{message}");
+                            }
+                        }
+                            results.Add(new SendResult { Type = "whatsapp", Recipient = phone, Success = delivered, Error = delivered ? null : "WhatsApp sending failed" });
+                    }
+                    catch (Exception ex) { 
+                        // Log the WhatsApp sending error but continue with other phones
+                        Console.WriteLine($"WhatsApp sending failed for {phone}: {ex.Message}");
+                        results.Add(new SendResult { Type = "whatsapp", Recipient = phone, Success = false, Error = ex.Message });
+                    }
+                }
+            }
+
+            if (sendDesktop && userIds != null)
+            {
+                // Only create Historique for valid existing users (avoid FK conflicts)
+                var requestedIds = userIds.Where(id => id > 0).Distinct().ToArray();
+                var existingIds = await _db.Users
+                    .Where(u => requestedIds.Contains(u.UserId))
+                    .Select(u => u.UserId)
+                    .ToListAsync();
+
+                foreach (var uid in existingIds)
+                {
+                    // Check if HistoriqueAlerte already exists for this user
+                    var existingHistorique = await _db.HistoriqueAlertes
+                        .FirstOrDefaultAsync(h => h.AlerteId == alerteId && h.DestinataireUserId == uid);
+                    
+                    if (existingHistorique == null)
+                    {
+                        _db.HistoriqueAlertes.Add(new AlertSystem.Entities.Entities.HistoriqueAlerte
+                        {
+                            AlerteId = alerte.AlerteId,
+                            DestinataireUserId = uid,
+                            EtatAlerteId = 1,
+                            PlateformeEnvoieId = 3
+                        });
+                    }
+                    
+                    try { 
+                        var success = await _notify.SendPushNotificationAsync(uid, title, message);
+                        results.Add(new SendResult { Type = "desktop", Recipient = uid.ToString(), Success = success, Error = success ? null : "Desktop notification failed" });
+                    }
+                    catch (Exception ex) {
+                        results.Add(new SendResult { Type = "desktop", Recipient = uid.ToString(), Success = false, Error = ex.Message });
+                    }
+                }
+            }
+
+            await _db.SaveChangesAsync();
+
+            var overallSuccess = results.Count == 0 || results.All(r => r.Success);
+            alerte.StatutId = overallSuccess ? 2 : 4; // Envoyé : Échoué
+            await _db.SaveChangesAsync();
+
+            // Send real-time KPI update for outbox
+            try
+            {
+                var currentUserId = _httpContextAccessor.HttpContext?.User?.FindFirst("UserId")?.Value;
+                if (int.TryParse(currentUserId, out var userId))
+                {
+                    await _kpiUpdateService.SendOutboxKpiUpdateAsync(userId);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to send outbox KPI update after existing alert send");
+            }
+
+            return new SendResponse 
+            { 
+                OverallSuccess = overallSuccess, 
+                AlerteId = alerte.AlerteId, 
+                Results = results 
+            };
+        }
+
+        private string CleanConfirmationUrl(string url)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+                return url;
+
+            // Remove any youtube.com prefix that might have been added
+            if (url.StartsWith("youtube.com/", StringComparison.OrdinalIgnoreCase))
+            {
+                url = url.Substring("youtube.com/".Length);
+            }
+            
+            // Remove any https://www.youtube.com/ prefix
+            if (url.StartsWith("https://www.youtube.com/", StringComparison.OrdinalIgnoreCase))
+            {
+                url = url.Substring("https://www.youtube.com/".Length);
+            }
+            
+            // Remove any http://www.youtube.com/ prefix
+            if (url.StartsWith("http://www.youtube.com/", StringComparison.OrdinalIgnoreCase))
+            {
+                url = url.Substring("http://www.youtube.com/".Length);
+            }
+
+            // Ensure the URL starts with http:// or https://
+            if (!url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) && 
+                !url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            {
+                // If it doesn't start with a protocol, assume it's localhost and add http://
+                if (url.StartsWith("localhost", StringComparison.OrdinalIgnoreCase))
+                {
+                    url = "http://" + url;
+                }
+            }
+
+            return url;
         }
     }
 }

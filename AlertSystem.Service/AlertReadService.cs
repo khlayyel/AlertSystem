@@ -20,9 +20,11 @@ namespace AlertSystem.Service
 
         public async Task<int> GetUnreadCountAsync()
         {
-            // 1 = Non Lu
+            // Count distinct alerts that have unread recipients
             return await _db.HistoriqueAlertes
                 .Where(d => d.EtatAlerteId == 1 || d.DateLecture == null)
+                .Select(d => d.AlerteId)
+                .Distinct()
                 .CountAsync();
         }
 
@@ -37,21 +39,25 @@ namespace AlertSystem.Service
 
         public async Task<int> GetConfirmedMandatoryCountAsync()
         {
-            // Obligatoires confirmées = acquittement nécessaire ET lu/confirmé (EtatAlerteId = 2)
+            // Count distinct alerts that are mandatory and have been confirmed
             return await _db.HistoriqueAlertes
                 .Join(_db.Alerte, d => d.AlerteId, a => a.AlerteId, (d, a) => new { d, a })
                 .Join(_db.AlertType, x => x.a.AlertTypeId, at => at.AlertTypeId, (x, at) => new { x.d, x.a, at })
                 .Where(x => x.at.AlertTypeName == "acquittementNécessaire" && (x.d.EtatAlerteId == 2 || x.d.DateLecture != null))
+                .Select(x => x.a.AlerteId)
+                .Distinct()
                 .CountAsync();
         }
 
         public async Task<int> GetMandatoryPendingCountAsync()
         {
-            // Obligatoires en attente = acquittement nécessaire ET non lu (EtatAlerteId != 2 et DateLecture NULL)
+            // Count distinct alerts that are mandatory and pending confirmation
             return await _db.HistoriqueAlertes
                 .Join(_db.Alerte, d => d.AlerteId, a => a.AlerteId, (d, a) => new { d, a })
                 .Join(_db.AlertType, x => x.a.AlertTypeId, at => at.AlertTypeId, (x, at) => new { x.d, x.a, at })
                 .Where(x => x.at.AlertTypeName == "acquittementNécessaire" && (x.d.EtatAlerteId != 2 && x.d.DateLecture == null))
+                .Select(x => x.a.AlerteId)
+                .Distinct()
                 .CountAsync();
         }
 
@@ -230,6 +236,64 @@ namespace AlertSystem.Service
                 _logger.LogError(ex, "MarkAsReadAsync: Error marking alert {AlertRecipientId} as read", alertRecipientId);
                 return false;
             }
+        }
+
+        public async Task<int> GetUnreadCountAsync(int userId)
+        {
+            return await _db.HistoriqueAlertes
+                .Where(h => h.DestinataireUserId == userId && h.EtatAlerteId == 1)
+                .Select(h => h.AlerteId)
+                .Distinct()
+                .CountAsync();
+        }
+
+        public async Task<int> GetTodayCountAsync(int userId)
+        {
+            var today = DateTime.UtcNow.Date;
+            return await _db.HistoriqueAlertes
+                .Where(h => h.DestinataireUserId == userId && h.Alerte != null && h.Alerte.DateCreationAlerte.Date == today)
+                .Select(h => h.AlerteId)
+                .Distinct()
+                .CountAsync();
+        }
+
+        public async Task<int> GetConfirmedMandatoryCountAsync(int userId)
+        {
+            return await _db.HistoriqueAlertes
+                .Where(h => h.DestinataireUserId == userId && h.EtatAlerteId == 2)
+                .Select(h => h.AlerteId)
+                .Distinct()
+                .CountAsync();
+        }
+
+        public async Task<int> GetMandatoryPendingCountAsync(int userId)
+        {
+            return await _db.HistoriqueAlertes
+                .Where(h => h.DestinataireUserId == userId && h.EtatAlerteId == 1)
+                .Select(h => h.AlerteId)
+                .Distinct()
+                .CountAsync();
+        }
+
+        public async Task<int> GetSentTodayCountAsync(int userId)
+        {
+            var today = DateTime.UtcNow.Date;
+            _logger.LogInformation("GetSentTodayCountAsync: Counting alerts for today {Today}", today);
+            
+            // Count all alerts created today (both manual and system-generated)
+            var count = await _db.Alerte
+                .Where(a => a.DateCreationAlerte.Date == today)
+                .CountAsync();
+                
+            _logger.LogInformation("GetSentTodayCountAsync: Found {Count} alerts created today", count);
+            return count;
+        }
+
+        public async Task<int> GetFailedCountAsync(int userId)
+        {
+            return await _db.Alerte
+                .Where(a => a.ExpediteurId == userId && a.StatutId == 4)
+                .CountAsync();
         }
     }
 }

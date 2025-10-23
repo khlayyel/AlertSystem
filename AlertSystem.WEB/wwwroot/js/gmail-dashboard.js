@@ -1271,4 +1271,198 @@ async function updateSidebarCounts() {
   }
 }
 
+// Real-time KPI updates via SignalR
+let hubConnection = null;
+
+function getCurrentUserId() {
+  // Try to get user ID from a data attribute or global variable
+  // This is a simple implementation - you may need to adjust based on your auth system
+  var userIdElement = document.querySelector('[data-user-id]');
+  if (userIdElement) {
+    return userIdElement.getAttribute('data-user-id');
+  }
+  
+  // Fallback: try to get from window object if set by server
+  if (window.currentUserId) {
+    return window.currentUserId;
+  }
+  
+  // For testing, return a default user ID
+  return '1';
+}
+
+function initializeSignalR() {
+  dbg('SignalR: Starting initialization...');
+  console.log('SignalR: typeof signalR =', typeof signalR);
+  console.log('SignalR: signalR object =', signalR);
+  
+  if (typeof signalR !== 'undefined') {
+    dbg('SignalR: signalR library found, creating connection...');
+    try {
+      hubConnection = new signalR.HubConnectionBuilder()
+        .withUrl('/hubs/notifications')
+        .withAutomaticReconnect()
+        .build();
+      dbg('SignalR: Connection builder created successfully');
+      console.log('SignalR: Hub connection created =', hubConnection);
+
+      // Handle inbox KPI updates
+      hubConnection.on('UpdateInboxKpis', function (kpiData) {
+        console.log('SignalR: Received UpdateInboxKpis event', kpiData);
+        dbg('SignalR: Received inbox KPI update', kpiData);
+        updateInboxKpis(kpiData);
+      });
+
+      // Handle outbox KPI updates
+      hubConnection.on('UpdateOutboxKpis', function (kpiData) {
+        console.log('SignalR: Received UpdateOutboxKpis event', kpiData);
+        dbg('SignalR: Received outbox KPI update', kpiData);
+        updateOutboxKpis(kpiData);
+      });
+
+      // Handle outbox modal updates
+      hubConnection.on('UpdateOutboxModal', function (data) {
+        console.log('SignalR: Received UpdateOutboxModal event', data);
+        dbg('SignalR: Received outbox modal update', data);
+        updateOutboxModal(data);
+      });
+      
+      console.log('SignalR: Event handlers registered');
+
+      // Start the connection
+      console.log('SignalR: Starting connection...');
+      hubConnection.start()
+        .then(function () {
+          console.log('SignalR: Connected successfully, state =', hubConnection.state);
+          dbg('SignalR: Connected successfully');
+          logSuccess('SignalR: Connection established');
+          
+          // Join user group for real-time updates
+          var userId = getCurrentUserId();
+          console.log('SignalR: Current user ID =', userId);
+          if (userId) {
+            console.log('SignalR: Joining user group...');
+            hubConnection.invoke('JoinUserGroup', userId.toString())
+              .then(function () {
+                console.log('SignalR: Successfully joined user group for user', userId);
+                dbg('SignalR: Joined user group for user', userId);
+              })
+              .catch(function (err) {
+                console.error('SignalR: Failed to join user group', err);
+                logError('SignalR: Failed to join user group', err);
+              });
+          }
+        })
+        .catch(function (err) {
+          console.error('SignalR: Connection failed', err);
+          logError('SignalR: Connection failed', err);
+        });
+    } catch (error) {
+      logError('SignalR: Initialization failed', error);
+    }
+  } else {
+    dbg('SignalR: signalR library not available');
+  }
+}
+
+function updateInboxKpis(kpiData) {
+  console.log('updateInboxKpis called with:', kpiData);
+  try {
+    // Update unread count
+    const unreadElement = document.getElementById('unreadAlertsCount');
+    console.log('Found unread element:', unreadElement);
+    if (unreadElement && kpiData.unreadCount !== undefined) {
+      unreadElement.textContent = kpiData.unreadCount;
+      console.log('Updated unread count to:', kpiData.unreadCount);
+    }
+
+    // Update pending count
+    const pendingElement = document.getElementById('pendingConfirmationCount');
+    console.log('Found pending element:', pendingElement);
+    if (pendingElement && kpiData.mandatoryPendingCount !== undefined) {
+      pendingElement.textContent = kpiData.mandatoryPendingCount;
+      console.log('Updated pending count to:', kpiData.mandatoryPendingCount);
+    }
+
+    // Update received today count (if available)
+    const receivedElement = document.getElementById('receivedTodayCount');
+    console.log('Found received element:', receivedElement);
+    if (receivedElement && kpiData.receivedTodayCount !== undefined) {
+      receivedElement.textContent = kpiData.receivedTodayCount;
+      console.log('Updated received count to:', kpiData.receivedTodayCount);
+    }
+
+    dbg('SignalR: Updated inbox KPIs', kpiData);
+    logSuccess('SignalR: Inbox KPIs updated successfully');
+  } catch (error) {
+    console.error('Error in updateInboxKpis:', error);
+    logError('SignalR: Failed to update inbox KPIs', error, { kpiData });
+  }
+}
+
+function updateOutboxKpis(kpiData) {
+  console.log('updateOutboxKpis called with:', kpiData);
+  try {
+    // Update sent today count
+    const sentElement = document.getElementById('sentTodayCount');
+    console.log('Found sent element:', sentElement);
+    if (sentElement && kpiData.sentTodayCount !== undefined) {
+      sentElement.textContent = kpiData.sentTodayCount;
+      console.log('Updated sent count to:', kpiData.sentTodayCount);
+    }
+
+    // Update confirmed count
+    const confirmedElement = document.getElementById('confirmedAlertsCount');
+    console.log('Found confirmed element:', confirmedElement);
+    if (confirmedElement && kpiData.confirmedCount !== undefined) {
+      confirmedElement.textContent = kpiData.confirmedCount;
+      console.log('Updated confirmed count to:', kpiData.confirmedCount);
+    }
+
+    // Update pending count
+    const pendingElement = document.getElementById('pendingConfirmationCount');
+    console.log('Found pending element:', pendingElement);
+    if (pendingElement && kpiData.pendingCount !== undefined) {
+      pendingElement.textContent = kpiData.pendingCount;
+      console.log('Updated pending count to:', kpiData.pendingCount);
+    }
+
+    dbg('SignalR: Updated outbox KPIs', kpiData);
+    logSuccess('SignalR: Outbox KPIs updated successfully');
+  } catch (error) {
+    console.error('Error in updateOutboxKpis:', error);
+    logError('SignalR: Failed to update outbox KPIs', error, { kpiData });
+  }
+}
+
+function updateOutboxModal(data) {
+  try {
+    dbg('SignalR: Updating outbox modal', data);
+    
+    // Check if the modal is open for this specific alert
+    const modal = document.getElementById('outboxDetailsModal');
+    if (modal && modal.style.display !== 'none') {
+      const currentAlertId = modal.getAttribute('data-alert-id');
+      if (currentAlertId && parseInt(currentAlertId) === data.alerteId) {
+        // Update the recipient list in the modal
+        if (data.recipientData) {
+          // Refresh the recipient list for this alert
+          loadOutboxDetails(data.alerteId);
+        }
+      }
+    }
+    
+    logSuccess('SignalR: Outbox modal updated successfully');
+  } catch (error) {
+    logError('SignalR: Failed to update outbox modal', error, { data });
+  }
+}
+
+
+// Initialize SignalR when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize SignalR after a short delay to ensure all other initialization is complete
+  setTimeout(initializeSignalR, 1000);
+});
+
 

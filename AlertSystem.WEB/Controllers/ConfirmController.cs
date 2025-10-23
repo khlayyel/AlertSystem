@@ -20,11 +20,24 @@ namespace AlertSystem.WEB.Controllers
         [HttpGet]
         public async Task<IActionResult> Index([FromQuery] string t)
         {
-            if (string.IsNullOrWhiteSpace(t)) return BadRequest("token missing");
-            if (!_tokens.TryValidate(t, out var payload)) return BadRequest("token invalid");
+            if (string.IsNullOrWhiteSpace(t)) 
+            {
+                return View("Error", new { Message = "Token manquant", Title = "Erreur de confirmation" });
+            }
+            
+            if (!_tokens.TryValidate(t, out var payload)) 
+            {
+                return View("Error", new { Message = "Token invalide ou expiré", Title = "Erreur de confirmation" });
+            }
 
-            var alerte = await _db.Alerte.FirstOrDefaultAsync(a => a.AlerteId == payload.AlerteId);
-            if (alerte == null) return NotFound("alert not found");
+            var alerte = await _db.Alerte
+                .Include(a => a.AlertType)
+                .FirstOrDefaultAsync(a => a.AlerteId == payload.AlerteId);
+                
+            if (alerte == null) 
+            {
+                return View("Error", new { Message = "Alerte introuvable", Title = "Erreur de confirmation" });
+            }
 
             // Mark as Lu for matching destinataires
             var rows = await _db.HistoriqueAlertes
@@ -33,15 +46,25 @@ namespace AlertSystem.WEB.Controllers
                     (payload.Kind == "email" && h.DestinataireEmail == payload.Value)))
                 .ToListAsync();
 
+            var confirmedCount = 0;
             foreach (var h in rows)
             {
-                h.EtatAlerteId = 2; // Lu
-                h.DateLecture = DateTime.UtcNow;
+                if (h.EtatAlerteId != 2) // Only update if not already confirmed
+                {
+                    h.EtatAlerteId = 2; // Lu
+                    h.DateLecture = DateTime.UtcNow;
+                    confirmedCount++;
+                }
             }
 
             await _db.SaveChangesAsync();
 
-            return Content("La notification a été confirmée", "text/plain", System.Text.Encoding.UTF8);
+            // Return success view with alert details
+            return View("Success", new { 
+                Alert = alerte, 
+                ConfirmedCount = confirmedCount,
+                ConfirmationTime = DateTime.Now.ToString("dd/MM/yyyy HH:mm")
+            });
         }
     }
 }

@@ -10,17 +10,23 @@ namespace AlertSystem.Services
     {
         private readonly HttpClient _httpClient;
         private readonly ILogger<WhatsAppService> _logger;
+        private readonly IConfiguration _configuration;
         private readonly string _accessToken;
         private readonly string _phoneNumberId;
+        private readonly string _defaultTemplateName;
+        private readonly string _defaultTemplateLang;
 
         public WhatsAppService(HttpClient httpClient, ILogger<WhatsAppService> logger, IConfiguration configuration)
         {
             _httpClient = httpClient;
             _logger = logger;
+            _configuration = configuration;
             
             // Configuration depuis appsettings.json
             _accessToken = configuration["WhatsApp:AccessToken"] ?? "";
             _phoneNumberId = configuration["WhatsApp:PhoneNumberId"] ?? "";
+            _defaultTemplateName = configuration["WhatsApp:DefaultTemplateName"] ?? "alert_confirmation";
+            _defaultTemplateLang = configuration["WhatsApp:DefaultTemplateLang"] ?? "fr";
             var apiVersion = configuration["WhatsApp:ApiVersion"] ?? "v20.0";
             
             if (string.IsNullOrWhiteSpace(_accessToken) || string.IsNullOrWhiteSpace(_phoneNumberId))
@@ -32,8 +38,8 @@ namespace AlertSystem.Services
             _httpClient.BaseAddress = new Uri($"https://graph.facebook.com/{apiVersion}/");
             _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {_accessToken}");
             
-            _logger.LogInformation("WhatsApp service initialized with PhoneNumberId: {PhoneNumberId}, API: {ApiVersion}", 
-                _phoneNumberId, apiVersion);
+            _logger.LogInformation("WhatsApp service initialized with PhoneNumberId: {PhoneNumberId}, API: {ApiVersion}, DefaultTemplate: {TemplateName}, DefaultLang: {TemplateLang}", 
+                _phoneNumberId, apiVersion, _defaultTemplateName, _defaultTemplateLang);
         }
 
         public async Task<bool> SendMessageAsync(string phoneNumber, string message)
@@ -124,19 +130,23 @@ namespace AlertSystem.Services
         {
             try
             {
-                // Use hello_world template as fallback
+                _logger.LogInformation("🔧 CONFIG DEBUG: DefaultTemplateName={TemplateName}, DefaultTemplateLang={TemplateLang}", 
+                    _defaultTemplateName, _defaultTemplateLang);
+
+                // Use the configured default template (alert_confirmation) as fallback
                 var payload = new
                 {
                     messaging_product = "whatsapp",
                     to = phoneNumber,
                     type = "template",
-                    template = new { name = "hello_world", language = new { code = "en_US" } }
+                    template = new { name = _defaultTemplateName, language = new { code = _defaultTemplateLang } }
                 };
 
                 var json = JsonSerializer.Serialize(payload);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                _logger.LogInformation("=== WHATSAPP TEMPLATE SEND === To: {PhoneNumber}, Template: hello_world", phoneNumber);
+                _logger.LogInformation("=== WHATSAPP TEMPLATE SEND === To: {PhoneNumber}, Template: {TemplateName}, Lang: {TemplateLang}", 
+                    phoneNumber, _defaultTemplateName, _defaultTemplateLang);
                 _logger.LogInformation("WA payload(template): {Payload}", json);
 
                 var response = await _httpClient.PostAsync($"{_phoneNumberId}/messages", content);
@@ -180,40 +190,91 @@ namespace AlertSystem.Services
                     return false;
                 }
 
-                object template;
+                _logger.LogInformation("🔧 TEMPLATE DEBUG: TemplateName={TemplateName}, LanguageCode={LanguageCode}, Variables={Variables}", 
+                    templateName, languageCode, variables != null ? string.Join(", ", variables.Select(kv => $"{kv.Key}={kv.Value}")) : "null");
+
+                // CRITICAL: Log the exact URL being sent to Meta
+                if (variables != null && variables.TryGetValue("5", out var urlValue))
+                {
+                    _logger.LogInformation("🔧 META URL DEBUG: Button URL being sent to Meta: {ButtonUrl}", urlValue);
+                }
+
+                // Build components array according to Meta Graph API specification
                 var components = new List<object>();
+                
                 if (variables != null && variables.Count > 0)
                 {
-                    // Body parameters (text placeholders)
-                    var bodyParams = variables
-                        .Where(kv => kv.Key != null && !kv.Key.Equals("confirm_url", StringComparison.OrdinalIgnoreCase))
-                        .Select(kv => new { type = "text", text = kv.Value })
-                        .ToArray();
-                    if (bodyParams.Length > 0)
+                    // Header component (for {{1}} - title)
+                    if (variables.TryGetValue("1", out var title))
                     {
-                        components.Add(new { type = "body", parameters = bodyParams });
+                        components.Add(new 
+                        { 
+                            type = "header", 
+                            parameters = new object[] { new { type = "text", text = title } } 
+                        });
                     }
-                    // URL button parameter if present
-                    if (variables.TryGetValue("confirm_url", out var url))
+
+                    // Body component (for {{2}}, {{3}}, {{4}} - message, sender, timestamp)
+                    var bodyParams = new List<object>();
+                    if (variables.TryGetValue("2", out var message))
+                        bodyParams.Add(new { type = "text", text = message });
+                    if (variables.TryGetValue("3", out var sender))
+                        bodyParams.Add(new { type = "text", text = sender });
+                    if (variables.TryGetValue("4", out var timestamp))
+                        bodyParams.Add(new { type = "text", text = timestamp });
+                    
+                    if (bodyParams.Count > 0)
                     {
-                        components.Add(new { type = "button", sub_type = "url", index = 0, parameters = new object[] { new { type = "text", text = url } } });
+                        components.Add(new { type = "body", parameters = bodyParams.ToArray() });
+                    }
+
+                    // Button component (for {{5}} - confirmation URL)
+                    if (variables.TryGetValue("5", out var confirmationUrl))
+                    {
+                        components.Add(new 
+                        { 
+                            type = "button", 
+                            sub_type = "url", 
+                            index = "0", 
+                            parameters = new object[] { new { type = "text", text = confirmationUrl } } 
+                        });
                     }
                 }
-                template = components.Count > 0
-                    ? new { name = templateName, language = new { code = languageCode }, components }
-                    : new { name = templateName, language = new { code = languageCode } };
+
+                // Build template object
+                object template;
+                if (components.Count > 0)
+                {
+                    template = new { name = templateName, language = new { code = languageCode }, components };
+                }
+                else
+                {
+                    template = new { name = templateName, language = new { code = languageCode } };
+                }
 
                 var payload = new { messaging_product = "whatsapp", to = cleanPhoneNumber, type = "template", template };
-                var json = JsonSerializer.Serialize(payload);
+                var json = JsonSerializer.Serialize(payload, new JsonSerializerOptions { WriteIndented = true });
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
                 _logger.LogInformation("=== WHATSAPP TEMPLATE SEND (dynamic) === To: {PhoneNumber}, Template: {Template}", cleanPhoneNumber, templateName);
                 _logger.LogInformation("WA payload(template-dyn): {Payload}", json);
+                
+                // CRITICAL: Log the exact button URL in the JSON payload
+                if (variables != null && variables.TryGetValue("5", out var buttonUrl))
+                {
+                    _logger.LogInformation("🔧 FINAL JSON DEBUG: Button URL in JSON payload: {ButtonUrl}", buttonUrl);
+                }
 
                 var response = await _httpClient.PostAsync($"{_phoneNumberId}/messages", content);
                 var responseContent = await response.Content.ReadAsStringAsync();
 
                 _logger.LogInformation("WhatsApp Template Response - Status: {StatusCode}, Content: {Content}", response.StatusCode, responseContent);
+                
+                if (!response.IsSuccessStatusCode)
+                {
+                    await LogWhatsAppError(phoneNumber, response.StatusCode, responseContent);
+                }
+                
                 return response.IsSuccessStatusCode;
             }
             catch (Exception ex)

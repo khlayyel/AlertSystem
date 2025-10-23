@@ -16,6 +16,7 @@ namespace AlertSystem.WEB.Controllers
         private readonly ILogger<AlertsCrudController> _logger;
         private readonly ApplicationDbContext _db;
         private readonly IDelayedAlertJobService _delayedJobService;
+        private readonly IKpiUpdateService _kpiUpdateService;
 
         public AlertsCrudController(
             IAlertCrudService service, 
@@ -23,7 +24,8 @@ namespace AlertSystem.WEB.Controllers
             ICurrentUserAccessor currentUser, 
             ILogger<AlertsCrudController> logger,
             ApplicationDbContext db,
-            IDelayedAlertJobService delayedJobService)
+            IDelayedAlertJobService delayedJobService,
+            IKpiUpdateService kpiUpdateService)
         {
             _service = service;
             _sendService = sendService;
@@ -31,6 +33,7 @@ namespace AlertSystem.WEB.Controllers
             _logger = logger;
             _db = db;
             _delayedJobService = delayedJobService;
+            _kpiUpdateService = kpiUpdateService;
         }
 
         [HttpGet]
@@ -156,6 +159,20 @@ namespace AlertSystem.WEB.Controllers
 
                 // Schedule the actual send for 5 seconds later
                 var jobId = BackgroundJob.Schedule(() => _delayedJobService.ExecuteDelayedSendAsync(alert.AlerteId), TimeSpan.FromSeconds(5));
+
+                // Send real-time KPI update
+                try
+                {
+                    var currentUserId = _currentUser.GetUserId();
+                    if (currentUserId.HasValue)
+                    {
+                        await _kpiUpdateService.SendOutboxKpiUpdateAsync(currentUserId.Value);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to send outbox KPI update after alert creation");
+                }
 
                 return Ok(new { 
                     success = true, 
