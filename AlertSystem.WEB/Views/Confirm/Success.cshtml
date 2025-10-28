@@ -1,0 +1,85 @@
+@model dynamic
+@{
+    ViewData["Title"] = "Confirmation d'alerte";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-lg border-0">
+                <div class="card-body text-center p-5">
+                    <!-- Success Icon -->
+                    <div class="mb-4">
+                        <div class="d-inline-flex align-items-center justify-content-center bg-success bg-opacity-10 rounded-circle" style="width: 80px; height: 80px;">
+                            <i class="fas fa-check-circle text-success" style="font-size: 2.5rem;"></i>
+                        </div>
+                    </div>
+
+                    <!-- Success Message -->
+                    <h2 class="card-title text-success mb-3">✅ Confirmation réussie</h2>
+                    <p class="text-muted mb-4">Votre alerte a été confirmée avec succès</p>
+
+                    <!-- Alert Details -->
+                    <div class="alert alert-info border-0 bg-light">
+                        <h5 class="alert-heading mb-3">
+                            <i class="fas fa-bell text-primary me-2"></i>
+                            @Model.Alert.TitreAlerte
+                        </h5>
+                        <p class="mb-2"><strong>Type:</strong> @Model.Alert.AlertType?.AlertTypeName</p>
+                        <p class="mb-2"><strong>Description:</strong> @Model.Alert.DescriptionAlerte</p>
+                        <p class="mb-0"><strong>Confirmé le:</strong> @Model.ConfirmationTime</p>
+                    </div>
+
+                    <!-- Confirmation Stats -->
+                    @if (Model.ConfirmedCount > 0)
+                    {
+                        <div class="alert alert-success border-0">
+                            <i class="fas fa-users text-success me-2"></i>
+                            <strong>@Model.ConfirmedCount</strong> notification(s) confirmée(s)
+                        </div>
+                    }
+
+                    <!-- Action Buttons -->
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-center mt-4">
+                        <a href="/" class="btn btn-primary btn-lg px-4">
+                            <i class="fas fa-home me-2"></i>
+                            Retour à l'accueil
+                        </a>
+                        <a href="/Dashboard" class="btn btn-outline-primary btn-lg px-4">
+                            <i class="fas fa-tachometer-alt me-2"></i>
+                            Tableau de bord
+                        </a>
+                    </div>
+
+                    <!-- Additional Info -->
+                    <div class="mt-4">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Cette confirmation a été enregistrée dans le système
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border-radius: 15px;
+    }
+    
+    .alert {
+        border-radius: 10px;
+    }
+    
+    .btn {
+        border-radius: 8px;
+        font-weight: 500;
+    }
+    
+    .btn-lg {
+        padding: 12px 24px;
+    }
+</style>

@@ -1,0 +1,6 @@
+@AlertSystem.API_HostAddress = http://localhost:5120
+
+GET {{AlertSystem.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

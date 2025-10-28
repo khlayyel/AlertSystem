@@ -1,0 +1,1001 @@
+La génération a démarré 20/10/2025 11:19:59.
+     1>Projet "C:\Users\khali\source\repos\AlertSystem\AlertSystem.sln" sur le nœud 1 (Clean cible(s)).
+     1>ValidateSolutionConfiguration:
+         Génération de la configuration de solution "Debug|Any CPU".
+     1>Le projet "C:\Users\khali\source\repos\AlertSystem\AlertSystem.sln" (1) génère "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\AlertSystem.Tests.csproj" (2) sur le nœud 1 (Clean cible(s)).
+     2>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\.msCoverageSourceRootsMapping_AlertSystem.Tests".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\CoverletSourceRootsMapping_AlertSystem.Tests".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\testhost.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\AlertSystem.WEB.deps.json".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\AlertSystem.WEB.runtimeconfig.json".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\appsettings.Development.json".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\appsettings.json".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\AlertSystem.WEB.staticwebassets.runtime.json".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\AlertSystem.WEB.staticwebassets.endpoints.json".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\AlertSystem.WEB.exe".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\AlertSystem.API.deps.json".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\AlertSystem.API.runtimeconfig.json".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\AlertSystem.API.exe".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\testhost.exe".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\xunit.runner.visualstudio.testadapter.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\xunit.runner.reporters.netcoreapp10.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\xunit.runner.utility.netcoreapp10.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\AlertSystem.Tests.deps.json".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\AlertSystem.Tests.runtimeconfig.json".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\AlertSystem.Tests.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\AlertSystem.Tests.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Azure.Core.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Azure.Identity.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\BCrypt.Net-Next.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\BouncyCastle.Cryptography.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\MailKit.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.AspNetCore.JsonPatch.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.AspNetCore.Mvc.Razor.Extensions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.AspNetCore.OpenApi.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.AspNetCore.Razor.Language.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.Bcl.AsyncInterfaces.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.CodeAnalysis.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.CodeAnalysis.CSharp.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.CodeAnalysis.Razor.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.VisualStudio.CodeCoverage.Shim.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.Data.SqlClient.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.EntityFrameworkCore.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.EntityFrameworkCore.Abstractions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.EntityFrameworkCore.Relational.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.EntityFrameworkCore.SqlServer.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.Extensions.Configuration.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.Extensions.Configuration.Abstractions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.Extensions.Configuration.Binder.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.Extensions.Configuration.CommandLine.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.Extensions.Configuration.EnvironmentVariables.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.Extensions.Configuration.FileExtensions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.Extensions.Configuration.Json.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.Extensions.Configuration.UserSecrets.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.Extensions.DependencyInjection.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.Extensions.DependencyModel.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.Extensions.Diagnostics.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.Extensions.Diagnostics.Abstractions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.Extensions.FileProviders.Abstractions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.Extensions.FileProviders.Physical.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.Extensions.FileSystemGlobbing.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.Extensions.Hosting.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.Extensions.Hosting.Abstractions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.Extensions.Logging.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.Extensions.Logging.Abstractions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.Extensions.Logging.Configuration.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.Extensions.Logging.Console.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.Extensions.Logging.Debug.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.Extensions.Logging.EventLog.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.Extensions.Logging.EventSource.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.Extensions.Options.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.Extensions.Options.ConfigurationExtensions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.Extensions.Primitives.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.Identity.Client.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.Identity.Client.Extensions.Msal.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.IdentityModel.Abstractions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.IdentityModel.JsonWebTokens.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.IdentityModel.Logging.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.IdentityModel.Protocols.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.IdentityModel.Tokens.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.OpenApi.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.SqlServer.Server.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.TestPlatform.CoreUtilities.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.TestPlatform.PlatformAbstractions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.VisualStudio.TestPlatform.ObjectModel.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.TestPlatform.CommunicationUtilities.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.TestPlatform.CrossPlatEngine.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.TestPlatform.Utilities.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.VisualStudio.TestPlatform.Common.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.Win32.SystemEvents.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\MimeKit.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Newtonsoft.Json.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Newtonsoft.Json.Bson.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\BouncyCastle.Crypto.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\System.Configuration.ConfigurationManager.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\System.Diagnostics.EventLog.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\System.Drawing.Common.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\System.IdentityModel.Tokens.Jwt.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\System.Memory.Data.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\System.Net.WebSockets.WebSocketProtocol.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\System.Runtime.Caching.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\System.Security.Cryptography.ProtectedData.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\System.Security.Permissions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\System.Windows.Extensions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\WebPush.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\xunit.abstractions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\xunit.assert.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\xunit.core.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\xunit.execution.dotnet.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\cs\Microsoft.TestPlatform.CoreUtilities.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\cs\Microsoft.VisualStudio.TestPlatform.ObjectModel.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\de\Microsoft.TestPlatform.CoreUtilities.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\de\Microsoft.VisualStudio.TestPlatform.ObjectModel.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\es\Microsoft.TestPlatform.CoreUtilities.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\es\Microsoft.VisualStudio.TestPlatform.ObjectModel.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\fr\Microsoft.TestPlatform.CoreUtilities.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\fr\Microsoft.VisualStudio.TestPlatform.ObjectModel.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\it\Microsoft.TestPlatform.CoreUtilities.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\it\Microsoft.VisualStudio.TestPlatform.ObjectModel.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\ja\Microsoft.TestPlatform.CoreUtilities.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\ja\Microsoft.VisualStudio.TestPlatform.ObjectModel.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\ko\Microsoft.TestPlatform.CoreUtilities.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\ko\Microsoft.VisualStudio.TestPlatform.ObjectModel.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\pl\Microsoft.TestPlatform.CoreUtilities.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\pl\Microsoft.VisualStudio.TestPlatform.ObjectModel.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\pt-BR\Microsoft.TestPlatform.CoreUtilities.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\pt-BR\Microsoft.VisualStudio.TestPlatform.ObjectModel.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\ru\Microsoft.TestPlatform.CoreUtilities.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\ru\Microsoft.VisualStudio.TestPlatform.ObjectModel.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\tr\Microsoft.TestPlatform.CoreUtilities.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\tr\Microsoft.VisualStudio.TestPlatform.ObjectModel.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\zh-Hans\Microsoft.TestPlatform.CoreUtilities.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\zh-Hans\Microsoft.VisualStudio.TestPlatform.ObjectModel.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\zh-Hant\Microsoft.TestPlatform.CoreUtilities.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\zh-Hant\Microsoft.VisualStudio.TestPlatform.ObjectModel.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\cs\Microsoft.TestPlatform.CommunicationUtilities.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\cs\Microsoft.TestPlatform.CrossPlatEngine.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\cs\Microsoft.VisualStudio.TestPlatform.Common.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\de\Microsoft.TestPlatform.CommunicationUtilities.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\de\Microsoft.TestPlatform.CrossPlatEngine.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\de\Microsoft.VisualStudio.TestPlatform.Common.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\es\Microsoft.TestPlatform.CommunicationUtilities.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\es\Microsoft.TestPlatform.CrossPlatEngine.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\es\Microsoft.VisualStudio.TestPlatform.Common.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\fr\Microsoft.TestPlatform.CommunicationUtilities.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\fr\Microsoft.TestPlatform.CrossPlatEngine.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\fr\Microsoft.VisualStudio.TestPlatform.Common.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\it\Microsoft.TestPlatform.CommunicationUtilities.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\it\Microsoft.TestPlatform.CrossPlatEngine.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\it\Microsoft.VisualStudio.TestPlatform.Common.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\ja\Microsoft.TestPlatform.CommunicationUtilities.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\ja\Microsoft.TestPlatform.CrossPlatEngine.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\ja\Microsoft.VisualStudio.TestPlatform.Common.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\ko\Microsoft.TestPlatform.CommunicationUtilities.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\ko\Microsoft.TestPlatform.CrossPlatEngine.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\ko\Microsoft.VisualStudio.TestPlatform.Common.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\pl\Microsoft.TestPlatform.CommunicationUtilities.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\pl\Microsoft.TestPlatform.CrossPlatEngine.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\pl\Microsoft.VisualStudio.TestPlatform.Common.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\pt-BR\Microsoft.TestPlatform.CommunicationUtilities.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\pt-BR\Microsoft.TestPlatform.CrossPlatEngine.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\pt-BR\Microsoft.VisualStudio.TestPlatform.Common.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\ru\Microsoft.TestPlatform.CommunicationUtilities.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\ru\Microsoft.TestPlatform.CrossPlatEngine.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\ru\Microsoft.VisualStudio.TestPlatform.Common.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\tr\Microsoft.TestPlatform.CommunicationUtilities.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\tr\Microsoft.TestPlatform.CrossPlatEngine.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\tr\Microsoft.VisualStudio.TestPlatform.Common.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\zh-Hans\Microsoft.TestPlatform.CommunicationUtilities.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\zh-Hans\Microsoft.TestPlatform.CrossPlatEngine.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\zh-Hans\Microsoft.VisualStudio.TestPlatform.Common.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\zh-Hant\Microsoft.TestPlatform.CommunicationUtilities.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\zh-Hant\Microsoft.TestPlatform.CrossPlatEngine.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\zh-Hant\Microsoft.VisualStudio.TestPlatform.Common.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\runtimes\win-arm\native\Microsoft.Data.SqlClient.SNI.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\runtimes\win-arm64\native\Microsoft.Data.SqlClient.SNI.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\runtimes\win-x64\native\Microsoft.Data.SqlClient.SNI.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\runtimes\win-x86\native\Microsoft.Data.SqlClient.SNI.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\runtimes\win\lib\net9.0\System.Diagnostics.EventLog.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\AlertSystem.API.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\AlertSystem.DataLayer.DB.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\AlertSystem.DataLayer.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\AlertSystem.Entities.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\AlertSystem.Infrastructure.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\AlertSystem.Repository.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\AlertSystem.Service.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\AlertSystem.Utils.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\AlertSystem.WEB.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\AlertSystem.Entities.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\AlertSystem.Service.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\AlertSystem.Repository.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\AlertSystem.Infrastructure.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\AlertSystem.DataLayer.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\AlertSystem.DataLayer.DB.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\AlertSystem.WEB.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\AlertSystem.API.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\AlertSystem.Utils.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Serilog.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Serilog.AspNetCore.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Serilog.Extensions.Hosting.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Serilog.Extensions.Logging.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Serilog.Formatting.Compact.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Serilog.Settings.Configuration.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Serilog.Sinks.Console.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Serilog.Sinks.Debug.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Serilog.Sinks.File.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.Extensions.Caching.Abstractions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.Extensions.Caching.Memory.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\System.ClientModel.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\System.Formats.Asn1.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\System.Text.Json.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\runtimes\unix\lib\net6.0\Microsoft.Data.SqlClient.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\runtimes\win\lib\net6.0\Microsoft.Data.SqlClient.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\runtimes\win\lib\net6.0\Microsoft.Win32.SystemEvents.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\runtimes\unix\lib\net6.0\System.Drawing.Common.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\runtimes\win\lib\net6.0\System.Drawing.Common.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\runtimes\win\lib\net6.0\System.Runtime.Caching.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\runtimes\win\lib\net6.0\System.Security.Cryptography.ProtectedData.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\runtimes\win\lib\net6.0\System.Windows.Extensions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Microsoft.EntityFrameworkCore.InMemory.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\DotNetEnv.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\bin\Debug\net9.0\Sprache.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\obj\Debug\net9.0\AlertSystem.Tests.csproj.AssemblyReference.cache".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\obj\Debug\net9.0\AlertSystem.Tests.GeneratedMSBuildEditorConfig.editorconfig".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\obj\Debug\net9.0\AlertSystem.Tests.AssemblyInfoInputs.cache".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\obj\Debug\net9.0\AlertSystem.Tests.AssemblyInfo.cs".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\obj\Debug\net9.0\AlertSystem.Tests.csproj.CoreCompileInputs.cache".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\obj\Debug\net9.0\AlertSystem.Tests.sourcelink.json".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\obj\Debug\net9.0\AlertSys.6D6FB9DD.Up2Date".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\obj\Debug\net9.0\AlertSystem.Tests.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\obj\Debug\net9.0\refint\AlertSystem.Tests.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\obj\Debug\net9.0\AlertSystem.Tests.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\obj\Debug\net9.0\AlertSystem.Tests.genruntimeconfig.cache".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\obj\Debug\net9.0\ref\AlertSystem.Tests.dll".
+     1>Le projet "C:\Users\khali\source\repos\AlertSystem\AlertSystem.sln" (1) génère "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Infrastructure\AlertSystem.Infrastructure.csproj" (3) sur le nœud 8 (Clean cible(s)).
+     3>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Infrastructure\bin\Debug\net9.0\AlertSystem.Infrastructure.deps.json".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Infrastructure\bin\Debug\net9.0\AlertSystem.Infrastructure.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Infrastructure\bin\Debug\net9.0\AlertSystem.Infrastructure.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Infrastructure\bin\Debug\net9.0\AlertSystem.DataLayer.DB.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Infrastructure\bin\Debug\net9.0\AlertSystem.DataLayer.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Infrastructure\bin\Debug\net9.0\AlertSystem.Entities.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Infrastructure\bin\Debug\net9.0\AlertSystem.Repository.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Infrastructure\bin\Debug\net9.0\AlertSystem.Service.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Infrastructure\bin\Debug\net9.0\AlertSystem.Utils.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Infrastructure\bin\Debug\net9.0\AlertSystem.Entities.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Infrastructure\bin\Debug\net9.0\AlertSystem.DataLayer.DB.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Infrastructure\bin\Debug\net9.0\AlertSystem.Utils.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Infrastructure\bin\Debug\net9.0\AlertSystem.Service.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Infrastructure\bin\Debug\net9.0\AlertSystem.DataLayer.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Infrastructure\bin\Debug\net9.0\AlertSystem.Repository.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Infrastructure\obj\Debug\net9.0\AlertSystem.Infrastructure.csproj.AssemblyReference.cache".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Infrastructure\obj\Debug\net9.0\AlertSystem.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Infrastructure\obj\Debug\net9.0\AlertSystem.Infrastructure.AssemblyInfoInputs.cache".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Infrastructure\obj\Debug\net9.0\AlertSystem.Infrastructure.AssemblyInfo.cs".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Infrastructure\obj\Debug\net9.0\AlertSystem.Infrastructure.csproj.CoreCompileInputs.cache".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Infrastructure\obj\Debug\net9.0\AlertSystem.Infrastructure.sourcelink.json".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Infrastructure\obj\Debug\net9.0\AlertSys.9585FB33.Up2Date".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Infrastructure\obj\Debug\net9.0\AlertSystem.Infrastructure.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Infrastructure\obj\Debug\net9.0\refint\AlertSystem.Infrastructure.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Infrastructure\obj\Debug\net9.0\AlertSystem.Infrastructure.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Infrastructure\obj\Debug\net9.0\ref\AlertSystem.Infrastructure.dll".
+     1>Le projet "C:\Users\khali\source\repos\AlertSystem\AlertSystem.sln" (1) génère "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Entities\AlertSystem.Entities.csproj" (6) sur le nœud 3 (Clean cible(s)).
+     6>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Entities\bin\Debug\net9.0\AlertSystem.Entities.deps.json".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Entities\bin\Debug\net9.0\AlertSystem.Entities.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Entities\bin\Debug\net9.0\AlertSystem.Entities.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Entities\obj\Debug\net9.0\AlertSystem.Entities.GeneratedMSBuildEditorConfig.editorconfig".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Entities\obj\Debug\net9.0\AlertSystem.Entities.AssemblyInfoInputs.cache".
+     1>Le projet "C:\Users\khali\source\repos\AlertSystem\AlertSystem.sln" (1) génère "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Utils\AlertSystem.Utils.csproj" (5) sur le nœud 5 (Clean cible(s)).
+     5>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Utils\bin\Debug\net9.0\AlertSystem.Utils.deps.json".
+     6>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Entities\obj\Debug\net9.0\AlertSystem.Entities.AssemblyInfo.cs".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Entities\obj\Debug\net9.0\AlertSystem.Entities.csproj.CoreCompileInputs.cache".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Entities\obj\Debug\net9.0\AlertSystem.Entities.sourcelink.json".
+     5>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Utils\bin\Debug\net9.0\AlertSystem.Utils.dll".
+     6>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Entities\obj\Debug\net9.0\AlertSystem.Entities.dll".
+     5>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Utils\bin\Debug\net9.0\AlertSystem.Utils.pdb".
+     6>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Entities\obj\Debug\net9.0\refint\AlertSystem.Entities.dll".
+     5>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Utils\obj\Debug\net9.0\AlertSystem.Utils.GeneratedMSBuildEditorConfig.editorconfig".
+     6>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Entities\obj\Debug\net9.0\AlertSystem.Entities.pdb".
+     5>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Utils\obj\Debug\net9.0\AlertSystem.Utils.AssemblyInfoInputs.cache".
+     6>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Entities\obj\Debug\net9.0\ref\AlertSystem.Entities.dll".
+     5>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Utils\obj\Debug\net9.0\AlertSystem.Utils.AssemblyInfo.cs".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Utils\obj\Debug\net9.0\AlertSystem.Utils.csproj.CoreCompileInputs.cache".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Utils\obj\Debug\net9.0\AlertSystem.Utils.sourcelink.json".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Utils\obj\Debug\net9.0\AlertSystem.Utils.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Utils\obj\Debug\net9.0\refint\AlertSystem.Utils.dll".
+     1>Le projet "C:\Users\khali\source\repos\AlertSystem\AlertSystem.sln" (1) génère "C:\Users\khali\source\repos\AlertSystem\AlertSystem.DataLayer.DB\AlertSystem.DataLayer.DB.csproj" (4) sur le nœud 2 (Clean cible(s)).
+     4>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.DataLayer.DB\bin\Debug\net9.0\AlertSystem.DataLayer.DB.deps.json".
+     5>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Utils\obj\Debug\net9.0\AlertSystem.Utils.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Utils\obj\Debug\net9.0\ref\AlertSystem.Utils.dll".
+     4>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.DataLayer.DB\bin\Debug\net9.0\AlertSystem.DataLayer.DB.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.DataLayer.DB\bin\Debug\net9.0\AlertSystem.DataLayer.DB.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.DataLayer.DB\bin\Debug\net9.0\AlertSystem.DataLayer.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.DataLayer.DB\bin\Debug\net9.0\AlertSystem.Entities.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.DataLayer.DB\bin\Debug\net9.0\AlertSystem.Utils.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.DataLayer.DB\bin\Debug\net9.0\AlertSystem.Entities.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.DataLayer.DB\bin\Debug\net9.0\AlertSystem.Utils.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.DataLayer.DB\bin\Debug\net9.0\AlertSystem.DataLayer.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.DataLayer.DB\obj\Debug\net9.0\AlertSystem.DataLayer.DB.csproj.AssemblyReference.cache".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.DataLayer.DB\obj\Debug\net9.0\AlertSystem.DataLayer.DB.GeneratedMSBuildEditorConfig.editorconfig".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.DataLayer.DB\obj\Debug\net9.0\AlertSystem.DataLayer.DB.AssemblyInfoInputs.cache".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.DataLayer.DB\obj\Debug\net9.0\AlertSystem.DataLayer.DB.AssemblyInfo.cs".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.DataLayer.DB\obj\Debug\net9.0\AlertSystem.DataLayer.DB.csproj.CoreCompileInputs.cache".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.DataLayer.DB\obj\Debug\net9.0\AlertSystem.DataLayer.DB.sourcelink.json".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.DataLayer.DB\obj\Debug\net9.0\AlertSys.B960099E.Up2Date".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.DataLayer.DB\obj\Debug\net9.0\AlertSystem.DataLayer.DB.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.DataLayer.DB\obj\Debug\net9.0\refint\AlertSystem.DataLayer.DB.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.DataLayer.DB\obj\Debug\net9.0\AlertSystem.DataLayer.DB.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.DataLayer.DB\obj\Debug\net9.0\ref\AlertSystem.DataLayer.DB.dll".
+     1>Le projet "C:\Users\khali\source\repos\AlertSystem\AlertSystem.sln" (1) génère "C:\Users\khali\source\repos\AlertSystem\AlertSystem.DataLayer\AlertSystem.DataLayer.csproj" (7) sur le nœud 6 (Clean cible(s)).
+     7>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.DataLayer\bin\Debug\net9.0\AlertSystem.DataLayer.deps.json".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.DataLayer\bin\Debug\net9.0\AlertSystem.DataLayer.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.DataLayer\bin\Debug\net9.0\AlertSystem.DataLayer.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.DataLayer\obj\Debug\net9.0\AlertSystem.DataLayer.GeneratedMSBuildEditorConfig.editorconfig".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.DataLayer\obj\Debug\net9.0\AlertSystem.DataLayer.AssemblyInfoInputs.cache".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.DataLayer\obj\Debug\net9.0\AlertSystem.DataLayer.AssemblyInfo.cs".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.DataLayer\obj\Debug\net9.0\AlertSystem.DataLayer.csproj.CoreCompileInputs.cache".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.DataLayer\obj\Debug\net9.0\AlertSystem.DataLayer.sourcelink.json".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.DataLayer\obj\Debug\net9.0\AlertSystem.DataLayer.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.DataLayer\obj\Debug\net9.0\refint\AlertSystem.DataLayer.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.DataLayer\obj\Debug\net9.0\AlertSystem.DataLayer.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.DataLayer\obj\Debug\net9.0\ref\AlertSystem.DataLayer.dll".
+     1>Le projet "C:\Users\khali\source\repos\AlertSystem\AlertSystem.sln" (1) génère "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Service\AlertSystem.Service.csproj" (8) sur le nœud 10 (Clean cible(s)).
+     8>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Service\bin\Debug\net9.0\AlertSystem.Service.deps.json".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Service\bin\Debug\net9.0\AlertSystem.Service.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Service\bin\Debug\net9.0\AlertSystem.Service.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Service\bin\Debug\net9.0\AlertSystem.DataLayer.DB.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Service\bin\Debug\net9.0\AlertSystem.DataLayer.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Service\bin\Debug\net9.0\AlertSystem.Entities.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Service\bin\Debug\net9.0\AlertSystem.Repository.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Service\bin\Debug\net9.0\AlertSystem.Utils.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Service\bin\Debug\net9.0\AlertSystem.Entities.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Service\bin\Debug\net9.0\AlertSystem.DataLayer.DB.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Service\bin\Debug\net9.0\AlertSystem.DataLayer.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Service\bin\Debug\net9.0\AlertSystem.Repository.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Service\bin\Debug\net9.0\AlertSystem.Utils.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Service\obj\Debug\net9.0\AlertSystem.Service.csproj.AssemblyReference.cache".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Service\obj\Debug\net9.0\AlertSystem.Service.GeneratedMSBuildEditorConfig.editorconfig".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Service\obj\Debug\net9.0\AlertSystem.Service.AssemblyInfoInputs.cache".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Service\obj\Debug\net9.0\AlertSystem.Service.AssemblyInfo.cs".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Service\obj\Debug\net9.0\AlertSystem.Service.csproj.CoreCompileInputs.cache".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Service\obj\Debug\net9.0\AlertSystem.Service.sourcelink.json".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Service\obj\Debug\net9.0\AlertSys.0A4052E4.Up2Date".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Service\obj\Debug\net9.0\AlertSystem.Service.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Service\obj\Debug\net9.0\refint\AlertSystem.Service.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Service\obj\Debug\net9.0\AlertSystem.Service.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Service\obj\Debug\net9.0\ref\AlertSystem.Service.dll".
+     1>Le projet "C:\Users\khali\source\repos\AlertSystem\AlertSystem.sln" (1) génère "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Repository\AlertSystem.Repository.csproj" (9) sur le nœud 7 (Clean cible(s)).
+     9>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Repository\bin\Debug\net9.0\AlertSystem.Repository.deps.json".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Repository\bin\Debug\net9.0\AlertSystem.Repository.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Repository\bin\Debug\net9.0\AlertSystem.Repository.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Repository\bin\Debug\net9.0\AlertSystem.DataLayer.DB.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Repository\bin\Debug\net9.0\AlertSystem.DataLayer.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Repository\bin\Debug\net9.0\AlertSystem.Entities.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Repository\bin\Debug\net9.0\AlertSystem.Utils.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Repository\bin\Debug\net9.0\AlertSystem.Entities.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Repository\bin\Debug\net9.0\AlertSystem.DataLayer.DB.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Repository\bin\Debug\net9.0\AlertSystem.DataLayer.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Repository\bin\Debug\net9.0\AlertSystem.Utils.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Repository\obj\Debug\net9.0\AlertSystem.Repository.csproj.AssemblyReference.cache".
+     6>Génération du projet "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Entities\AlertSystem.Entities.csproj" terminée (Clean cible(s)).
+     9>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Repository\obj\Debug\net9.0\AlertSystem.Repository.GeneratedMSBuildEditorConfig.editorconfig".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Repository\obj\Debug\net9.0\AlertSystem.Repository.AssemblyInfoInputs.cache".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Repository\obj\Debug\net9.0\AlertSystem.Repository.AssemblyInfo.cs".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Repository\obj\Debug\net9.0\AlertSystem.Repository.csproj.CoreCompileInputs.cache".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Repository\obj\Debug\net9.0\AlertSystem.Repository.sourcelink.json".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Repository\obj\Debug\net9.0\AlertSys.DA30BBB3.Up2Date".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Repository\obj\Debug\net9.0\AlertSystem.Repository.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Repository\obj\Debug\net9.0\refint\AlertSystem.Repository.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Repository\obj\Debug\net9.0\AlertSystem.Repository.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Repository\obj\Debug\net9.0\ref\AlertSystem.Repository.dll".
+     1>Le projet "C:\Users\khali\source\repos\AlertSystem\AlertSystem.sln" (1) génère "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\AlertSystem.Worker.csproj" (10) sur le nœud 11 (Clean cible(s)).
+    10>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\appsettings.json".
+     5>Génération du projet "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Utils\AlertSystem.Utils.csproj" terminée (Clean cible(s)).
+    10>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\AlertSystem.Worker.exe".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\AlertSystem.Worker.deps.json".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\AlertSystem.Worker.runtimeconfig.json".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\AlertSystem.Worker.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\AlertSystem.Worker.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Azure.Core.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Azure.Identity.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Microsoft.Bcl.AsyncInterfaces.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Microsoft.Data.SqlClient.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Microsoft.Extensions.Configuration.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Microsoft.Extensions.Configuration.Abstractions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Microsoft.Extensions.Configuration.Binder.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Microsoft.Extensions.Configuration.CommandLine.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Microsoft.Extensions.Configuration.EnvironmentVariables.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Microsoft.Extensions.Configuration.FileExtensions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Microsoft.Extensions.Configuration.Json.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Microsoft.Extensions.Configuration.UserSecrets.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Microsoft.Extensions.DependencyInjection.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Microsoft.Extensions.Diagnostics.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Microsoft.Extensions.Diagnostics.Abstractions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Microsoft.Extensions.FileProviders.Abstractions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Microsoft.Extensions.FileProviders.Physical.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Microsoft.Extensions.FileSystemGlobbing.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Microsoft.Extensions.Hosting.dll".
+     7>Génération du projet "C:\Users\khali\source\repos\AlertSystem\AlertSystem.DataLayer\AlertSystem.DataLayer.csproj" terminée (Clean cible(s)).
+    10>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Microsoft.Extensions.Hosting.Abstractions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Microsoft.Extensions.Hosting.WindowsServices.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Microsoft.Extensions.Http.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Microsoft.Extensions.Logging.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Microsoft.Extensions.Logging.Abstractions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Microsoft.Extensions.Logging.Configuration.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Microsoft.Extensions.Logging.Console.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Microsoft.Extensions.Logging.Debug.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Microsoft.Extensions.Logging.EventLog.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Microsoft.Extensions.Logging.EventSource.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Microsoft.Extensions.Options.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Microsoft.Extensions.Options.ConfigurationExtensions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Microsoft.Extensions.Primitives.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Microsoft.Identity.Client.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Microsoft.Identity.Client.Extensions.Msal.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Microsoft.IdentityModel.Abstractions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Microsoft.IdentityModel.JsonWebTokens.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Microsoft.IdentityModel.Logging.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Microsoft.IdentityModel.Protocols.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Microsoft.IdentityModel.Tokens.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Microsoft.SqlServer.Server.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Newtonsoft.Json.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\BouncyCastle.Crypto.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\System.Configuration.ConfigurationManager.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\System.Diagnostics.EventLog.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\System.IdentityModel.Tokens.Jwt.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\System.Memory.Data.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\System.Runtime.Caching.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\System.Security.Cryptography.ProtectedData.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\System.ServiceProcess.ServiceController.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\WebPush.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\de\Microsoft.Data.SqlClient.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\es\Microsoft.Data.SqlClient.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\fr\Microsoft.Data.SqlClient.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\it\Microsoft.Data.SqlClient.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\ja\Microsoft.Data.SqlClient.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\ko\Microsoft.Data.SqlClient.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\pt-BR\Microsoft.Data.SqlClient.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\ru\Microsoft.Data.SqlClient.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\zh-Hans\Microsoft.Data.SqlClient.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\zh-Hant\Microsoft.Data.SqlClient.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\runtimes\unix\lib\net8.0\Microsoft.Data.SqlClient.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\runtimes\win\lib\net8.0\Microsoft.Data.SqlClient.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\runtimes\win-arm\native\Microsoft.Data.SqlClient.SNI.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\runtimes\win-arm64\native\Microsoft.Data.SqlClient.SNI.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\runtimes\win-x64\native\Microsoft.Data.SqlClient.SNI.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\runtimes\win-x86\native\Microsoft.Data.SqlClient.SNI.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\runtimes\win\lib\net9.0\System.Diagnostics.EventLog.Messages.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\runtimes\win\lib\net9.0\System.Diagnostics.EventLog.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\runtimes\win\lib\net8.0\System.Runtime.Caching.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\runtimes\win\lib\net9.0\System.ServiceProcess.ServiceController.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Microsoft.Extensions.DependencyModel.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Serilog.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Serilog.Extensions.Hosting.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Serilog.Extensions.Logging.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Serilog.Settings.Configuration.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Serilog.Sinks.Console.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\DotNetEnv.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\bin\Debug\net9.0\Sprache.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\obj\Debug\net9.0\AlertSystem.Worker.csproj.AssemblyReference.cache".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\obj\Debug\net9.0\AlertSystem.Worker.GeneratedMSBuildEditorConfig.editorconfig".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\obj\Debug\net9.0\AlertSystem.Worker.AssemblyInfoInputs.cache".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\obj\Debug\net9.0\AlertSystem.Worker.AssemblyInfo.cs".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\obj\Debug\net9.0\AlertSystem.Worker.csproj.CoreCompileInputs.cache".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\obj\Debug\net9.0\AlertSystem.Worker.sourcelink.json".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\obj\Debug\net9.0\AlertSys.D5A534A0.Up2Date".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\obj\Debug\net9.0\AlertSystem.Worker.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\obj\Debug\net9.0\refint\AlertSystem.Worker.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\obj\Debug\net9.0\AlertSystem.Worker.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\obj\Debug\net9.0\AlertSystem.Worker.genruntimeconfig.cache".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\obj\Debug\net9.0\ref\AlertSystem.Worker.dll".
+     1>Le projet "C:\Users\khali\source\repos\AlertSystem\AlertSystem.sln" (1) génère "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\AlertSystem.API.csproj" (11) sur le nœud 9 (Clean cible(s)).
+    11>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\appsettings.Development.json".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\appsettings.json".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\AlertSystem.API.exe".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\AlertSystem.API.deps.json".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\AlertSystem.API.runtimeconfig.json".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\AlertSystem.API.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\AlertSystem.API.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Azure.Core.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Azure.Identity.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\BCrypt.Net-Next.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\BouncyCastle.Cryptography.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\MailKit.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.AspNetCore.JsonPatch.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.AspNetCore.Mvc.Razor.Extensions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.AspNetCore.OpenApi.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.AspNetCore.Razor.Language.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.Bcl.AsyncInterfaces.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.CodeAnalysis.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.CodeAnalysis.CSharp.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.CodeAnalysis.Razor.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.Data.SqlClient.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.EntityFrameworkCore.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.EntityFrameworkCore.Abstractions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.EntityFrameworkCore.Relational.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.EntityFrameworkCore.SqlServer.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.Extensions.Configuration.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.Extensions.Configuration.Abstractions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.Extensions.Configuration.Binder.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.Extensions.Configuration.CommandLine.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.Extensions.Configuration.EnvironmentVariables.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.Extensions.Configuration.FileExtensions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.Extensions.Configuration.Json.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.Extensions.Configuration.UserSecrets.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.Extensions.DependencyInjection.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.Extensions.DependencyModel.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.Extensions.Diagnostics.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.Extensions.Diagnostics.Abstractions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.Extensions.FileProviders.Abstractions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.Extensions.FileProviders.Physical.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.Extensions.FileSystemGlobbing.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.Extensions.Hosting.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.Extensions.Hosting.Abstractions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.Extensions.Logging.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.Extensions.Logging.Abstractions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.Extensions.Logging.Configuration.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.Extensions.Logging.Console.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.Extensions.Logging.Debug.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.Extensions.Logging.EventLog.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.Extensions.Logging.EventSource.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.Extensions.Options.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.Extensions.Options.ConfigurationExtensions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.Extensions.Primitives.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.Identity.Client.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.Identity.Client.Extensions.Msal.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.IdentityModel.Abstractions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.IdentityModel.JsonWebTokens.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.IdentityModel.Logging.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.IdentityModel.Protocols.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.IdentityModel.Tokens.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.OpenApi.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.SqlServer.Server.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.Win32.SystemEvents.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\MimeKit.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Newtonsoft.Json.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Newtonsoft.Json.Bson.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\BouncyCastle.Crypto.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\System.Configuration.ConfigurationManager.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\System.Diagnostics.EventLog.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\System.Drawing.Common.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\System.IdentityModel.Tokens.Jwt.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\System.Memory.Data.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\System.Net.WebSockets.WebSocketProtocol.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\System.Runtime.Caching.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\System.Security.Cryptography.ProtectedData.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\System.Security.Permissions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\System.Windows.Extensions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\WebPush.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\runtimes\win-arm\native\Microsoft.Data.SqlClient.SNI.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\runtimes\win-arm64\native\Microsoft.Data.SqlClient.SNI.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\runtimes\win-x64\native\Microsoft.Data.SqlClient.SNI.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\runtimes\win-x86\native\Microsoft.Data.SqlClient.SNI.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\runtimes\win\lib\net9.0\System.Diagnostics.EventLog.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\AlertSystem.DataLayer.DB.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\AlertSystem.DataLayer.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\AlertSystem.Entities.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\AlertSystem.Infrastructure.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\AlertSystem.Repository.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\AlertSystem.Service.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\AlertSystem.Utils.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\AlertSystem.Entities.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\AlertSystem.DataLayer.DB.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\AlertSystem.DataLayer.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\AlertSystem.Repository.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\AlertSystem.Service.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\AlertSystem.Infrastructure.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\AlertSystem.Utils.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Serilog.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Serilog.AspNetCore.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Serilog.Extensions.Hosting.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Serilog.Extensions.Logging.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Serilog.Formatting.Compact.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Serilog.Settings.Configuration.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Serilog.Sinks.Console.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Serilog.Sinks.Debug.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Serilog.Sinks.File.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Humanizer.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.Build.Locator.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.CodeAnalysis.CSharp.Workspaces.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.CodeAnalysis.Workspaces.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.CodeAnalysis.Workspaces.MSBuild.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.EntityFrameworkCore.Design.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.Extensions.Caching.Abstractions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Microsoft.Extensions.Caching.Memory.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Mono.TextTemplating.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\System.CodeDom.dll".
+     4>Génération du projet "C:\Users\khali\source\repos\AlertSystem\AlertSystem.DataLayer.DB\AlertSystem.DataLayer.DB.csproj" terminée (Clean cible(s)).
+    11>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\System.Composition.AttributedModel.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\System.Composition.Convention.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\System.Composition.Hosting.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\System.Composition.Runtime.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\System.Composition.TypedParts.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\System.Text.Json.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\cs\Microsoft.CodeAnalysis.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\de\Microsoft.CodeAnalysis.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\es\Microsoft.CodeAnalysis.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\fr\Microsoft.CodeAnalysis.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\it\Microsoft.CodeAnalysis.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\ja\Microsoft.CodeAnalysis.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\ko\Microsoft.CodeAnalysis.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\pl\Microsoft.CodeAnalysis.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\pt-BR\Microsoft.CodeAnalysis.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\ru\Microsoft.CodeAnalysis.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\tr\Microsoft.CodeAnalysis.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\zh-Hans\Microsoft.CodeAnalysis.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\zh-Hant\Microsoft.CodeAnalysis.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\cs\Microsoft.CodeAnalysis.CSharp.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\de\Microsoft.CodeAnalysis.CSharp.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\es\Microsoft.CodeAnalysis.CSharp.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\fr\Microsoft.CodeAnalysis.CSharp.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\it\Microsoft.CodeAnalysis.CSharp.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\ja\Microsoft.CodeAnalysis.CSharp.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\ko\Microsoft.CodeAnalysis.CSharp.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\pl\Microsoft.CodeAnalysis.CSharp.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\pt-BR\Microsoft.CodeAnalysis.CSharp.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\ru\Microsoft.CodeAnalysis.CSharp.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\tr\Microsoft.CodeAnalysis.CSharp.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\zh-Hans\Microsoft.CodeAnalysis.CSharp.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\zh-Hant\Microsoft.CodeAnalysis.CSharp.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\cs\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\de\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\es\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\fr\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\it\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\ja\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\ko\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\pl\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\pt-BR\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\ru\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\tr\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\zh-Hans\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\zh-Hant\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\cs\Microsoft.CodeAnalysis.Workspaces.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\de\Microsoft.CodeAnalysis.Workspaces.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\es\Microsoft.CodeAnalysis.Workspaces.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\fr\Microsoft.CodeAnalysis.Workspaces.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\it\Microsoft.CodeAnalysis.Workspaces.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\ja\Microsoft.CodeAnalysis.Workspaces.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\ko\Microsoft.CodeAnalysis.Workspaces.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\pl\Microsoft.CodeAnalysis.Workspaces.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\pt-BR\Microsoft.CodeAnalysis.Workspaces.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\ru\Microsoft.CodeAnalysis.Workspaces.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\tr\Microsoft.CodeAnalysis.Workspaces.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\zh-Hans\Microsoft.CodeAnalysis.Workspaces.resources.dll".
+     1>Le projet "C:\Users\khali\source\repos\AlertSystem\AlertSystem.sln" (1) génère "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\AlertSystem.WEB.csproj" (12) sur le nœud 4 (Clean cible(s)).
+    12>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\appsettings.Development.json".
+    11>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\zh-Hant\Microsoft.CodeAnalysis.Workspaces.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\cs\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\de\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\es\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\fr\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\it\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\ja\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll".
+    12>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\appsettings.json".
+    11>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\ko\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll".
+    12>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\AlertSystem.WEB.staticwebassets.runtime.json".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\AlertSystem.WEB.staticwebassets.endpoints.json".
+    11>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\pl\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll".
+    12>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\AlertSystem.WEB.exe".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\AlertSystem.WEB.deps.json".
+    11>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\pt-BR\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll".
+    12>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\AlertSystem.WEB.runtimeconfig.json".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\AlertSystem.WEB.dll".
+    11>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\ru\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll".
+    12>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\AlertSystem.WEB.pdb".
+    11>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\tr\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll".
+    12>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Azure.Core.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Azure.Identity.dll".
+    11>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\zh-Hans\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll".
+    12>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\BCrypt.Net-Next.dll".
+    11>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\zh-Hant\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll".
+    12>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\BouncyCastle.Cryptography.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\MailKit.dll".
+    11>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\System.ClientModel.dll".
+    12>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.Bcl.AsyncInterfaces.dll".
+    11>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\System.Formats.Asn1.dll".
+    12>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.Data.SqlClient.dll".
+    11>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\runtimes\unix\lib\net6.0\Microsoft.Data.SqlClient.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\runtimes\win\lib\net6.0\Microsoft.Data.SqlClient.dll".
+    12>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.EntityFrameworkCore.dll".
+    11>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\runtimes\win\lib\net6.0\Microsoft.Win32.SystemEvents.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\runtimes\unix\lib\net6.0\System.Drawing.Common.dll".
+    12>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.EntityFrameworkCore.Abstractions.dll".
+    11>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\runtimes\win\lib\net6.0\System.Drawing.Common.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\runtimes\win\lib\net6.0\System.Runtime.Caching.dll".
+    12>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.EntityFrameworkCore.Relational.dll".
+    11>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\runtimes\win\lib\net6.0\System.Security.Cryptography.ProtectedData.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\runtimes\win\lib\net6.0\System.Windows.Extensions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\DotNetEnv.dll".
+    12>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.EntityFrameworkCore.SqlServer.dll".
+    11>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\bin\Debug\net9.0\Sprache.dll".
+    12>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.Extensions.Configuration.dll".
+    11>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\obj\Debug\net9.0\AlertSystem.API.csproj.AssemblyReference.cache".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\obj\Debug\net9.0\AlertSystem.API.GeneratedMSBuildEditorConfig.editorconfig".
+    12>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.Extensions.Configuration.Abstractions.dll".
+    11>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\obj\Debug\net9.0\AlertSystem.API.AssemblyInfoInputs.cache".
+    12>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.Extensions.Configuration.Binder.dll".
+    11>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\obj\Debug\net9.0\AlertSystem.API.AssemblyInfo.cs".
+    12>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.Extensions.Configuration.CommandLine.dll".
+    11>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\obj\Debug\net9.0\AlertSystem.API.csproj.CoreCompileInputs.cache".
+    12>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.Extensions.Configuration.EnvironmentVariables.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.Extensions.Configuration.FileExtensions.dll".
+    11>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\obj\Debug\net9.0\AlertSystem.API.MvcApplicationPartsAssemblyInfo.cs".
+    12>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.Extensions.Configuration.Json.dll".
+    11>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\obj\Debug\net9.0\AlertSystem.API.MvcApplicationPartsAssemblyInfo.cache".
+    12>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.Extensions.Configuration.UserSecrets.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.Extensions.DependencyInjection.dll".
+    11>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\obj\Debug\net9.0\AlertSystem.API.RazorAssemblyInfo.cache".
+    12>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.Extensions.DependencyModel.dll".
+    11>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\obj\Debug\net9.0\AlertSystem.API.RazorAssemblyInfo.cs".
+    12>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.Extensions.Diagnostics.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.Extensions.Diagnostics.Abstractions.dll".
+    11>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\obj\Debug\net9.0\AlertSystem.API.sourcelink.json".
+    12>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.Extensions.FileProviders.Abstractions.dll".
+    11>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\obj\Debug\net9.0\AlertSys.32EB8D5C.Up2Date".
+    12>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.Extensions.FileProviders.Physical.dll".
+    11>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\obj\Debug\net9.0\AlertSystem.API.dll".
+    12>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.Extensions.FileSystemGlobbing.dll".
+    11>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\obj\Debug\net9.0\refint\AlertSystem.API.dll".
+    12>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.Extensions.Hosting.dll".
+    11>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\obj\Debug\net9.0\AlertSystem.API.pdb".
+    12>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.Extensions.Hosting.Abstractions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.Extensions.Logging.dll".
+    11>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\obj\Debug\net9.0\AlertSystem.API.genruntimeconfig.cache".
+    12>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.Extensions.Logging.Abstractions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.Extensions.Logging.Configuration.dll".
+    11>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\obj\Debug\net9.0\ref\AlertSystem.API.dll".
+    12>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.Extensions.Logging.Console.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.Extensions.Logging.Debug.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.Extensions.Logging.EventLog.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.Extensions.Logging.EventSource.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.Extensions.Options.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.Extensions.Options.ConfigurationExtensions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.Extensions.Primitives.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.Identity.Client.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.Identity.Client.Extensions.Msal.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.IdentityModel.Abstractions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.IdentityModel.JsonWebTokens.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.IdentityModel.Logging.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.IdentityModel.Protocols.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.IdentityModel.Tokens.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.SqlServer.Server.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.Win32.SystemEvents.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\MimeKit.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Newtonsoft.Json.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\BouncyCastle.Crypto.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\System.Configuration.ConfigurationManager.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\System.Diagnostics.EventLog.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\System.Drawing.Common.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\System.IdentityModel.Tokens.Jwt.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\System.Memory.Data.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\System.Net.WebSockets.WebSocketProtocol.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\System.Runtime.Caching.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\System.Security.Cryptography.ProtectedData.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\System.Security.Permissions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\System.Windows.Extensions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\WebPush.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\runtimes\win-arm\native\Microsoft.Data.SqlClient.SNI.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\runtimes\win-arm64\native\Microsoft.Data.SqlClient.SNI.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\runtimes\win-x64\native\Microsoft.Data.SqlClient.SNI.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\runtimes\win-x86\native\Microsoft.Data.SqlClient.SNI.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\runtimes\win\lib\net9.0\System.Diagnostics.EventLog.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\AlertSystem.DataLayer.DB.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\AlertSystem.DataLayer.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\AlertSystem.Entities.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\AlertSystem.Infrastructure.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\AlertSystem.Repository.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\AlertSystem.Service.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\AlertSystem.Utils.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\AlertSystem.Entities.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\AlertSystem.DataLayer.DB.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\AlertSystem.DataLayer.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\AlertSystem.Repository.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\AlertSystem.Service.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\AlertSystem.Infrastructure.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\AlertSystem.Utils.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Serilog.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Serilog.AspNetCore.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Serilog.Extensions.Hosting.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Serilog.Extensions.Logging.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Serilog.Formatting.Compact.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Serilog.Settings.Configuration.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Serilog.Sinks.Console.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Serilog.Sinks.Debug.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Serilog.Sinks.File.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.Extensions.Caching.Abstractions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Microsoft.Extensions.Caching.Memory.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\System.ClientModel.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\System.Formats.Asn1.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\System.Text.Json.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\runtimes\unix\lib\net6.0\Microsoft.Data.SqlClient.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\runtimes\win\lib\net6.0\Microsoft.Data.SqlClient.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\runtimes\win\lib\net6.0\Microsoft.Win32.SystemEvents.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\runtimes\unix\lib\net6.0\System.Drawing.Common.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\runtimes\win\lib\net6.0\System.Drawing.Common.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\runtimes\win\lib\net6.0\System.Runtime.Caching.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\runtimes\win\lib\net6.0\System.Security.Cryptography.ProtectedData.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\runtimes\win\lib\net6.0\System.Windows.Extensions.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\DotNetEnv.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\bin\Debug\net9.0\Sprache.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\AlertSystem.WEB.csproj.AssemblyReference.cache".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\rpswa.dswa.cache.json".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\AlertSystem.WEB.GeneratedMSBuildEditorConfig.editorconfig".
+     9>Génération du projet "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Repository\AlertSystem.Repository.csproj" terminée (Clean cible(s)).
+    12>CoreClean:
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\AlertSystem.WEB.AssemblyInfoInputs.cache".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\AlertSystem.WEB.AssemblyInfo.cs".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\AlertSystem.WEB.csproj.CoreCompileInputs.cache".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\AlertSystem.WEB.MvcApplicationPartsAssemblyInfo.cache".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\AlertSystem.WEB.RazorAssemblyInfo.cache".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\AlertSystem.WEB.RazorAssemblyInfo.cs".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\AlertSystem.WEB.sourcelink.json".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\rjimswa.dswa.cache.json".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\rjsmrazor.dswa.cache.json".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\rjsmcshtml.dswa.cache.json".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\scopedcss\Views\Shared\_Layout.cshtml.rz.scp.css".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\scopedcss\bundle\AlertSystem.WEB.styles.css".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\scopedcss\projectbundle\AlertSystem.WEB.bundle.scp.css".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\t04ds9nckl-mlv21k5csn.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\tpcsw3dr8m-87fc7y1x7t.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\vgz27s8664-muycvpuwrr.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\1p82f2fsif-2z0ns9nrw6.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\0b1ml27yby-ttgo8qnofa.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\z38gajhovy-o1o13a6vjx.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\ox7h80oqnx-0i3buxo5is.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\uu5y5hoonj-x0q3zqp4vz.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\es7772q4yf-ag7o75518u.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\khblr8r2cy-lzl9nlhx6b.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\ay2wn7diql-mrlpezrjn3.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\1764gbmvl4-83jwlth58m.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\5zuodests6-356vix0kms.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\dhmxo7fuom-4v8eqarkd7.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\7x6o3jlhml-47otxtyo56.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\0i05vuo82p-0j3bgjxly4.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\c6uvqt76zr-63fj8s7r0e.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\8nl65bq54h-h1s4sie4z3.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\bjt597zuh2-notf2xhcfb.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\k92bvjfl1z-y7v9cxd14o.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\4304iiqxup-jj8uyg4cgr.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\xlo91oq3dr-kbrnm935zg.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\9iys4cuorv-vr1egmr9el.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\uh8uxhw91l-iovd86k7lj.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\hqgcinjthb-493y06b0oq.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\ngz4445z7x-6pdc2jztkx.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\hr47kithf7-6cfz1n2cew.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\1ktoz2e3sj-ft3s53vfgj.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\cshpl6yvun-pk9g2wxc8p.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\btn8a7vh1c-hrwsygsryq.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\hk6f1ojuhs-37tfw0ft22.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\r0mfe6m1a7-v0zj4ognzu.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\bo023kyl8o-46ein0sx1k.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\m6jjpf5s4o-pj5nd1wqec.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\arnlkk5s6g-s35ty4nyc5.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\maxq1ae0n3-nvvlpmu67g.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\19gkjg7o45-06098lyss8.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\hx3tyn6yts-j5mq2jizvt.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\yc1p61jo0h-tdbxkamptv.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\glzz7fcrnu-c2oey78nd0.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\x6e4e0xw7l-lcd1t2u6c8.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\iga0hvtn04-r4e9w2rdcm.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\ml99fr9jpi-khv3u5hwcm.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\k522e76zuj-jd9uben2k1.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\sr3ehd01j8-dxx9fxp4il.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\6f0h5qt3nd-ee0r1s7dh0.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\3evrnx102n-rzd6atqjts.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\jbx6zfua5v-fsbi9cje9m.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\d1pyrq4s73-b7pk76d08c.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\xatkb8faz7-fvhpjtyr6v.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\wpps7avtsq-ub07r2b239.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\hgukvk10zs-cosvhxvwiu.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\vo6cd218af-k8d9w2qqmf.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\lga3n0sqts-ausgxo2sd3.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\qvo1h3bphx-d7shbmvgxk.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\6xe3xkglfj-aexeepp0ev.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\ebpp8tkeki-erw9l3u2r3.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\a85y1tab1j-c2jlpeoesf.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\njzovi3g8v-bqjiyaj88i.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\pxu5qmb72e-xtxxf3hu2r.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\3v139ptu5s-61n19gt1b8.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\zlww4n3lhm-pofspmk8i2.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\kv5etn9hha-pofspmk8i2.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\staticwebassets.build.json".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\staticwebassets.build.json.cache".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\staticwebassets.development.json".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\staticwebassets.build.endpoints.json".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\AlertSys.985FAC2B.Up2Date".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\AlertSystem.WEB.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\refint\AlertSystem.WEB.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\AlertSystem.WEB.pdb".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\AlertSystem.WEB.genruntimeconfig.cache".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\ref\AlertSystem.WEB.dll".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\wt7y7kq6w6-bb4e5wa6cn.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\t3of6y1u14-b06v1f7s5l.gz".
+         Suppression du fichier "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\obj\Debug\net9.0\compressed\5jwsdkj3kp-5347ru6rmz.gz".
+     8>Génération du projet "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Service\AlertSystem.Service.csproj" terminée (Clean cible(s)).
+     3>Génération du projet "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Infrastructure\AlertSystem.Infrastructure.csproj" terminée (Clean cible(s)).
+    10>Génération du projet "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Worker\AlertSystem.Worker.csproj" terminée (Clean cible(s)).
+    11>Génération du projet "C:\Users\khali\source\repos\AlertSystem\AlertSystem.API\AlertSystem.API.csproj" terminée (Clean cible(s)).
+    12>Génération du projet "C:\Users\khali\source\repos\AlertSystem\AlertSystem.WEB\AlertSystem.WEB.csproj" terminée (Clean cible(s)).
+     2>Génération du projet "C:\Users\khali\source\repos\AlertSystem\AlertSystem.Tests\AlertSystem.Tests.csproj" terminée (Clean cible(s)).
+     1>Génération du projet "C:\Users\khali\source\repos\AlertSystem\AlertSystem.sln" terminée (Clean cible(s)).
+
+La génération a réussi.
+    0 Avertissement(s)
+    0 Erreur(s)
+
+Temps écoulé 00:00:01.30
