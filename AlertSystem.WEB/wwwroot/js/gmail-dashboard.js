@@ -966,72 +966,140 @@ async function initWebPushSubscriptionFlow(){
 
 // Load users for compose modal
 let usersList = [];
+let usersDefList = [];
+let usersGrhList = [];
+let usersActiveTab = 'def';
 
 async function loadUsers(){
   dbg('loadUsers: Starting');
   
   try {
     const data = await fetchJson('/Dashboard/GetUsers');
-    usersList = (data && data.success !== false && Array.isArray(data.users)) ? data.users : [];
-    dbg('loadUsers: Received users', { count: usersList.length });
+    usersDefList = Array.isArray(data.defUsers) ? data.defUsers : [];
+    usersGrhList = Array.isArray(data.grhUsers) ? data.grhUsers : [];
+    usersList = usersDefList; // default
+    dbg('loadUsers: Received users', { def: usersDefList.length, grh: usersGrhList.length });
     
-    // Preferred: render as dynamic table into #usersTableBody if present
+    // Scrollable table (list déroulante) below the search bar
     const tableBody = document.getElementById('usersTableBody');
     const searchBox = document.getElementById('userSearch');
-    if (tableBody) {
-      const render = ()=>{
-        const q = (searchBox?.value || '').toLowerCase();
-        const emailOn = document.getElementById('platformEmail')?.checked;
-        const waOn = document.getElementById('platformWhatsApp')?.checked;
-        // Toggle header columns visibility
-        const colEmail = document.getElementById('colEmail'); if (colEmail) colEmail.style.display = emailOn ? '' : 'none';
-        const colWa = document.getElementById('colWa'); if (colWa) colWa.style.display = waOn ? '' : 'none';
-        const rows = usersList
-          .filter(u => (u.name||'').toLowerCase().includes(q))
-          .map(u=>{
-            const emailCell = emailOn ? (u.email || '<span class="text-muted">—</span>') : '';
-            const phoneCell = waOn ? (u.phoneNumber ? normalizePhone(u.phoneNumber) : '<span class="text-muted">—</span>') : '';
-            return `<tr>
-              <td class="fw-semibold">${u.name || ('ID '+u.id)}</td>
-              ${emailOn ? `<td>${emailCell}</td>` : ''}
-              ${waOn ? `<td>${phoneCell}</td>` : ''}
-              <td class="text-end">
-                <button type="button" class="btn btn-sm btn-outline-primary user-add" data-id="${u.id}">+
-                </button>
-              </td>
-            </tr>`;
-          }).join('');
-        tableBody.innerHTML = rows;
-        // wire + buttons
-        tableBody.querySelectorAll('.user-add').forEach(btn=>{
-          btn.addEventListener('click', ()=>{
-            const id = btn.getAttribute('data-id');
-            const user = usersList.find(x => (x.id ?? x.userId).toString() === id);
-            if (!user) return;
-            if (emailOn) {
-              if (user.email) addTagTo('destEmails', user.email);
-            }
-            if (waOn) {
-              if (user.phoneNumber) {
-                addTagTo('destPhones', user.phoneNumber);
+    
+    if (!tableBody || !searchBox) {
+      dbg('loadUsers: tableBody or searchBox not found');
+      return;
+    }
+
+    // Setup scrollable container
+    const container = tableBody.closest('.table-responsive');
+    if (container) { container.style.maxHeight = '320px'; container.style.overflowY = 'auto'; }
+
+    // Define renderRows function BEFORE tabs setup so tabs can call it
+    const renderRows = ()=>{
+      const q = (searchBox.value||'').toLowerCase();
+      const emailOn = document.getElementById('platformEmail')?.checked || false;
+      const waOn = document.getElementById('platformWhatsApp')?.checked || false;
+      
+      // Show/hide columns based on platform selection
+      const colEmail = document.getElementById('colEmail');
+      const colWa = document.getElementById('colWa');
+      if (colEmail) colEmail.style.display = emailOn ? '' : 'none';
+      if (colWa) colWa.style.display = waOn ? '' : 'none';
+
+      // Get the active list based on selected tab
+      const source = usersActiveTab === 'def' ? usersDefList : usersGrhList;
+      const filtered = source.filter(u => {
+        const name = (u.name||'').toLowerCase();
+        return name.includes(q);
+      });
+      
+      dbg('renderRows', { tab: usersActiveTab, total: source.length, filtered: filtered.length, emailOn, waOn });
+
+      // Always render rows, even if no platforms selected (show name only)
+      if (filtered.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="4" class="text-muted text-center">Aucun résultat</td></tr>';
+        return;
+      }
+
+      tableBody.innerHTML = filtered.map(u=>{
+        const emailCell = emailOn ? (u.email || '<span class="text-muted">—</span>') : '';
+        const phones = splitPhones(u.phoneNumber);
+        const phoneFirst = phones.length ? phones[0] : null;
+        const phoneCell = waOn ? (phoneFirst ? phoneFirst : '<span class="text-muted">—</span>') : '';
+        return `<tr>
+          <td class="fw-semibold">${u.name || ('ID '+u.id)}</td>
+          ${emailOn ? `<td>${emailCell}</td>` : ''}
+          ${waOn ? `<td>${phoneCell}</td>` : ''}
+          <td class="text-end"><button type="button" class="btn btn-sm btn-outline-primary user-add" data-id="${u.id}">+</button></td>
+        </tr>`;
+      }).join('');
+
+      // Wire up + buttons
+      tableBody.querySelectorAll('.user-add').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const id = btn.getAttribute('data-id');
+          const list = usersActiveTab === 'def' ? usersDefList : usersGrhList;
+          const user = list.find(x => (x.id ?? x.userId).toString() === id);
+          if (!user) return;
+          
+          const emailOnNow = document.getElementById('platformEmail')?.checked || false;
+          const waOnNow = document.getElementById('platformWhatsApp')?.checked || false;
+          
+          if (emailOnNow && user.email) {
+            addTagTo('destEmails', user.email);
+          }
+          if (waOnNow) {
+            if (user.phoneNumber) {
+              const phones = splitPhones(user.phoneNumber);
+              if (phones.length){
+                phones.forEach(p=> addTagTo('destPhones', p));
               } else {
                 try { showFinalStatusToast(`${user.name || 'Cet utilisateur'} n'a pas de numéro WhatsApp.`, 'warning'); } catch {}
               }
             }
-          });
+          }
         });
+      });
+    };
+
+    // Setup tabs just under the search bar
+    let tabs = document.getElementById('userTabs');
+    if (!tabs && searchBox) {
+      tabs = document.createElement('div');
+      tabs.id = 'userTabs';
+      tabs.className = 'btn-group mb-2';
+      tabs.innerHTML = `
+        <button type="button" id="userTabDef" class="btn btn-outline-secondary active">Utilisateurs</button>
+        <button type="button" id="userTabGrh" class="btn btn-outline-secondary">Employés GRH</button>
+      `;
+      searchBox.parentElement?.insertAdjacentElement('afterend', tabs);
+      
+      const tabDef = tabs.querySelector('#userTabDef');
+      const tabGrh = tabs.querySelector('#userTabGrh');
+      const setActive = (tab)=>{
+        usersActiveTab = tab;
+        tabs.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+        (tab === 'def' ? tabDef : tabGrh)?.classList.add('active');
+        renderRows();
       };
-      // initial render and listeners
-      render();
-      searchBox?.addEventListener('input', render);
-      document.getElementById('platformEmail')?.addEventListener('change', render);
-      document.getElementById('platformWhatsApp')?.addEventListener('change', render);
+      tabDef?.addEventListener('click', ()=> setActive('def'));
+      tabGrh?.addEventListener('click', ()=> setActive('grh'));
     }
+
+    // Wire up event listeners
+    searchBox.addEventListener('input', renderRows);
+    const emailCheck = document.getElementById('platformEmail');
+    const waCheck = document.getElementById('platformWhatsApp');
+    if (emailCheck) emailCheck.addEventListener('change', renderRows);
+    if (waCheck) waCheck.addEventListener('change', renderRows);
+    
+    // Initial render
+    renderRows();
 
     // Fallback: render as checkboxes into #usersCheckboxes
     const boxContainer = document.getElementById('usersCheckboxes');
     if (boxContainer) {
-      boxContainer.innerHTML = usersList.map(u=>{
+      const merged = [...usersDefList, ...usersGrhList];
+      boxContainer.innerHTML = merged.map(u=>{
         const label = (u.name || u.login || ("ID "+u.id));
         return `<div class="form-check"><input class="form-check-input user-check" type="checkbox" value="${u.id}" id="u_${u.id}"><label class="form-check-label" for="u_${u.id}">${label}</label></div>`;
       }).join('');
@@ -1040,12 +1108,15 @@ async function loadUsers(){
       boxContainer.querySelectorAll('.user-check').forEach(cb=>{
         cb.addEventListener('change', ()=>{
           const userId = cb.value;
-          const user = usersList.find(x => (x.id ?? x.userId).toString() === userId);
+          const list = [...usersDefList, ...usersGrhList];
+          const user = list.find(x => (x.id ?? x.userId).toString() === userId);
           const emailOn = document.getElementById('platformEmail')?.checked;
           const waOn = document.getElementById('platformWhatsApp')?.checked;
           if (cb.checked && user){
             if (emailOn && user.email) addTagTo('destEmails', user.email);
-            if (waOn && user.phoneNumber) addTagTo('destPhones', normalizePhone(user.phoneNumber));
+            if (waOn){
+              splitPhones(user.phoneNumber).forEach(p=> addTagTo('destPhones', p));
+            }
           }
         });
       });
@@ -1053,13 +1124,12 @@ async function loadUsers(){
       // Fallback: populate the legacy select element if present
       const selectElement = document.getElementById('selectedUsers');
       if (selectElement) {
-        selectElement.innerHTML = usersList.length > 0
-          ? usersList.map(user => `<option value="${user.id}">${user.name || user.login || ('ID '+user.id)} (${user.email || 'Pas d\'email'})</option>`).join('')
+        const merged = [...usersDefList, ...usersGrhList];
+        selectElement.innerHTML = merged.length > 0
+          ? merged.map(user => `<option value="${user.id}">${user.name || user.login || ('ID '+user.id)} (${user.email || 'Pas d\'email'})</option>`).join('')
           : '<option value="">Aucun utilisateur actif</option>';
       }
     }
-    
-    logSuccess('loadUsers: Users loaded successfully', { count: usersList.length });
   } catch (error) {
     logError('loadUsers: Failed to load users', error);
     const selectElement = document.getElementById('selectedUsers');
@@ -1089,9 +1159,15 @@ const sendBtn = document.getElementById('composeSendBtn');
 let isSending = false;
 if (sendBtn){
   dbg('SendButton: Setting up click handler');
+  // Defensive re-enabler in case a native dialog interrupted the flow
+  document.addEventListener('visibilitychange', ()=>{
+    if (document.visibilityState === 'visible') { sendBtn.disabled = false; isSending = false; sendBtn.classList.remove('disabled'); }
+  });
   sendBtn.addEventListener('click', async ()=>{
     if (isSending) { dbg('SendButton: Already sending - ignored'); return; }
-    sendBtn.disabled = true; isSending = true;
+    // Ensure button is always enabled unless we actually start the request
+    sendBtn.disabled = false; sendBtn.classList.remove('disabled');
+    isSending = true;
     dbg('SendButton: Clicked, starting send process');
     
     const title = document.getElementById('composeTitle')?.value || '';
@@ -1158,16 +1234,18 @@ if (sendBtn){
       phoneCount: combinedPhones.length
     });
     
-    // Validation
+    // Validation (never disable on validation errors)
     if (!title.trim()) {
       logError('SendButton: Validation failed', new Error('Title is required'));
       alert('Le titre de l\'alerte est obligatoire');
+      isSending = false; sendBtn.disabled = false; sendBtn.classList.remove('disabled');
       return;
     }
     
     if (!platforms.Email && !platforms.WhatsApp && !platforms.Desktop) {
       logError('SendButton: Validation failed', new Error('No platform selected'));
       alert('Veuillez sélectionner au moins une plateforme d\'envoi');
+      isSending = false; sendBtn.disabled = false; sendBtn.classList.remove('disabled');
       return;
     }
     
@@ -1175,6 +1253,7 @@ if (sendBtn){
     if (combinedEmails.length === 0 && combinedPhones.length === 0 && desktopUserIds.length === 0) {
       logError('SendButton: Validation failed', new Error('No recipients'));
       alert('Veuillez ajouter au moins un destinataire (email, téléphone ou utilisateur)');
+      isSending = false; sendBtn.disabled = false; sendBtn.classList.remove('disabled');
       return;
     }
 
@@ -1182,6 +1261,7 @@ if (sendBtn){
     if (platforms.WhatsApp && combinedPhones.length === 0) {
       logError('SendButton: Validation failed', new Error('No WhatsApp phone numbers'));
       alert('Veuillez ajouter au moins un numéro de téléphone pour WhatsApp (ex: +216XXXXXXXX)');
+      isSending = false; sendBtn.disabled = false; sendBtn.classList.remove('disabled');
       return;
     }
     
@@ -1191,6 +1271,9 @@ if (sendBtn){
         url: '/AlertsCrud/Send',
         payload: { title, message, emails: combinedEmails, phones: combinedPhones, desktopUserIds, platforms }
       });
+      
+      // Disable only while the request is in-flight
+      sendBtn.disabled = true; sendBtn.classList.add('disabled');
       
       // No long-running spinner anymore; we'll show a short toast on success
       
@@ -1256,7 +1339,7 @@ if (sendBtn){
       console.groupEnd();
       alert("Échec de création d'alerte: " + err.message);
     }
-    finally { isSending = false; sendBtn.disabled = false; }
+    finally { isSending = false; sendBtn.disabled = false; sendBtn.classList.remove('disabled'); }
   });
 } else {
   dbg('SendButton: Send button not found');
@@ -1349,14 +1432,35 @@ function addTagTo(inputId, value){
   hidden.value = arr.join(',');
 }
 
-function normalizePhone(p){
-  let s = (p||'').replace(/[^\d+]/g,'');
-  if (!s) return s;
-  if (s.startsWith('+')) return s;
-  if (s.startsWith('216') && s.length===11) return '+'+s; // Tunisia E.164
-  if (s.length===8) return '+216'+s; // local 8-digit
-  if (s.startsWith('0') && s.length>=9) return '+216'+s.slice(1);
-  return s.startsWith('+')?s:('+'+s);
+function normalizePhone(raw){
+  try {
+    let p = (raw||'').toString().trim();
+    // existing normalization rules...
+    if (!p) return '';
+    // Keep only digits and plus
+    p = p.replace(/[^+\d]/g,'');
+    if (p.startsWith('00')) p = '+' + p.substring(2);
+    if (!p.startsWith('+') && /^\d{8,15}$/.test(p)) {
+      // assume TN if 8 digits
+      if (p.length === 8) p = '+216' + p;
+      else p = '+' + p;
+    }
+    return p;
+  } catch { return (raw||''); }
+}
+
+// Split a raw phone field containing one or multiple numbers separated by non-digits or slashes
+function splitPhones(raw){
+  const text = (raw||'').toString();
+  // Extract digit groups of length >= 8
+  const groups = text.match(/\d{8,15}/g) || [];
+  const uniques = new Set();
+  const result = [];
+  for (const g of groups){
+    const norm = normalizePhone(g);
+    if (norm && !uniques.has(norm)) { uniques.add(norm); result.push(norm); }
+  }
+  return result;
 }
 
 async function updateTodayKpi(){

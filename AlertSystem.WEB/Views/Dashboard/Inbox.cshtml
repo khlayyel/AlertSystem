@@ -234,6 +234,7 @@
                 <div class="mb-2">
                   <input id="userSearch" class="form-control" placeholder="Rechercher par nom..." />
                 </div>
+                <!-- Tabs will be injected by JS (userTabs) under the search bar -->
                 <div class="table-responsive border rounded">
                   <table class="table table-sm align-middle mb-0">
                     <thead>
@@ -277,33 +278,7 @@
           </div>
         </div>
 
-        <!-- Configuration API -->
-        <div class="card mb-2 border-0 shadow-sm">
-          <div class="card-header bg-secondary text-white">
-            <i class="bi bi-gear me-2"></i>Configuration API
-          </div>
-          <div class="card-body">
-            <div class="row g-3 align-items-center">
-              <div class="col-12 col-md-8">
-                <label class="form-label fw-semibold">
-                  <i class="bi bi-key me-1"></i>Clé API
-                </label>
-                <input id="apiKey" class="form-control" placeholder="Entrez votre clé API..." />
-                <div class="form-text">La clé API est nécessaire pour envoyer des alertes via l'API</div>
-              </div>
-              <div class="col-12 col-md-4">
-                <div class="d-grid gap-2">
-                  <button type="button" id="apiSaveBtn" class="btn btn-outline-primary">
-                    <i class="bi bi-save me-1"></i>Sauvegarder
-                  </button>
-                  <button type="button" id="apiTestBtn" class="btn btn-outline-success">
-                    <i class="bi bi-check-circle me-1"></i>Tester
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        
       </div>
       <div class="modal-footer bg-light">
         <div>

@@ -16,6 +16,9 @@ namespace AlertSystem.WEB.Controllers
         private readonly AlertReadService _read;
         private readonly ApplicationDbContext _db;
         private readonly ICurrentUserService _currentUserService;
+
+        // DTO for compose user list
+        private sealed record UserListItem(decimal id, decimal userId, string? name, string? email, string? phoneNumber);
         
         public DashboardController(AlertReadService read, ApplicationDbContext db, ICurrentUserService currentUserService) 
         { 
@@ -262,7 +265,8 @@ namespace AlertSystem.WEB.Controllers
         [HttpGet("GetUsers")]
         public async Task<IActionResult> GetUsers2()
         {
-            var users = await _db.DefUtilisateurs
+            // 1) Load application users from def_utilisateur (include grh_emp_id for enrichment)
+            var defUsersRaw = await _db.DefUtilisateurs
                 .AsNoTracking()
                 .Select(u => new
                 {
@@ -270,12 +274,151 @@ namespace AlertSystem.WEB.Controllers
                     userId = u.util_id,
                     name = (u.util_prenom + " " + u.util_nom).Trim(),
                     email = u.util_email,
+                    empId = u.grh_emp_id,
                     phoneNumber = (string?)null
                 })
-                .Take(500)
                 .ToListAsync();
 
-            return Json(new { success = true, users });
+            // 2) Load GRH phones (safe raw SQL in case entity isn't mapped)
+            var grhPhones = new Dictionary<decimal, string>();
+            try
+            {
+                var conn = _db.Database.GetDbConnection();
+                await conn.OpenAsync();
+                using (var cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"
+                        SELECT CAST(e.grh_emp_id AS decimal(18,2)) AS id,
+                               NULLIF(LTRIM(RTRIM(ISNULL(e.grh_emp_gsm, ''))), '') AS phone
+                        FROM grh_employe e
+                        WHERE NULLIF(LTRIM(RTRIM(ISNULL(e.grh_emp_gsm, ''))), '') IS NOT NULL
+                          AND LTRIM(RTRIM(ISNULL(e.grh_emp_gsm, ''))) NOT IN ('0', '00000000')";
+                    using (var reader = await cmd.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            if (!reader.IsDBNull(1))
+                            {
+                                var id = reader.GetDecimal(0);
+                                var phone = reader.GetString(1);
+                                if (!grhPhones.ContainsKey(id)) grhPhones[id] = phone;
+                            }
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // Fallback to alternative table name: grh_employee
+                try
+                {
+                    var conn2 = _db.Database.GetDbConnection();
+                    if (conn2.State != System.Data.ConnectionState.Open) await conn2.OpenAsync();
+                    using (var cmd2 = conn2.CreateCommand())
+                    {
+                        cmd2.CommandText = @"
+                            SELECT CAST(e.grh_emp_id AS decimal(18,2)) AS id,
+                                   NULLIF(LTRIM(RTRIM(ISNULL(e.grh_emp_gsm, ''))), '') AS phone
+                            FROM grh_employee e
+                            WHERE NULLIF(LTRIM(RTRIM(ISNULL(e.grh_emp_gsm, ''))), '') IS NOT NULL
+                              AND LTRIM(RTRIM(ISNULL(e.grh_emp_gsm, ''))) NOT IN ('0', '00000000')";
+                        using (var reader2 = await cmd2.ExecuteReaderAsync())
+                        {
+                            while (await reader2.ReadAsync())
+                            {
+                                if (!reader2.IsDBNull(1))
+                                {
+                                    var id = reader2.GetDecimal(0);
+                                    var phone = reader2.GetString(1);
+                                    if (!grhPhones.ContainsKey(id)) grhPhones[id] = phone;
+                                }
+                            }
+                        }
+                    }
+                }
+                catch { }
+            }
+
+            // 3) Enrich def users with GRH phone when possible
+            var defUsers = defUsersRaw.Select(u => new UserListItem(
+                id: (decimal)u.id,
+                userId: (decimal)u.userId,
+                name: u.name,
+                email: u.email,
+                phoneNumber: u.phoneNumber ?? (u.empId.HasValue && grhPhones.TryGetValue((decimal)u.empId.Value, out var p) ? p : null)
+            ));
+            // Dedup def by email -> phone -> name
+            string KeyDef(UserListItem u)
+            {
+                var email = (u.email ?? string.Empty).Trim().ToLowerInvariant();
+                var phone = (u.phoneNumber ?? string.Empty).Trim();
+                var name = (u.name ?? string.Empty).Trim().ToLowerInvariant();
+                return !string.IsNullOrEmpty(email) ? $"e:{email}" : (!string.IsNullOrEmpty(phone) ? $"p:{phone}" : $"n:{name}");
+            }
+            var defList = defUsers
+                .GroupBy(u => KeyDef(u))
+                .Select(g => g.First())
+                .OrderBy(u => u.name)
+                .ToList();
+
+            // 4) Build standalone GRH employees (complete list), regardless of def link; dedup by phone then name
+            var grhList = new List<UserListItem>();
+            async Task LoadGrhAsync(string table)
+            {
+                var conn = _db.Database.GetDbConnection();
+                if (conn.State != System.Data.ConnectionState.Open) await conn.OpenAsync();
+                using var cmd = conn.CreateCommand();
+                cmd.CommandText = $@"
+                    SELECT TOP 5000 
+                           CAST(e.grh_emp_id AS decimal(18,2)) AS id,
+                           LTRIM(RTRIM(ISNULL(e.grh_emp_prenom, ''))) + ' ' + LTRIM(RTRIM(ISNULL(e.grh_emp_nom,''))) AS name,
+                           NULLIF(LTRIM(RTRIM(ISNULL(e.grh_emp_email, ''))), '') AS email,
+                           NULLIF(LTRIM(RTRIM(ISNULL(e.grh_emp_gsm, ''))), '') AS phoneNumber
+                    FROM {table} e
+                    WHERE LTRIM(RTRIM(ISNULL(e.grh_emp_prenom, ''))) + ' ' + LTRIM(RTRIM(ISNULL(e.grh_emp_nom,''))) <> ''";
+                using var reader = await cmd.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    var id = reader.GetDecimal(0);
+                    var name = reader.IsDBNull(1) ? "" : reader.GetString(1);
+                    var email = reader.IsDBNull(2) ? null : reader.GetString(2);
+                    var phone = reader.IsDBNull(3) ? null : reader.GetString(3);
+                    if (!string.IsNullOrWhiteSpace(phone) && phone.Trim() != "00000000" && phone.Trim() != "0")
+                    {
+                        grhList.Add(new UserListItem(id, id, name, email, phone));
+                    }
+                    else if (!string.IsNullOrWhiteSpace(name))
+                    {
+                        grhList.Add(new UserListItem(id, id, name, email, null));
+                    }
+                }
+            }
+            // Try multiple table name variants to maximize compatibility
+            var tried = new List<string>();
+            foreach (var tbl in new[] { "grh_employe", "dbo.grh_employe", "grh_employee", "dbo.grh_employee" })
+            {
+                try
+                {
+                    tried.Add(tbl);
+                    await LoadGrhAsync(tbl);
+                    if (grhList.Count > 0) break;
+                }
+                catch { /* continue to next variant */ }
+            }
+
+            string KeyGrh(UserListItem u)
+            {
+                var phone = (u.phoneNumber ?? string.Empty).Trim();
+                var name = (u.name ?? string.Empty).Trim().ToLowerInvariant();
+                return !string.IsNullOrEmpty(phone) ? $"p:{phone}" : $"n:{name}";
+            }
+            var grhUsers = grhList
+                .GroupBy(u => KeyGrh(u))
+                .Select(g => g.First())
+                .OrderBy(u => u.name)
+                .ToList();
+
+            return Json(new { success = true, defUsers = defList, grhUsers });
         }
 
         
