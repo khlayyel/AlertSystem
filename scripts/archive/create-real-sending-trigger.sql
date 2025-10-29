@@ -1,12 +1,12 @@
--- TRIGGER QUI ENVOIE VRAIMENT LES EMAILS
-USE AlertSystemDB;
+﻿-- TRIGGER QUI ENVOIE VRAIMENT LES EMAILS
+USE BELVEDERE_17_10_2025;
 GO
 
 -- Supprimer l'ancien trigger
 DROP TRIGGER IF EXISTS TR_Alerte_Working;
 GO
 
--- Créer le trigger qui envoie vraiment les emails
+-- CrÃ©er le trigger qui envoie vraiment les emails
 CREATE TRIGGER TR_Alerte_Real_Sending
 ON Alerte
 AFTER INSERT
@@ -32,7 +32,7 @@ BEGIN
     
     PRINT 'TRIGGER REAL: Alerte ' + CAST(@AlerteId AS VARCHAR(10)) + ' - ' + @TitreAlerte;
     
-    -- Créer l'historique d'abord
+    -- CrÃ©er l'historique d'abord
     IF @DestinataireId IS NOT NULL
     BEGIN
         INSERT INTO HistoriqueAlerte (
@@ -46,7 +46,7 @@ BEGIN
         FROM Users u
         WHERE u.UserId = @DestinataireId AND u.IsActive = 1;
         
-        PRINT 'TRIGGER REAL: Historique créé pour utilisateur ' + CAST(@DestinataireId AS VARCHAR(10));
+        PRINT 'TRIGGER REAL: Historique crÃ©Ã© pour utilisateur ' + CAST(@DestinataireId AS VARCHAR(10));
         
         -- ENVOYER L'EMAIL VRAIMENT (si plateforme Email)
         IF @PlateformeEnvoieId = 1 OR @PlateformeEnvoieId IS NULL
@@ -57,7 +57,7 @@ BEGIN
             SELECT @Email = Email, @FullName = FullName
             FROM Users WHERE UserId = @DestinataireId;
             
-            -- Créer le fichier PowerShell temporaire
+            -- CrÃ©er le fichier PowerShell temporaire
             DECLARE @PSFile NVARCHAR(500) = 'C:\temp\send_email_' + CAST(@AlerteId AS VARCHAR(10)) + '.ps1';
             DECLARE @PSContent NVARCHAR(MAX);
             
@@ -76,25 +76,25 @@ BEGIN
                 '  Write-Host "ERREUR EMAIL: $($_.Exception.Message)"' + CHAR(13) + CHAR(10) +
                 '}';
             
-            -- Créer le répertoire temp
+            -- CrÃ©er le rÃ©pertoire temp
             EXEC xp_cmdshell 'if not exist C:\temp mkdir C:\temp', NO_OUTPUT;
             
-            -- Écrire le fichier PowerShell
+            -- Ã‰crire le fichier PowerShell
             DECLARE @WriteCmd NVARCHAR(MAX);
             SET @WriteCmd = 'echo ' + REPLACE(@PSContent, '"', '""') + ' > ' + @PSFile;
             EXEC xp_cmdshell @WriteCmd, NO_OUTPUT;
             
-            -- Exécuter PowerShell
+            -- ExÃ©cuter PowerShell
             DECLARE @ExecCmd NVARCHAR(MAX);
             SET @ExecCmd = 'powershell.exe -ExecutionPolicy Bypass -File ' + @PSFile;
             
             BEGIN TRY
                 EXEC xp_cmdshell @ExecCmd;
-                PRINT 'TRIGGER REAL: Email envoyé à ' + @Email;
+                PRINT 'TRIGGER REAL: Email envoyÃ© Ã  ' + @Email;
                 
-                -- Marquer comme envoyé
+                -- Marquer comme envoyÃ©
                 UPDATE HistoriqueAlerte 
-                SET EtatAlerte = 'Envoyé par Email'
+                SET EtatAlerte = 'EnvoyÃ© par Email'
                 WHERE AlerteId = @AlerteId AND DestinataireUserId = @DestinataireId;
                 
                 -- Nettoyer le fichier temporaire
@@ -115,13 +115,14 @@ BEGIN
         END
     END
     
-    PRINT 'TRIGGER REAL: Traitement terminé';
+    PRINT 'TRIGGER REAL: Traitement terminÃ©';
 END;
 GO
 
-PRINT 'Trigger TR_Alerte_Real_Sending créé !';
+PRINT 'Trigger TR_Alerte_Real_Sending crÃ©Ã© !';
 PRINT 'Ce trigger envoie VRAIMENT les emails !';
 PRINT '';
 PRINT 'Test maintenant:';
 PRINT 'INSERT INTO Alerte (AlertTypeId, AppId, ExpedTypeId, ExpediteurId, TitreAlerte, DescriptionAlerte, DateCreationAlerte, StatutId, EtatAlerteId, DestinataireId, PlateformeEnvoieId)';
-PRINT 'VALUES (2, 1, 1, 2, ''TEST EMAIL REEL'', ''Cet email sera vraiment envoyé!'', GETDATE(), 1, 2, 1, 1);';
+PRINT 'VALUES (2, 1, 1, 2, ''TEST EMAIL REEL'', ''Cet email sera vraiment envoyÃ©!'', GETDATE(), 1, 2, 1, 1);';
+

@@ -1,8 +1,8 @@
-param(
+﻿param(
     [Parameter(Mandatory=$true)]
     [string]$ApiClientId,
     [string]$Server = "(localdb)\\MSSQLLocalDB",
-    [string]$Database = "AlertSystemDB"
+    [string]$Database = "BELVEDERE_17_10_2025"
 )
 
 $sql = @"
@@ -18,3 +18,4 @@ sqlcmd -S $Server -d $Database -Q $sql | Out-Host
 
 Write-Host "" -ForegroundColor Cyan
 Write-Host "API key deactivated successfully!" -ForegroundColor Green
+

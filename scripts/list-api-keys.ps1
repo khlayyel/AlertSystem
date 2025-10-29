@@ -1,6 +1,6 @@
-param(
+﻿param(
     [string]$Server = "(localdb)\\MSSQLLocalDB",
-    [string]$Database = "AlertSystemDB"
+    [string]$Database = "BELVEDERE_17_10_2025"
 )
 
 $sql = @"
@@ -20,3 +20,4 @@ ORDER BY CreatedAt DESC;
 
 Write-Host "Listing all API clients:" -ForegroundColor Yellow
 sqlcmd -S $Server -d $Database -Q $sql | Out-Host
+

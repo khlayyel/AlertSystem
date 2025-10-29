@@ -1,36 +1,36 @@
--- Script pour ajouter les nouvelles colonnes au système de reminders
-USE [AlertSystemDb]
+﻿-- Script pour ajouter les nouvelles colonnes au systÃ¨me de reminders
+USE [BELVEDERE_17_10_2025]
 GO
 
--- Vérifier si les colonnes existent déjà
+-- VÃ©rifier si les colonnes existent dÃ©jÃ 
 IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'AlertRecipients' AND COLUMN_NAME = 'DeliveryPlatforms')
 BEGIN
     ALTER TABLE AlertRecipients ADD DeliveryPlatforms NVARCHAR(MAX) NOT NULL DEFAULT '[]'
-    PRINT 'Colonne DeliveryPlatforms ajoutée'
+    PRINT 'Colonne DeliveryPlatforms ajoutÃ©e'
 END
 ELSE
 BEGIN
-    PRINT 'Colonne DeliveryPlatforms existe déjà'
+    PRINT 'Colonne DeliveryPlatforms existe dÃ©jÃ '
 END
 
 IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'AlertRecipients' AND COLUMN_NAME = 'SendStatus')
 BEGIN
     ALTER TABLE AlertRecipients ADD SendStatus NVARCHAR(50) NOT NULL DEFAULT 'Pending'
-    PRINT 'Colonne SendStatus ajoutée'
+    PRINT 'Colonne SendStatus ajoutÃ©e'
 END
 ELSE
 BEGIN
-    PRINT 'Colonne SendStatus existe déjà'
+    PRINT 'Colonne SendStatus existe dÃ©jÃ '
 END
 
--- Créer les index pour les performances
+-- CrÃ©er les index pour les performances
 IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_AlertRecipients_SendStatus_NextReminderAt')
 BEGIN
     CREATE INDEX IX_AlertRecipients_SendStatus_NextReminderAt ON AlertRecipients (SendStatus, NextReminderAt)
-    PRINT 'Index SendStatus_NextReminderAt créé'
+    PRINT 'Index SendStatus_NextReminderAt crÃ©Ã©'
 END
 
--- Mettre à jour les données existantes (seulement si les colonnes existent)
+-- Mettre Ã  jour les donnÃ©es existantes (seulement si les colonnes existent)
 IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'AlertRecipients' AND COLUMN_NAME = 'DeliveryPlatforms')
 BEGIN
     UPDATE AlertRecipients 
@@ -40,8 +40,9 @@ BEGIN
             ELSE 'Pending' 
         END
     WHERE DeliveryPlatforms = '[]' OR SendStatus = 'Pending'
-    PRINT 'Données existantes mises à jour'
+    PRINT 'DonnÃ©es existantes mises Ã  jour'
 END
 
-PRINT 'Colonnes ajoutées et données mises à jour avec succès !'
+PRINT 'Colonnes ajoutÃ©es et donnÃ©es mises Ã  jour avec succÃ¨s !'
 GO
+

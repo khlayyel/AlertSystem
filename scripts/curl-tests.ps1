@@ -1,4 +1,4 @@
-$ErrorActionPreference = 'Stop'
+﻿$ErrorActionPreference = 'Stop'
 
 $base = 'http://localhost:5186'
 $apiKey = 'REPLACE_WITH_TEST_KEY'
@@ -14,5 +14,6 @@ curl.exe -s -H "Content-Type: application/json" -X POST "http://localhost:5185/A
   "phones":["21699414008"],
   "platforms": {"email": true, "whatsApp": true, "desktop": false}
 }' | Write-Output
+
 
 

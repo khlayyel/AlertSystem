@@ -1,7 +1,7 @@
--- Script de test pour la nouvelle structure HistoriqueAlerte
--- Vérifier que tout fonctionne correctement
+﻿-- Script de test pour la nouvelle structure HistoriqueAlerte
+-- VÃ©rifier que tout fonctionne correctement
 
--- 1. Vérifier la structure de HistoriqueAlerte
+-- 1. VÃ©rifier la structure de HistoriqueAlerte
 SELECT 
     COLUMN_NAME,
     DATA_TYPE,
@@ -11,7 +11,7 @@ FROM INFORMATION_SCHEMA.COLUMNS
 WHERE TABLE_NAME = 'HistoriqueAlerte'
 ORDER BY ORDINAL_POSITION;
 
--- 2. Vérifier les utilisateurs existants
+-- 2. VÃ©rifier les utilisateurs existants
 SELECT 
     UserId,
     FullName,
@@ -21,7 +21,7 @@ SELECT
 FROM Users
 ORDER BY UserId;
 
--- 3. Vérifier les alertes existantes
+-- 3. VÃ©rifier les alertes existantes
 SELECT 
     AlerteId,
     TitreAlerte,
@@ -32,7 +32,7 @@ SELECT
 FROM Alerte
 ORDER BY AlerteId;
 
--- 4. Insérer une alerte de test
+-- 4. InsÃ©rer une alerte de test
 INSERT INTO Alerte (
     AlertTypeId, 
     ExpedTypeId, 
@@ -48,15 +48,15 @@ INSERT INTO Alerte (
     'Test Alerte Multi-Destinataires',
     'Ceci est un test de la nouvelle structure HistoriqueAlerte avec plusieurs destinataires.',
     GETDATE(),
-    1, -- StatutId (Envoyé)
+    1, -- StatutId (EnvoyÃ©)
     1, -- EtatAlerteId (Non Lu)
     1  -- AppId
 );
 
--- Récupérer l'ID de l'alerte créée
+-- RÃ©cupÃ©rer l'ID de l'alerte crÃ©Ã©e
 DECLARE @AlerteId INT = SCOPE_IDENTITY();
 
--- 5. Insérer plusieurs destinataires pour cette alerte
+-- 5. InsÃ©rer plusieurs destinataires pour cette alerte
 INSERT INTO HistoriqueAlerte (
     AlerteId,
     DestinataireUserId,
@@ -78,7 +78,7 @@ INSERT INTO HistoriqueAlerte (
 -- Fatma (SuperUser) - Non Lu avec rappel
 (@AlerteId, 5, 'Non Lu', NULL, DATEADD(HOUR, 2, GETDATE()), 'fatma.karray@test.com', '+21622555777', 'web-push-token-fatma');
 
--- 6. Vérifier les données insérées
+-- 6. VÃ©rifier les donnÃ©es insÃ©rÃ©es
 SELECT 
     h.DestinataireId,
     h.AlerteId,
@@ -123,4 +123,5 @@ WHERE h.RappelSuivant IS NOT NULL
   AND h.EtatAlerte = 'Non Lu'
 ORDER BY h.RappelSuivant;
 
-PRINT 'Test de la structure HistoriqueAlerte terminé avec succès !';
+PRINT 'Test de la structure HistoriqueAlerte terminÃ© avec succÃ¨s !';
+

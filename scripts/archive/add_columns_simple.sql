@@ -1,5 +1,5 @@
--- Script simple pour ajouter les colonnes
-USE [AlertSystemDB]
+﻿-- Script simple pour ajouter les colonnes
+USE [BELVEDERE_17_10_2025]
 GO
 
 -- Ajouter DeliveryPlatforms
@@ -10,11 +10,11 @@ GO
 ALTER TABLE AlertRecipients ADD SendStatus NVARCHAR(50) NOT NULL DEFAULT 'Pending'
 GO
 
--- Créer l'index
+-- CrÃ©er l'index
 CREATE INDEX IX_AlertRecipients_SendStatus_NextReminderAt ON AlertRecipients (SendStatus, NextReminderAt)
 GO
 
--- Mettre à jour les données existantes
+-- Mettre Ã  jour les donnÃ©es existantes
 UPDATE AlertRecipients 
 SET DeliveryPlatforms = '["Email"]', 
     SendStatus = CASE 
@@ -23,5 +23,6 @@ SET DeliveryPlatforms = '["Email"]',
     END
 GO
 
-PRINT 'Colonnes ajoutées avec succès !'
+PRINT 'Colonnes ajoutÃ©es avec succÃ¨s !'
 GO
+

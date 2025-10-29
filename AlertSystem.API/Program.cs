@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using AlertSystem.Service.Interfaces;
 using AlertSystem.Service.Services;
 using AlertSystem.API.Middleware;
@@ -28,9 +28,9 @@ builder.Services.AddSwaggerGen(c => AlertSystem.API.SwaggerConfiguration.Configu
 builder.Services.AddApiServices(builder.Configuration);
 
 // Add database services
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? 
-                      Environment.GetEnvironmentVariable("CONNECTIONSTRINGS__DEFAULTCONNECTION") ??
-                      "Server=(localdb)\\MSSQLLocalDB;Database=AlertSystemDB;Trusted_Connection=True;MultipleActiveResultSets=true";
+var connectionString =
+    Environment.GetEnvironmentVariable("CONNECTIONSTRINGS__DEFAULTCONNECTION")
+    ?? throw new InvalidOperationException("Missing CONNECTIONSTRINGS__DEFAULTCONNECTION");
 
 builder.Services.AddDbContext<AlertSystem.Data.ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
@@ -77,9 +77,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "AlertSystem API v1");
-        c.RoutePrefix = string.Empty; // Swagger UI à la racine
+        c.RoutePrefix = string.Empty; // Swagger UI Ã  la racine
         c.DocumentTitle = "AlertSystem API Documentation";
-        c.DefaultModelsExpandDepth(-1); // Masquer les modèles par défaut
+        c.DefaultModelsExpandDepth(-1); // Masquer les modÃ¨les par dÃ©faut
         c.DisplayRequestDuration();
         c.EnableDeepLinking();
         c.EnableFilter();
@@ -103,3 +103,4 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
+

@@ -1,4 +1,4 @@
-# Comprehensive WhatsApp Testing Script
+﻿# Comprehensive WhatsApp Testing Script
 param(
     [string]$PhoneNumber = "21699414008",
     [string]$Message = "Test comprehensive WhatsApp - " + (Get-Date)
@@ -13,13 +13,13 @@ Write-Host ""
 Write-Host "1. Checking WhatsApp Configuration..." -ForegroundColor Green
 try {
     $config = Invoke-RestMethod -Uri 'http://localhost:5143/api/v1/whatsapp-debug/config' -Method GET
-    Write-Host "✅ Configuration OK:" -ForegroundColor Green
+    Write-Host "âœ… Configuration OK:" -ForegroundColor Green
     Write-Host "   - Access Token: $($config.hasAccessToken)" -ForegroundColor White
     Write-Host "   - Phone Number ID: $($config.phoneNumberId)" -ForegroundColor White
     Write-Host "   - API Version: $($config.apiVersion)" -ForegroundColor White
     Write-Host "   - Base URL: $($config.baseUrl)" -ForegroundColor White
 } catch {
-    Write-Host "❌ Configuration Error: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "âŒ Configuration Error: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 
@@ -36,10 +36,10 @@ try {
     $result = Invoke-RestMethod -Uri 'http://localhost:5143/api/v1/whatsapp-debug/test-direct-api' -Method POST -ContentType 'application/json' -Body $body
     
     if ($result.freeFormResult.success) {
-        Write-Host "✅ Free-form message SUCCESS!" -ForegroundColor Green
+        Write-Host "âœ… Free-form message SUCCESS!" -ForegroundColor Green
         Write-Host "   Response: $($result.freeFormResult.response)" -ForegroundColor White
     } else {
-        Write-Host "❌ Free-form message FAILED" -ForegroundColor Red
+        Write-Host "âŒ Free-form message FAILED" -ForegroundColor Red
         Write-Host "   Status: $($result.freeFormResult.statusCode)" -ForegroundColor Yellow
         Write-Host "   Response: $($result.freeFormResult.response)" -ForegroundColor Yellow
         
@@ -54,29 +54,29 @@ try {
     
     if ($result.templateResult) {
         if ($result.templateResult.success) {
-            Write-Host "✅ Template message SUCCESS!" -ForegroundColor Green
+            Write-Host "âœ… Template message SUCCESS!" -ForegroundColor Green
             Write-Host "   Response: $($result.templateResult.response)" -ForegroundColor White
         } else {
-            Write-Host "❌ Template message FAILED" -ForegroundColor Red
+            Write-Host "âŒ Template message FAILED" -ForegroundColor Red
             Write-Host "   Status: $($result.templateResult.statusCode)" -ForegroundColor Yellow
             Write-Host "   Response: $($result.templateResult.response)" -ForegroundColor Yellow
         }
     }
     
     Write-Host ""
-    Write-Host "💡 Recommendation: $($result.recommendation.message)" -ForegroundColor Cyan
+    Write-Host "ðŸ’¡ Recommendation: $($result.recommendation.message)" -ForegroundColor Cyan
     if ($result.recommendation.solution) {
-        Write-Host "🔧 Solution: $($result.recommendation.solution)" -ForegroundColor Yellow
+        Write-Host "ðŸ”§ Solution: $($result.recommendation.solution)" -ForegroundColor Yellow
     }
     if ($result.recommendation.solutions) {
-        Write-Host "🔧 Solutions:" -ForegroundColor Yellow
+        Write-Host "ðŸ”§ Solutions:" -ForegroundColor Yellow
         foreach ($solution in $result.recommendation.solutions) {
             Write-Host "   - $solution" -ForegroundColor White
         }
     }
     
 } catch {
-    Write-Host "❌ Direct API Test Error: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "âŒ Direct API Test Error: $($_.Exception.Message)" -ForegroundColor Red
 }
 
 Write-Host ""
@@ -92,14 +92,14 @@ try {
     $result = Invoke-RestMethod -Uri 'http://localhost:5143/api/v1/whatsapp-debug/test-free-form' -Method POST -ContentType 'application/json' -Body $body
     
     if ($result.success) {
-        Write-Host "✅ Service layer SUCCESS!" -ForegroundColor Green
+        Write-Host "âœ… Service layer SUCCESS!" -ForegroundColor Green
     } else {
-        Write-Host "❌ Service layer FAILED" -ForegroundColor Red
+        Write-Host "âŒ Service layer FAILED" -ForegroundColor Red
     }
     Write-Host "   Message: $($result.message)" -ForegroundColor White
     
 } catch {
-    Write-Host "❌ Service Layer Test Error: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "âŒ Service Layer Test Error: $($_.Exception.Message)" -ForegroundColor Red
 }
 
 Write-Host ""
@@ -115,15 +115,15 @@ try {
     $result = Invoke-RestMethod -Uri 'http://localhost:5143/api/v1/whatsapp-debug/test-template' -Method POST -ContentType 'application/json' -Body $body
     
     if ($result.success) {
-        Write-Host "✅ Template message SUCCESS!" -ForegroundColor Green
+        Write-Host "âœ… Template message SUCCESS!" -ForegroundColor Green
     } else {
-        Write-Host "❌ Template message FAILED" -ForegroundColor Red
+        Write-Host "âŒ Template message FAILED" -ForegroundColor Red
     }
     Write-Host "   Message: $($result.message)" -ForegroundColor White
     Write-Host "   Template: $($result.template)" -ForegroundColor White
     
 } catch {
-    Write-Host "❌ Template Test Error: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "âŒ Template Test Error: $($_.Exception.Message)" -ForegroundColor Red
 }
 
 Write-Host ""
@@ -139,26 +139,27 @@ try {
     $result = Invoke-RestMethod -Uri 'http://localhost:5143/api/v1/whatsapptest/send' -Method POST -ContentType 'application/json' -Body $body
     
     if ($result.success) {
-        Write-Host "✅ Original endpoint SUCCESS!" -ForegroundColor Green
+        Write-Host "âœ… Original endpoint SUCCESS!" -ForegroundColor Green
     } else {
-        Write-Host "❌ Original endpoint FAILED" -ForegroundColor Red
+        Write-Host "âŒ Original endpoint FAILED" -ForegroundColor Red
     }
     Write-Host "   Message: $($result.message)" -ForegroundColor White
     
 } catch {
-    Write-Host "❌ Original Endpoint Test Error: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "âŒ Original Endpoint Test Error: $($_.Exception.Message)" -ForegroundColor Red
 }
 
 Write-Host ""
 Write-Host "=== Testing Complete ===" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "📱 IMPORTANT NOTES:" -ForegroundColor Yellow
+Write-Host "ðŸ“± IMPORTANT NOTES:" -ForegroundColor Yellow
 Write-Host "1. If free-form messages fail but templates work:" -ForegroundColor White
-Write-Host "   → Send a message from +$PhoneNumber to your WhatsApp Business number" -ForegroundColor Cyan
-Write-Host "   → Then test again within 24 hours" -ForegroundColor Cyan
+Write-Host "   â†’ Send a message from +$PhoneNumber to your WhatsApp Business number" -ForegroundColor Cyan
+Write-Host "   â†’ Then test again within 24 hours" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "2. If both fail:" -ForegroundColor White
-Write-Host "   → Check your WhatsApp Business API configuration" -ForegroundColor Cyan
-Write-Host "   → Verify your access token and phone number ID" -ForegroundColor Cyan
+Write-Host "   â†’ Check your WhatsApp Business API configuration" -ForegroundColor Cyan
+Write-Host "   â†’ Verify your access token and phone number ID" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "3. Check application logs for detailed error information" -ForegroundColor White
+

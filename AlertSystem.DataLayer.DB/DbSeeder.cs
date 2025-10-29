@@ -32,12 +32,22 @@ namespace AlertSystem
                 );
             }
 
-            // Seed Etat - NO ACCENTS
+            // Seed Etat - NO ACCENTS (1=NonLu, 2=Lu to match code expectations)
             if (!await context.Etat.AnyAsync())
             {
                 context.Etat.AddRange(
-                    new Etat { EtatAlerteName = "Lu" },          // ID 1
-                    new Etat { EtatAlerteName = "NonLu" }        // ID 2
+                    new Etat { EtatAlerteName = "NonLu" },      // ID 1
+                    new Etat { EtatAlerteName = "Lu" }          // ID 2
+                );
+            }
+
+            // Seed PlateformeEnvoie required by Alerte FK (1=Email, 2=WhatsApp, 3=Desktop)
+            if (!await context.PlateformeEnvoie.AnyAsync())
+            {
+                context.PlateformeEnvoie.AddRange(
+                    new PlateformeEnvoie { PlateformeId = 1, Plateforme = "Email" },
+                    new PlateformeEnvoie { PlateformeId = 2, Plateforme = "WhatsApp" },
+                    new PlateformeEnvoie { PlateformeId = 3, Plateforme = "Desktop" }
                 );
             }
 

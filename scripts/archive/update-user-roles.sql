@@ -1,4 +1,4 @@
--- Mettre à jour les rôles des utilisateurs
+﻿-- Mettre Ã  jour les rÃ´les des utilisateurs
 UPDATE Users SET 
     Role = 'Admin' 
 WHERE Email = 'khalilouerghemmi@gmail.com';
@@ -11,7 +11,7 @@ UPDATE Users SET
     Role = 'User' 
 WHERE Email IN ('sarah.benali@test.com', 'ahmed.trabelsi@test.com');
 
--- Vérifier les mises à jour
+-- VÃ©rifier les mises Ã  jour
 SELECT UserId, Username, Email, Role, IsActive 
 FROM Users 
 ORDER BY 
@@ -20,3 +20,4 @@ ORDER BY
         WHEN Role = 'SuperUser' THEN 2
         ELSE 3 
     END, Username;
+

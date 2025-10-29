@@ -1,4 +1,4 @@
-param(
+﻿param(
   [string[]]$Phones,
   [string]$Message = "Test AlertSystem WA message",
   [ValidateSet('text','template','smart')][string]$Mode = 'smart',
@@ -155,5 +155,6 @@ else {
     }
   }
 }
+
 
 

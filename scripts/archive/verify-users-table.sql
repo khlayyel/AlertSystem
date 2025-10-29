@@ -1,6 +1,6 @@
--- Vérification de la table Users et explication des notifications desktop
+﻿-- VÃ©rification de la table Users et explication des notifications desktop
 
--- 1. Vérifier que la table Users a été créée
+-- 1. VÃ©rifier que la table Users a Ã©tÃ© crÃ©Ã©e
 SELECT 'Structure de la table Users' as Check_Type,
        COLUMN_NAME as Column_Name,
        DATA_TYPE as Data_Type,
@@ -10,7 +10,7 @@ FROM INFORMATION_SCHEMA.COLUMNS
 WHERE TABLE_NAME = 'Users'
 ORDER BY ORDINAL_POSITION;
 
--- 2. Vérifier que Khalil a été inséré
+-- 2. VÃ©rifier que Khalil a Ã©tÃ© insÃ©rÃ©
 SELECT 'Utilisateur Khalil' as Check_Type,
        UserId,
        Username,
@@ -32,7 +32,7 @@ SELECT 'Statistiques Users' as Check_Type,
        COUNT(CASE WHEN Role = 'Admin' THEN 1 END) as Admin_Users
 FROM Users;
 
--- 4. Vérifier les index uniques
+-- 4. VÃ©rifier les index uniques
 SELECT 'Index uniques' as Check_Type,
        i.name as Index_Name,
        c.name as Column_Name
@@ -42,3 +42,4 @@ JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
 WHERE i.object_id = OBJECT_ID('Users') 
   AND i.is_unique = 1
 ORDER BY i.name, ic.key_ordinal;
+

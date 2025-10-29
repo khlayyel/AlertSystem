@@ -1,6 +1,6 @@
--- Vérification que la colonne ExternalRecipientId a été supprimée
+﻿-- VÃ©rification que la colonne ExternalRecipientId a Ã©tÃ© supprimÃ©e
 
--- 1. Vérifier que la colonne ExternalRecipientId n'existe plus
+-- 1. VÃ©rifier que la colonne ExternalRecipientId n'existe plus
 SELECT 'Colonne ExternalRecipientId existe encore' as Check_Type,
        COUNT(*) as Count
 FROM INFORMATION_SCHEMA.COLUMNS 
@@ -16,7 +16,7 @@ FROM INFORMATION_SCHEMA.COLUMNS
 WHERE TABLE_NAME = 'Destinataire'
 ORDER BY ORDINAL_POSITION;
 
--- 3. Vérifier qu'il n'y a plus de duplications
+-- 3. VÃ©rifier qu'il n'y a plus de duplications
 SELECT 'Duplications dans Destinataire' as Check_Type,
        AlerteId, 
        COUNT(*) as Count
@@ -24,15 +24,15 @@ FROM Destinataire
 GROUP BY AlerteId 
 HAVING COUNT(*) > 1;
 
--- 4. Statistiques générales
+-- 4. Statistiques gÃ©nÃ©rales
 SELECT 'Statistiques finales' as Check_Type,
        (SELECT COUNT(*) FROM Alerte) as Total_Alertes,
        (SELECT COUNT(*) FROM Destinataire) as Total_Destinataires,
        (SELECT COUNT(DISTINCT AlerteId) FROM Destinataire) as Alertes_Avec_Destinataires;
 
--- 5. Afficher quelques exemples de données nettoyées
+-- 5. Afficher quelques exemples de donnÃ©es nettoyÃ©es
 SELECT TOP 10 
-       'Exemples de données finales' as Check_Type,
+       'Exemples de donnÃ©es finales' as Check_Type,
        d.DestinataireId,
        d.AlerteId,
        d.EtatAlerte,
@@ -41,3 +41,4 @@ SELECT TOP 10
 FROM Destinataire d
 JOIN Alerte a ON d.AlerteId = a.AlerteId
 ORDER BY d.DestinataireId;
+

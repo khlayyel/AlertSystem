@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Serilog;
 using AlertSystem.WEB.Services;
@@ -82,9 +82,11 @@ builder.Services.AddScoped<IPasswordService, PasswordService>();
 builder.Services.AddSignalR();
 
 // Add database services
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? 
-                      Environment.GetEnvironmentVariable("CONNECTIONSTRINGS__DEFAULTCONNECTION") ??
-                      "Server=(localdb)\\MSSQLLocalDB;Database=AlertSystemDB;Trusted_Connection=True;MultipleActiveResultSets=true";
+var connectionString = Environment.GetEnvironmentVariable("CONNECTIONSTRINGS__DEFAULTCONNECTION");
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException("Missing CONNECTIONSTRINGS__DEFAULTCONNECTION");
+}
 
 builder.Services.AddDbContext<AlertSystem.Data.ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
@@ -130,3 +132,4 @@ app.MapControllerRoute(
 
 
 app.Run();
+

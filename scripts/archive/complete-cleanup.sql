@@ -1,5 +1,5 @@
--- Complete cleanup: Remove ALL triggers and NotificationOutbox table
-USE AlertSystemDB;
+﻿-- Complete cleanup: Remove ALL triggers and NotificationOutbox table
+USE BELVEDERE_17_10_2025;
 GO
 
 PRINT 'Starting complete cleanup of triggers and NotificationOutbox table...';
@@ -82,3 +82,4 @@ PRINT '- NotificationOutbox table: ' + CASE WHEN OBJECT_ID('dbo.NotificationOutb
 PRINT '- ProcessedByWorker column: ' + CASE WHEN EXISTS(SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('dbo.Alerte') AND name = 'ProcessedByWorker') THEN 'EXISTS' ELSE 'MISSING' END;
 
 PRINT 'Complete cleanup finished. System is now ready for AlertePollingWorker only.';
+

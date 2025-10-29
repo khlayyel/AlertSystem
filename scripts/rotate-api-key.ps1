@@ -1,8 +1,8 @@
-param(
+﻿param(
     [Parameter(Mandatory=$true)]
     [string]$ApiClientId,
     [string]$Server = "(localdb)\\MSSQLLocalDB",
-    [string]$Database = "AlertSystemDB"
+    [string]$Database = "BELVEDERE_17_10_2025"
 )
 
 function New-RandomApiKey {
@@ -41,3 +41,4 @@ Write-Host "NEW PLAINTEXT API KEY (copy and keep safe):" -ForegroundColor Yellow
 Write-Host $newKey -ForegroundColor Green
 Write-Host "" -ForegroundColor Cyan
 Write-Host "IMPORTANT: Update your applications with the new key immediately!" -ForegroundColor Red
+

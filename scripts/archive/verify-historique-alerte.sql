@@ -1,4 +1,4 @@
--- Vérifier la nouvelle structure HistoriqueAlerte après restructuration
+﻿-- VÃ©rifier la nouvelle structure HistoriqueAlerte aprÃ¨s restructuration
 SELECT 
     COLUMN_NAME,
     DATA_TYPE,
@@ -8,7 +8,7 @@ FROM INFORMATION_SCHEMA.COLUMNS
 WHERE TABLE_NAME = 'HistoriqueAlerte'
 ORDER BY ORDINAL_POSITION;
 
--- Vérifier les données dans HistoriqueAlerte
+-- VÃ©rifier les donnÃ©es dans HistoriqueAlerte
 SELECT 
     DestinataireId,
     AlerteId,
@@ -22,7 +22,7 @@ SELECT
 FROM HistoriqueAlerte
 ORDER BY AlerteId, DestinataireId;
 
--- Vérifier que les colonnes ont été supprimées de la table Alerte
+-- VÃ©rifier que les colonnes ont Ã©tÃ© supprimÃ©es de la table Alerte
 SELECT 
     COLUMN_NAME
 FROM INFORMATION_SCHEMA.COLUMNS 
@@ -40,7 +40,7 @@ FROM HistoriqueAlerte
 GROUP BY AlerteId
 ORDER BY AlerteId;
 
--- Vérifier les relations avec Users
+-- VÃ©rifier les relations avec Users
 SELECT 
     h.DestinataireId,
     h.AlerteId,
@@ -52,3 +52,4 @@ SELECT
 FROM HistoriqueAlerte h
 LEFT JOIN Users u ON h.DestinataireUserId = u.UserId
 ORDER BY h.AlerteId, h.DestinataireId;
+

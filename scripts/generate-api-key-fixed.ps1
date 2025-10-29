@@ -1,7 +1,7 @@
-param(
+﻿param(
     [string]$Name = "Test Hotel",
     [string]$Server = "(localdb)\MSSQLLocalDB",
-    [string]$Database = "AlertSystemDB"
+    [string]$Database = "BELVEDERE_17_10_2025"
 )
 
 function New-RandomApiKey {
@@ -67,3 +67,4 @@ Write-Host "curl -H ""X-API-KEY: $key"" http://localhost:5002/api/v1/keys/valida
 Write-Host ""
 Write-Host "IMPORTANT: This key is shown only once!" -ForegroundColor Red
 Write-Host "Save it in a secure location." -ForegroundColor Red
+

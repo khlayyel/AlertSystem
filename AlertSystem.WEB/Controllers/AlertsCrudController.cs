@@ -198,7 +198,6 @@ namespace AlertSystem.WEB.Controllers
                 {
                     foreach (var userId in userIds)
                     {
-                        var user = await _db.DefUtilisateurs.FindAsync(userId);
                         var alertRecord = new AlertSystem.Entities.Entities.Alerte
                         {
                             AlertGroupId = alertGroupId,
@@ -210,7 +209,7 @@ namespace AlertSystem.WEB.Controllers
                             EtatAlerteId = 1, // Non Lu
                             PlateformeEnvoieId = 3, // Desktop
                             ExpediteurId = currentUserId.Value, // Set sender ID
-                            DestinataireUserId = userId,
+                            DestinataireUserId = (decimal)userId,
                             DestinataireDesktop = null, // DesktopDeviceToken not available in DefUtilisateur
                             ProcessedByWorker = false // Let WatcherWorker process this
                         };
@@ -233,6 +232,9 @@ namespace AlertSystem.WEB.Controllers
                     if (currentUserIdForKpi.HasValue)
                     {
                         await _KpiUpdateService.SendOutboxKpiUpdateAsync(currentUserIdForKpi.Value);
+                        // Broadcast KPI refresh to sender
+                        await _hubContext.Clients.Group($"user_{currentUserIdForKpi.Value}")
+                            .SendAsync("UpdateKpis");
                     }
                 }
                 catch (Exception ex)
@@ -268,7 +270,7 @@ namespace AlertSystem.WEB.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "AlertsCrud/Send failed with exception");
-                return StatusCode(500, ex.Message);
+                return StatusCode(500, ex.ToString());
             }
         }
 

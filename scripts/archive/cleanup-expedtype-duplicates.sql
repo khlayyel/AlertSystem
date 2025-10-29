@@ -1,7 +1,7 @@
--- Script pour supprimer les doublons dans la table ExpedType
+﻿-- Script pour supprimer les doublons dans la table ExpedType
 -- Garder seulement les IDs les plus bas pour chaque type
 
--- 1. Vérifier les doublons existants
+-- 1. VÃ©rifier les doublons existants
 SELECT 
     ExpedType,
     COUNT(*) as Count,
@@ -11,10 +11,10 @@ FROM ExpedType
 GROUP BY ExpedType
 HAVING COUNT(*) > 1;
 
--- 2. Voir toutes les données avant nettoyage
+-- 2. Voir toutes les donnÃ©es avant nettoyage
 SELECT * FROM ExpedType ORDER BY ExpedTypeId;
 
--- 3. Vérifier les références dans la table Alerte
+-- 3. VÃ©rifier les rÃ©fÃ©rences dans la table Alerte
 SELECT 
     a.ExpedTypeId,
     et.ExpedType,
@@ -24,25 +24,25 @@ LEFT JOIN ExpedType et ON a.ExpedTypeId = et.ExpedTypeId
 GROUP BY a.ExpedTypeId, et.ExpedType
 ORDER BY a.ExpedTypeId;
 
--- 4. Mettre à jour les références dans Alerte pour pointer vers les IDs les plus bas
--- Remplacer ExpedTypeId=3 (Humain dupliqué) par ExpedTypeId=1 (Humain original)
+-- 4. Mettre Ã  jour les rÃ©fÃ©rences dans Alerte pour pointer vers les IDs les plus bas
+-- Remplacer ExpedTypeId=3 (Humain dupliquÃ©) par ExpedTypeId=1 (Humain original)
 UPDATE Alerte 
 SET ExpedTypeId = 1 
 WHERE ExpedTypeId = 3;
 
--- Remplacer ExpedTypeId=4 (Service dupliqué) par ExpedTypeId=2 (Service original)
+-- Remplacer ExpedTypeId=4 (Service dupliquÃ©) par ExpedTypeId=2 (Service original)
 UPDATE Alerte 
 SET ExpedTypeId = 2 
 WHERE ExpedTypeId = 4;
 
 -- 5. Supprimer les doublons (garder les IDs les plus bas)
-DELETE FROM ExpedType WHERE ExpedTypeId = 3; -- Humain dupliqué
-DELETE FROM ExpedType WHERE ExpedTypeId = 4; -- Service dupliqué
+DELETE FROM ExpedType WHERE ExpedTypeId = 3; -- Humain dupliquÃ©
+DELETE FROM ExpedType WHERE ExpedTypeId = 4; -- Service dupliquÃ©
 
--- 6. Vérifier le résultat final
+-- 6. VÃ©rifier le rÃ©sultat final
 SELECT * FROM ExpedType ORDER BY ExpedTypeId;
 
--- 7. Vérifier que les références sont correctes
+-- 7. VÃ©rifier que les rÃ©fÃ©rences sont correctes
 SELECT 
     a.ExpedTypeId,
     et.ExpedType,
@@ -52,4 +52,5 @@ LEFT JOIN ExpedType et ON a.ExpedTypeId = et.ExpedTypeId
 GROUP BY a.ExpedTypeId, et.ExpedType
 ORDER BY a.ExpedTypeId;
 
-PRINT 'Nettoyage des doublons ExpedType terminé avec succès !';
+PRINT 'Nettoyage des doublons ExpedType terminÃ© avec succÃ¨s !';
+

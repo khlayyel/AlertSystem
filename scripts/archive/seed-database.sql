@@ -1,14 +1,14 @@
--- Database seeding script for AlertSystem
+﻿-- Database seeding script for AlertSystem
 -- Run this to ensure reference tables have required data
 
-USE AlertSystemDB;
+USE BELVEDERE_17_10_2025;
 
 -- Seed AlertType table
-IF NOT EXISTS (SELECT 1 FROM AlertType WHERE AlertType = 'acquittementNécessaire')
-    INSERT INTO AlertType (AlertType) VALUES ('acquittementNécessaire');
+IF NOT EXISTS (SELECT 1 FROM AlertType WHERE AlertType = 'acquittementNÃ©cessaire')
+    INSERT INTO AlertType (AlertType) VALUES ('acquittementNÃ©cessaire');
 
-IF NOT EXISTS (SELECT 1 FROM AlertType WHERE AlertType = 'acquittementNonNécessaire')
-    INSERT INTO AlertType (AlertType) VALUES ('acquittementNonNécessaire');
+IF NOT EXISTS (SELECT 1 FROM AlertType WHERE AlertType = 'acquittementNonNÃ©cessaire')
+    INSERT INTO AlertType (AlertType) VALUES ('acquittementNonNÃ©cessaire');
 
 -- Seed ExpedType table
 IF NOT EXISTS (SELECT 1 FROM ExpedType WHERE ExpedType = 'Humain')
@@ -21,11 +21,11 @@ IF NOT EXISTS (SELECT 1 FROM ExpedType WHERE ExpedType = 'Service')
 IF NOT EXISTS (SELECT 1 FROM Statut WHERE Statut = 'En Cours')
     INSERT INTO Statut (Statut) VALUES ('En Cours');
 
-IF NOT EXISTS (SELECT 1 FROM Statut WHERE Statut = 'Terminé')
-    INSERT INTO Statut (Statut) VALUES ('Terminé');
+IF NOT EXISTS (SELECT 1 FROM Statut WHERE Statut = 'TerminÃ©')
+    INSERT INTO Statut (Statut) VALUES ('TerminÃ©');
 
-IF NOT EXISTS (SELECT 1 FROM Statut WHERE Statut = 'Échoué')
-    INSERT INTO Statut (Statut) VALUES ('Échoué');
+IF NOT EXISTS (SELECT 1 FROM Statut WHERE Statut = 'Ã‰chouÃ©')
+    INSERT INTO Statut (Statut) VALUES ('Ã‰chouÃ©');
 
 -- Seed Etat table
 IF NOT EXISTS (SELECT 1 FROM Etat WHERE EtatAlerte = 'Non Lu')
@@ -35,3 +35,4 @@ IF NOT EXISTS (SELECT 1 FROM Etat WHERE EtatAlerte = 'Lu')
     INSERT INTO Etat (EtatAlerte) VALUES ('Lu');
 
 PRINT 'Database seeding completed successfully!';
+

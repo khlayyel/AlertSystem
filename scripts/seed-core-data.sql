@@ -1,9 +1,9 @@
--- Seed minimal reference data for AlertSystem
+﻿-- Seed minimal reference data for AlertSystem
 SET NOCOUNT ON;
 
 IF NOT EXISTS (SELECT 1 FROM Statut)
 BEGIN
-    INSERT INTO Statut (StatutId, Statut) VALUES (1,'En cours'),(2,'Envoyé'),(3,'Annulé'),(4,'Échoué');
+    INSERT INTO Statut (StatutId, Statut) VALUES (1,'En cours'),(2,'EnvoyÃ©'),(3,'AnnulÃ©'),(4,'Ã‰chouÃ©');
 END
 
 IF NOT EXISTS (SELECT 1 FROM Etat)
@@ -13,12 +13,13 @@ END
 
 IF NOT EXISTS (SELECT 1 FROM AlertType)
 BEGIN
-    INSERT INTO AlertType (AlertTypeId, AlertType) VALUES (1,'acquittementNécessaire'),(2,'information');
+    INSERT INTO AlertType (AlertTypeId, AlertType) VALUES (1,'acquittementNÃ©cessaire'),(2,'information');
 END
 
 IF NOT EXISTS (SELECT 1 FROM PlateformeEnvoie)
 BEGIN
     INSERT INTO PlateformeEnvoie (PlateformeId, Plateforme) VALUES (1,'Email'),(2,'WhatsApp'),(3,'Desktop');
 END
+
 
 

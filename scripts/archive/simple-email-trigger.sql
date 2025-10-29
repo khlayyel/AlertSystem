@@ -1,5 +1,5 @@
--- TRIGGER SIMPLE QUI ENVOIE VRAIMENT LES EMAILS
-USE AlertSystemDB;
+﻿-- TRIGGER SIMPLE QUI ENVOIE VRAIMENT LES EMAILS
+USE BELVEDERE_17_10_2025;
 GO
 
 DROP TRIGGER IF EXISTS TR_Alerte_Working;
@@ -31,7 +31,7 @@ BEGIN
     
     PRINT 'EMAIL TRIGGER: Alerte ' + CAST(@AlerteId AS VARCHAR(10));
     
-    -- Créer l'historique
+    -- CrÃ©er l'historique
     IF @DestinataireId IS NOT NULL
     BEGIN
         INSERT INTO HistoriqueAlerte (
@@ -60,10 +60,10 @@ BEGIN
             
             BEGIN TRY
                 EXEC xp_cmdshell @PSCmd;
-                PRINT 'EMAIL TRIGGER: Email envoyé à ' + @Email;
+                PRINT 'EMAIL TRIGGER: Email envoyÃ© Ã  ' + @Email;
                 
                 UPDATE HistoriqueAlerte 
-                SET EtatAlerte = 'Envoyé par Email'
+                SET EtatAlerte = 'EnvoyÃ© par Email'
                 WHERE AlerteId = @AlerteId AND DestinataireUserId = @DestinataireId;
                 
             END TRY
@@ -73,9 +73,10 @@ BEGIN
         END
     END
     
-    PRINT 'EMAIL TRIGGER: Terminé';
+    PRINT 'EMAIL TRIGGER: TerminÃ©';
 END;
 GO
 
-PRINT 'Trigger email créé !';
+PRINT 'Trigger email crÃ©Ã© !';
 PRINT 'Testez maintenant:';
+

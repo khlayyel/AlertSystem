@@ -1,4 +1,4 @@
-namespace AlertSystem.Utils.Configuration
+﻿namespace AlertSystem.Utils.Configuration
 {
     /// <summary>
     /// Centralized configuration constants to eliminate hardcoded values across the solution
@@ -35,7 +35,7 @@ namespace AlertSystem.Utils.Configuration
 
         // Database Configuration
         public const string CONNECTION_STRING_KEY = "CONNECTIONSTRINGS__DEFAULTCONNECTION";
-        public const string DEFAULT_CONNECTION_STRING = "Server=(localdb)\\MSSQLLocalDB;Database=AlertSystemDB;Trusted_Connection=True;MultipleActiveResultSets=true";
+        public const string DEFAULT_CONNECTION_STRING = "";
 
         // Base URL Configuration
         public const string BASE_URL_KEY = "BASE_URL";
@@ -43,7 +43,7 @@ namespace AlertSystem.Utils.Configuration
 
         // Hangfire Configuration
         public const string HANGFIRE_CONNECTION_STRING_KEY = "HANGFIRE_CONNECTION_STRING";
-        public const string DEFAULT_HANGFIRE_CONNECTION_STRING = "Server=(localdb)\\MSSQLLocalDB;Database=AlertSystemDB;Trusted_Connection=True;MultipleActiveResultSets=true";
+        public const string DEFAULT_HANGFIRE_CONNECTION_STRING = "";
 
         // Logging Configuration
         public const string LOG_LEVEL_KEY = "Logging:LogLevel:Default";
@@ -73,3 +73,4 @@ namespace AlertSystem.Utils.Configuration
         public const string SIGNALR_HUB_PATH = "/notifications";
     }
 }
+

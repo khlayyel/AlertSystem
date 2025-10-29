@@ -1,5 +1,5 @@
--- TRIGGER SIMPLE ET FONCTIONNEL
-USE AlertSystemDB;
+﻿-- TRIGGER SIMPLE ET FONCTIONNEL
+USE BELVEDERE_17_10_2025;
 GO
 
 -- Supprimer tous les anciens triggers
@@ -11,7 +11,7 @@ DROP TRIGGER IF EXISTS TR_Alerte_Real_Email_Send;
 DROP TRIGGER IF EXISTS TR_Alerte_Final_Working;
 GO
 
--- Créer le trigger simple qui fonctionne
+-- CrÃ©er le trigger simple qui fonctionne
 CREATE TRIGGER TR_Alerte_Working
 ON Alerte
 AFTER INSERT
@@ -35,7 +35,7 @@ BEGIN
     
     PRINT 'TRIGGER: Alerte ' + CAST(@AlerteId AS VARCHAR(10)) + ' - ' + @TitreAlerte;
     
-    -- Créer l'historique
+    -- CrÃ©er l'historique
     IF @DestinataireId IS NOT NULL
     BEGIN
         INSERT INTO HistoriqueAlerte (
@@ -49,7 +49,7 @@ BEGIN
         FROM Users u
         WHERE u.UserId = @DestinataireId AND u.IsActive = 1;
         
-        PRINT 'TRIGGER: Historique créé pour utilisateur ' + CAST(@DestinataireId AS VARCHAR(10));
+        PRINT 'TRIGGER: Historique crÃ©Ã© pour utilisateur ' + CAST(@DestinataireId AS VARCHAR(10));
     END
     ELSE
     BEGIN
@@ -64,12 +64,13 @@ BEGIN
         FROM Users u
         WHERE u.IsActive = 1;
         
-        PRINT 'TRIGGER: Historique créé pour tous les utilisateurs';
+        PRINT 'TRIGGER: Historique crÃ©Ã© pour tous les utilisateurs';
     END
     
-    PRINT 'TRIGGER: Traitement terminé';
+    PRINT 'TRIGGER: Traitement terminÃ©';
 END;
 GO
 
-PRINT 'Trigger TR_Alerte_Working créé avec succès !';
+PRINT 'Trigger TR_Alerte_Working crÃ©Ã© avec succÃ¨s !';
 PRINT 'Test maintenant avec une insertion...';
+

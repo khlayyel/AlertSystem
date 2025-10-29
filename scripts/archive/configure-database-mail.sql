@@ -1,5 +1,5 @@
--- Configuration de Database Mail pour envoi d'emails direct depuis SQL Server
--- À exécuter en tant qu'administrateur SQL Server
+﻿-- Configuration de Database Mail pour envoi d'emails direct depuis SQL Server
+-- Ã€ exÃ©cuter en tant qu'administrateur SQL Server
 
 USE msdb;
 GO
@@ -10,19 +10,19 @@ RECONFIGURE;
 EXEC sp_configure 'Database Mail XPs', 1;
 RECONFIGURE;
 
--- Créer un profil de messagerie
+-- CrÃ©er un profil de messagerie
 IF NOT EXISTS (SELECT * FROM msdb.dbo.sysmail_profile WHERE name = 'AlertSystem')
 BEGIN
     EXEC msdb.dbo.sysmail_add_profile_sp
         @profile_name = 'AlertSystem',
         @description = 'Profil pour AlertSystem notifications';
     
-    PRINT 'Profil AlertSystem créé';
+    PRINT 'Profil AlertSystem crÃ©Ã©';
 END
 ELSE
-    PRINT 'Profil AlertSystem existe déjà';
+    PRINT 'Profil AlertSystem existe dÃ©jÃ ';
 
--- Créer un compte de messagerie (Gmail SMTP)
+-- CrÃ©er un compte de messagerie (Gmail SMTP)
 IF NOT EXISTS (SELECT * FROM msdb.dbo.sysmail_account WHERE name = 'AlertSystem_Gmail')
 BEGIN
     EXEC msdb.dbo.sysmail_add_account_sp
@@ -34,12 +34,12 @@ BEGIN
         @port = 587,
         @enable_ssl = 1,
         @username = 'khalilouerghemmi@gmail.com',
-        @password = 'VOTRE_MOT_DE_PASSE_APP_GMAIL'; -- À remplacer par votre mot de passe d'application
+        @password = 'VOTRE_MOT_DE_PASSE_APP_GMAIL'; -- Ã€ remplacer par votre mot de passe d'application
     
-    PRINT 'Compte Gmail créé';
+    PRINT 'Compte Gmail crÃ©Ã©';
 END
 ELSE
-    PRINT 'Compte Gmail existe déjà';
+    PRINT 'Compte Gmail existe dÃ©jÃ ';
 
 -- Associer le compte au profil
 IF NOT EXISTS (SELECT * FROM msdb.dbo.sysmail_profileaccount pa 
@@ -52,10 +52,10 @@ BEGIN
         @account_name = 'AlertSystem_Gmail',
         @sequence_number = 1;
     
-    PRINT 'Compte associé au profil';
+    PRINT 'Compte associÃ© au profil';
 END
 ELSE
-    PRINT 'Compte déjà associé au profil';
+    PRINT 'Compte dÃ©jÃ  associÃ© au profil';
 
 -- Donner les permissions au profil
 EXEC msdb.dbo.sysmail_add_principalprofile_sp
@@ -64,7 +64,7 @@ EXEC msdb.dbo.sysmail_add_principalprofile_sp
     @is_default = 1;
 
 PRINT '';
-PRINT '=== CONFIGURATION DATABASE MAIL TERMINÉE ===';
+PRINT '=== CONFIGURATION DATABASE MAIL TERMINÃ‰E ===';
 PRINT '';
 PRINT 'IMPORTANT: Remplacez VOTRE_MOT_DE_PASSE_APP_GMAIL par votre vrai mot de passe d''application Gmail';
 PRINT '';
@@ -74,3 +74,4 @@ PRINT '    @profile_name = ''AlertSystem'',';
 PRINT '    @recipients = ''khalilouerghemmi@gmail.com'',';
 PRINT '    @subject = ''Test Database Mail'',';
 PRINT '    @body = ''Test envoi depuis SQL Server'';';
+

@@ -1,10 +1,10 @@
--- CORRECTION COMPLÈTE DU SYSTÈME DE TRIGGERS
--- Ce script corrige tous les problèmes et crée un système fonctionnel
+﻿-- CORRECTION COMPLÃˆTE DU SYSTÃˆME DE TRIGGERS
+-- Ce script corrige tous les problÃ¨mes et crÃ©e un systÃ¨me fonctionnel
 
-USE AlertSystemDB;
+USE BELVEDERE_17_10_2025;
 GO
 
-PRINT '🔧 ÉTAPE 1: Nettoyage complet des anciens triggers';
+PRINT 'ðŸ”§ Ã‰TAPE 1: Nettoyage complet des anciens triggers';
 
 -- Supprimer TOUS les anciens triggers
 IF EXISTS (SELECT * FROM sys.triggers WHERE name = 'TR_Alerte_Rules')
@@ -22,11 +22,11 @@ IF EXISTS (SELECT * FROM sys.triggers WHERE name = 'TR_Alerte_Hybrid_Send')
 IF EXISTS (SELECT * FROM sys.triggers WHERE name = 'TR_Alerte_Real_Email_Send')
     DROP TRIGGER TR_Alerte_Real_Email_Send;
 
-PRINT '✅ Anciens triggers supprimés';
+PRINT 'âœ… Anciens triggers supprimÃ©s';
 
-PRINT '🔧 ÉTAPE 2: Création du trigger final fonctionnel';
+PRINT 'ðŸ”§ Ã‰TAPE 2: CrÃ©ation du trigger final fonctionnel';
 
--- Créer le trigger final qui fonctionne vraiment
+-- CrÃ©er le trigger final qui fonctionne vraiment
 CREATE OR ALTER TRIGGER TR_Alerte_Final_Working
 ON Alerte
 AFTER INSERT
@@ -41,7 +41,7 @@ BEGIN
     DECLARE @DestinataireId INT;
     DECLARE @PlateformeEnvoieId INT;
     
-    -- Récupérer les informations de l'alerte insérée
+    -- RÃ©cupÃ©rer les informations de l'alerte insÃ©rÃ©e
     SELECT 
         @AlerteId = AlerteId,
         @TitreAlerte = TitreAlerte,
@@ -51,13 +51,13 @@ BEGIN
         @PlateformeEnvoieId = PlateformeEnvoieId
     FROM inserted;
     
-    PRINT '🚀 TRIGGER FINAL: Nouvelle alerte détectée - ID: ' + CAST(@AlerteId AS VARCHAR(10));
-    PRINT '📧 TRIGGER FINAL: Titre: ' + @TitreAlerte;
+    PRINT 'ðŸš€ TRIGGER FINAL: Nouvelle alerte dÃ©tectÃ©e - ID: ' + CAST(@AlerteId AS VARCHAR(10));
+    PRINT 'ðŸ“§ TRIGGER FINAL: Titre: ' + @TitreAlerte;
     
-    -- TOUJOURS créer l'historique d'abord
+    -- TOUJOURS crÃ©er l'historique d'abord
     IF @DestinataireId IS NOT NULL
     BEGIN
-        -- Destinataire spécifique
+        -- Destinataire spÃ©cifique
         INSERT INTO HistoriqueAlerte (
             AlerteId, DestinataireUserId, EtatAlerte, DateLecture, RappelSuivant,
             DestinataireEmail, DestinatairePhoneNumber, DestinataireDesktop
@@ -69,7 +69,7 @@ BEGIN
         FROM Users u
         WHERE u.UserId = @DestinataireId AND u.IsActive = 1;
         
-        PRINT '✅ TRIGGER FINAL: Historique créé pour destinataire ' + CAST(@DestinataireId AS VARCHAR(10));
+        PRINT 'âœ… TRIGGER FINAL: Historique crÃ©Ã© pour destinataire ' + CAST(@DestinataireId AS VARCHAR(10));
     END
     ELSE
     BEGIN
@@ -86,7 +86,7 @@ BEGIN
         WHERE u.IsActive = 1;
         
         DECLARE @RecipientCount INT = @@ROWCOUNT;
-        PRINT '✅ TRIGGER FINAL: Historique créé pour ' + CAST(@RecipientCount AS VARCHAR(10)) + ' destinataires';
+        PRINT 'âœ… TRIGGER FINAL: Historique crÃ©Ã© pour ' + CAST(@RecipientCount AS VARCHAR(10)) + ' destinataires';
     END
     
     -- Essayer d'envoyer l'email (si plateforme Email ou NULL)
@@ -104,16 +104,16 @@ BEGIN
         
         BEGIN TRY
             EXEC xp_cmdshell @PSCmd;
-            PRINT '📨 TRIGGER FINAL: Commande email exécutée pour ' + @Email;
+            PRINT 'ðŸ“¨ TRIGGER FINAL: Commande email exÃ©cutÃ©e pour ' + @Email;
             
-            -- Marquer comme envoyé
+            -- Marquer comme envoyÃ©
             UPDATE HistoriqueAlerte 
-            SET EtatAlerte = 'Envoyé par Email'
+            SET EtatAlerte = 'EnvoyÃ© par Email'
             WHERE AlerteId = @AlerteId AND DestinataireUserId = @DestinataireId;
             
         END TRY
         BEGIN CATCH
-            PRINT '❌ TRIGGER FINAL: Erreur lors de l''envoi email';
+            PRINT 'âŒ TRIGGER FINAL: Erreur lors de l''envoi email';
             
             -- Marquer comme erreur
             UPDATE HistoriqueAlerte 
@@ -123,17 +123,17 @@ BEGIN
     END
     ELSE
     BEGIN
-        PRINT '📝 TRIGGER FINAL: Pas d''envoi email (plateforme=' + ISNULL(CAST(@PlateformeEnvoieId AS VARCHAR(10)), 'NULL') + ')';
+        PRINT 'ðŸ“ TRIGGER FINAL: Pas d''envoi email (plateforme=' + ISNULL(CAST(@PlateformeEnvoieId AS VARCHAR(10)), 'NULL') + ')';
     END
     
-    PRINT '🎉 TRIGGER FINAL: Traitement terminé pour alerte ' + CAST(@AlerteId AS VARCHAR(10));
+    PRINT 'ðŸŽ‰ TRIGGER FINAL: Traitement terminÃ© pour alerte ' + CAST(@AlerteId AS VARCHAR(10));
     PRINT '================================================';
 END;
 GO
 
-PRINT '✅ TRIGGER FINAL CRÉÉ AVEC SUCCÈS !';
+PRINT 'âœ… TRIGGER FINAL CRÃ‰Ã‰ AVEC SUCCÃˆS !';
 PRINT '';
-PRINT '🧪 TESTS AUTOMATIQUES:';
+PRINT 'ðŸ§ª TESTS AUTOMATIQUES:';
 
 -- Test 1: Alerte pour Khalil avec Email
 PRINT 'Test 1: Alerte Email pour Khalil...';
@@ -143,7 +143,7 @@ INSERT INTO Alerte (
     DestinataireId, PlateformeEnvoieId
 ) VALUES (
     2, 1, 1, 2, 'TEST FINAL - Email Khalil', 
-    'Test du trigger final corrigé - Email pour Khalil', 
+    'Test du trigger final corrigÃ© - Email pour Khalil', 
     GETDATE(), 1, 2, 1, 1
 );
 
@@ -158,19 +158,19 @@ INSERT INTO Alerte (
     DestinataireId, PlateformeEnvoieId
 ) VALUES (
     2, 1, 1, 2, 'TEST FINAL - WhatsApp Zied', 
-    'Test du trigger final corrigé - WhatsApp pour Zied', 
+    'Test du trigger final corrigÃ© - WhatsApp pour Zied', 
     GETDATE(), 1, 2, 2, 2
 );
 
 PRINT '';
-PRINT '📊 VÉRIFICATION DES RÉSULTATS:';
+PRINT 'ðŸ“Š VÃ‰RIFICATION DES RÃ‰SULTATS:';
 
--- Voir les 2 dernières alertes créées
+-- Voir les 2 derniÃ¨res alertes crÃ©Ã©es
 SELECT TOP 2 AlerteId, TitreAlerte, DateCreationAlerte 
 FROM Alerte 
 ORDER BY AlerteId DESC;
 
--- Voir l'historique créé
+-- Voir l'historique crÃ©Ã©
 SELECT 
     h.AlerteId,
     h.DestinataireUserId,
@@ -188,9 +188,10 @@ WHERE h.AlerteId IN (
 ORDER BY h.AlerteId DESC;
 
 PRINT '';
-PRINT '🎯 SYSTÈME CORRIGÉ ET TESTÉ !';
-PRINT 'Maintenant vous pouvez insérer des alertes et elles seront automatiquement traitées.';
+PRINT 'ðŸŽ¯ SYSTÃˆME CORRIGÃ‰ ET TESTÃ‰ !';
+PRINT 'Maintenant vous pouvez insÃ©rer des alertes et elles seront automatiquement traitÃ©es.';
 PRINT '';
-PRINT '📧 Pour tester manuellement:';
+PRINT 'ðŸ“§ Pour tester manuellement:';
 PRINT 'INSERT INTO Alerte (AlertTypeId, AppId, ExpedTypeId, ExpediteurId, TitreAlerte, DescriptionAlerte, DateCreationAlerte, StatutId, EtatAlerteId, DestinataireId, PlateformeEnvoieId)';
 PRINT 'VALUES (2, 1, 1, 2, ''Mon Test'', ''Description test'', GETDATE(), 1, 2, 1, 1);';
+

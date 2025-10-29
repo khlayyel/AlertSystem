@@ -1,7 +1,7 @@
-param(
+﻿param(
     [string]$Name = "Test Hotel",
     [string]$Server = "(localdb)\\MSSQLLocalDB",
-    [string]$Database = "AlertSystemDB"
+    [string]$Database = "BELVEDERE_17_10_2025"
 )
 
 function New-RandomApiKey {
@@ -34,5 +34,6 @@ sqlcmd -S $Server -d $Database -Q $sql | Out-Host
 Write-Host "" -ForegroundColor Cyan
 Write-Host "PLAINTEXT API KEY (copy and keep safe):" -ForegroundColor Yellow
 Write-Host $key -ForegroundColor Green
+
 
 

@@ -1,5 +1,5 @@
--- Trigger hybride : essaie l'API puis méthode alternative
-USE AlertSystemDB;
+﻿-- Trigger hybride : essaie l'API puis mÃ©thode alternative
+USE BELVEDERE_17_10_2025;
 GO
 
 -- Supprimer les anciens triggers
@@ -15,7 +15,7 @@ IF EXISTS (SELECT * FROM sys.triggers WHERE name = 'TR_Alerte_AutoSend')
     DROP TRIGGER TR_Alerte_AutoSend;
 GO
 
--- Créer le trigger hybride
+-- CrÃ©er le trigger hybride
 CREATE OR ALTER TRIGGER TR_Alerte_Hybrid_Send
 ON Alerte
 AFTER INSERT
@@ -30,7 +30,7 @@ BEGIN
     DECLARE @DestinataireId INT;
     DECLARE @PlateformeEnvoieId INT;
     
-    -- Récupérer les informations de l'alerte insérée
+    -- RÃ©cupÃ©rer les informations de l'alerte insÃ©rÃ©e
     SELECT 
         @AlerteId = AlerteId,
         @TitreAlerte = TitreAlerte,
@@ -40,10 +40,10 @@ BEGIN
         @PlateformeEnvoieId = PlateformeEnvoieId
     FROM inserted;
     
-    PRINT '🚀 TRIGGER HYBRID: Nouvelle alerte détectée - ID: ' + CAST(@AlerteId AS VARCHAR(10));
-    PRINT '📧 TRIGGER HYBRID: Titre: ' + @TitreAlerte;
+    PRINT 'ðŸš€ TRIGGER HYBRID: Nouvelle alerte dÃ©tectÃ©e - ID: ' + CAST(@AlerteId AS VARCHAR(10));
+    PRINT 'ðŸ“§ TRIGGER HYBRID: Titre: ' + @TitreAlerte;
     
-    -- Créer l'historique pour le destinataire
+    -- CrÃ©er l'historique pour le destinataire
     IF @DestinataireId IS NOT NULL
     BEGIN
         INSERT INTO HistoriqueAlerte (
@@ -57,7 +57,7 @@ BEGIN
         FROM Users u
         WHERE u.UserId = @DestinataireId AND u.IsActive = 1;
         
-        PRINT '✅ TRIGGER HYBRID: Destinataire ajouté à l''historique';
+        PRINT 'âœ… TRIGGER HYBRID: Destinataire ajoutÃ© Ã  l''historique';
     END
     ELSE
     BEGIN
@@ -74,10 +74,10 @@ BEGIN
         WHERE u.IsActive = 1;
         
         DECLARE @RecipientCount INT = @@ROWCOUNT;
-        PRINT '✅ TRIGGER HYBRID: ' + CAST(@RecipientCount AS VARCHAR(10)) + ' destinataires ajoutés';
+        PRINT 'âœ… TRIGGER HYBRID: ' + CAST(@RecipientCount AS VARCHAR(10)) + ' destinataires ajoutÃ©s';
     END
     
-    -- ÉTAPE 1: Essayer l'API (si l'application tourne)
+    -- Ã‰TAPE 1: Essayer l'API (si l'application tourne)
     DECLARE @url NVARCHAR(500) = 'http://localhost:5000/api/v1/alerts/send-by-id/' + CAST(@AlerteId AS VARCHAR(10));
     DECLARE @response NVARCHAR(MAX);
     DECLARE @status INT;
@@ -95,21 +95,21 @@ BEGIN
             EXEC sp_OADestroy @status;
             
             SET @apiSuccess = 1;
-            PRINT '🎯 TRIGGER HYBRID: API appelée avec succès !';
-            PRINT '📨 TRIGGER HYBRID: Alerte envoyée via l''application';
+            PRINT 'ðŸŽ¯ TRIGGER HYBRID: API appelÃ©e avec succÃ¨s !';
+            PRINT 'ðŸ“¨ TRIGGER HYBRID: Alerte envoyÃ©e via l''application';
         END
     END TRY
     BEGIN CATCH
-        PRINT '⚠️ TRIGGER HYBRID: API non disponible - utilisation méthode alternative';
+        PRINT 'âš ï¸ TRIGGER HYBRID: API non disponible - utilisation mÃ©thode alternative';
         SET @apiSuccess = 0;
     END CATCH
     
-    -- ÉTAPE 2: Si l'API a échoué, utiliser méthode alternative
+    -- Ã‰TAPE 2: Si l'API a Ã©chouÃ©, utiliser mÃ©thode alternative
     IF @apiSuccess = 0
     BEGIN
-        PRINT '🔄 TRIGGER HYBRID: Envoi via méthode alternative...';
+        PRINT 'ðŸ”„ TRIGGER HYBRID: Envoi via mÃ©thode alternative...';
         
-        -- Récupérer les infos du destinataire
+        -- RÃ©cupÃ©rer les infos du destinataire
         DECLARE @Email NVARCHAR(MAX);
         DECLARE @PhoneNumber NVARCHAR(MAX);
         DECLARE @FullName NVARCHAR(MAX);
@@ -120,40 +120,41 @@ BEGIN
             FROM Users WHERE UserId = @DestinataireId;
             
             -- Simuler l'envoi (vous pouvez remplacer par un vrai envoi)
-            PRINT '📧 TRIGGER HYBRID: Email simulé pour ' + @FullName + ' (' + @Email + ')';
-            PRINT '📱 TRIGGER HYBRID: WhatsApp simulé pour ' + @PhoneNumber;
-            PRINT '🖥️ TRIGGER HYBRID: Desktop notification simulée';
+            PRINT 'ðŸ“§ TRIGGER HYBRID: Email simulÃ© pour ' + @FullName + ' (' + @Email + ')';
+            PRINT 'ðŸ“± TRIGGER HYBRID: WhatsApp simulÃ© pour ' + @PhoneNumber;
+            PRINT 'ðŸ–¥ï¸ TRIGGER HYBRID: Desktop notification simulÃ©e';
             
-            -- Marquer comme envoyé dans l'historique
+            -- Marquer comme envoyÃ© dans l'historique
             UPDATE HistoriqueAlerte 
-            SET EtatAlerte = 'Envoyé (Trigger)'
+            SET EtatAlerte = 'EnvoyÃ© (Trigger)'
             WHERE AlerteId = @AlerteId AND DestinataireUserId = @DestinataireId;
         END
         ELSE
         BEGIN
-            PRINT '📧 TRIGGER HYBRID: Envoi simulé à tous les utilisateurs actifs';
+            PRINT 'ðŸ“§ TRIGGER HYBRID: Envoi simulÃ© Ã  tous les utilisateurs actifs';
             
-            -- Marquer tous comme envoyés
+            -- Marquer tous comme envoyÃ©s
             UPDATE HistoriqueAlerte 
-            SET EtatAlerte = 'Envoyé (Trigger)'
+            SET EtatAlerte = 'EnvoyÃ© (Trigger)'
             WHERE AlerteId = @AlerteId;
         END
         
-        PRINT '✅ TRIGGER HYBRID: Envoi alternatif terminé';
+        PRINT 'âœ… TRIGGER HYBRID: Envoi alternatif terminÃ©';
     END
     
-    PRINT '🎉 TRIGGER HYBRID: Traitement terminé pour alerte ' + CAST(@AlerteId AS VARCHAR(10));
+    PRINT 'ðŸŽ‰ TRIGGER HYBRID: Traitement terminÃ© pour alerte ' + CAST(@AlerteId AS VARCHAR(10));
     PRINT '================================================';
 END;
 GO
 
-PRINT '🚀 Trigger TR_Alerte_Hybrid_Send créé avec succès !';
+PRINT 'ðŸš€ Trigger TR_Alerte_Hybrid_Send crÃ©Ã© avec succÃ¨s !';
 PRINT '';
-PRINT '✅ FONCTIONNEMENT:';
+PRINT 'âœ… FONCTIONNEMENT:';
 PRINT '1. Essaie d''abord l''API (si l''application tourne)';
-PRINT '2. Si l''API échoue, utilise une méthode alternative';
-PRINT '3. Dans tous les cas, l''alerte est traitée !';
+PRINT '2. Si l''API Ã©choue, utilise une mÃ©thode alternative';
+PRINT '3. Dans tous les cas, l''alerte est traitÃ©e !';
 PRINT '';
-PRINT '🧪 POUR TESTER:';
+PRINT 'ðŸ§ª POUR TESTER:';
 PRINT 'INSERT INTO Alerte (AlertTypeId, AppId, ExpedTypeId, ExpediteurId, TitreAlerte, DescriptionAlerte, DateCreationAlerte, StatutId, EtatAlerteId, DestinataireId, PlateformeEnvoieId)';
 PRINT 'VALUES (2, 1, 1, 2, ''Test Hybrid'', ''Test sans application'', GETDATE(), 1, 2, 1, 1);';
+

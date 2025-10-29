@@ -72,6 +72,13 @@ namespace AlertSystem.WEB.Controllers
                     await hub.Clients.Group($"user_{alerte.DestinataireUserId.Value}").SendCoreAsync(
                         "ReceiveNotification",
                         new object[] { "AlertProcessed", new { alertId = alerte.AlertRecordId, status = "Lu" } });
+                    // KPIs refresh for the recipient
+                    await hub.Clients.Group($"user_{alerte.DestinataireUserId.Value}").SendAsync("UpdateKpis");
+                    // KPIs refresh for the sender as well
+                    if (alerte.ExpediteurId.HasValue)
+                    {
+                        await hub.Clients.Group($"user_{alerte.ExpediteurId.Value}").SendAsync("UpdateKpis");
+                    }
                 }
             }
             catch { }

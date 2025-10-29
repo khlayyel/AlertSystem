@@ -1,11 +1,11 @@
--- Créer une clé API de test pour les tests d'envoi automatique
+﻿-- CrÃ©er une clÃ© API de test pour les tests d'envoi automatique
 
--- 1. Supprimer l'ancienne clé de test si elle existe
+-- 1. Supprimer l'ancienne clÃ© de test si elle existe
 DELETE FROM ApiClients WHERE Name = 'Test Auto Send';
 
--- 2. Insérer une nouvelle clé API de test
--- La clé en clair sera: test-auto-send-key-123
--- Le hash BCrypt de cette clé est calculé avec un salt de 12 rounds
+-- 2. InsÃ©rer une nouvelle clÃ© API de test
+-- La clÃ© en clair sera: test-auto-send-key-123
+-- Le hash BCrypt de cette clÃ© est calculÃ© avec un salt de 12 rounds
 INSERT INTO ApiClients (
     Name,
     ApiKeyHash,
@@ -20,7 +20,7 @@ INSERT INTO ApiClients (
     1000
 );
 
--- 3. Vérifier que la clé a été créée
+-- 3. VÃ©rifier que la clÃ© a Ã©tÃ© crÃ©Ã©e
 SELECT 
     ApiClientId,
     Name,
@@ -31,7 +31,8 @@ SELECT
 FROM ApiClients
 WHERE Name = 'Test Auto Send';
 
-PRINT 'Clé API de test créée avec succès !';
+PRINT 'ClÃ© API de test crÃ©Ã©e avec succÃ¨s !';
 PRINT 'Nom du client: Test Auto Send';
-PRINT 'Clé API à utiliser: test-auto-send-key-123';
-PRINT 'Header à ajouter: X-Api-Key: test-auto-send-key-123';
+PRINT 'ClÃ© API Ã  utiliser: test-auto-send-key-123';
+PRINT 'Header Ã  ajouter: X-Api-Key: test-auto-send-key-123';
+

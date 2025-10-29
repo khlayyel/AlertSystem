@@ -131,6 +131,8 @@ public class ConsolidatedWorkerService : BackgroundService
                                             status = sendSuccess ? "Envoyé" : "Échoué",
                                             timestamp = DateTime.UtcNow
                                         });
+                                    await _hubContext.Clients.Group($"user_{alert.ExpediteurId.Value}")
+                                        .SendAsync("UpdateKpis");
                                 }
                                 
                                 if (alert.DestinataireUserId.HasValue)
@@ -142,6 +144,8 @@ public class ConsolidatedWorkerService : BackgroundService
                                             message = alert.DescriptionAlerte,
                                             timestamp = DateTime.UtcNow
                                         });
+                                    await _hubContext.Clients.Group($"user_{alert.DestinataireUserId.Value}")
+                                        .SendAsync("UpdateKpis");
                                 }
                             }
                             catch (Exception signalREx)

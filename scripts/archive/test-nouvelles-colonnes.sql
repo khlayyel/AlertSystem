@@ -1,7 +1,7 @@
--- Script de test pour les nouvelles colonnes PlateformeEnvoieId et DestinataireId
--- Utilisation : sqlcmd -S "(localdb)\MSSQLLocalDB" -d "AlertSystemDB" -i "test-nouvelles-colonnes.sql"
+﻿-- Script de test pour les nouvelles colonnes PlateformeEnvoieId et DestinataireId
+-- Utilisation : sqlcmd -S "(localdb)\MSSQLLocalDB" -d "BELVEDERE_17_10_2025" -i "test-nouvelles-colonnes.sql"
 
-USE AlertSystemDB;
+USE BELVEDERE_17_10_2025;
 GO
 
 PRINT '=== TEST DES NOUVELLES COLONNES ===';
@@ -34,7 +34,7 @@ INSERT INTO Alerte (
     1,
     2,
     'TEST - Alerte Email pour Zied',
-    'Cette alerte sera envoyée uniquement par Email à Zied Soltani',
+    'Cette alerte sera envoyÃ©e uniquement par Email Ã  Zied Soltani',
     GETDATE(),
     1,
     2,
@@ -44,7 +44,7 @@ INSERT INTO Alerte (
 );
 
 DECLARE @AlerteId1 INT = SCOPE_IDENTITY();
-PRINT 'Alerte créée avec ID: ' + CAST(@AlerteId1 AS VARCHAR(10));
+PRINT 'Alerte crÃ©Ã©e avec ID: ' + CAST(@AlerteId1 AS VARCHAR(10));
 PRINT '';
 
 -- Test 2: Alerte WhatsApp pour Sarah (UserId=3)
@@ -64,7 +64,7 @@ INSERT INTO Alerte (
     2,  -- Information
     1,  -- Humain
     'TEST - Alerte WhatsApp pour Sarah',
-    'Cette alerte sera envoyée uniquement par WhatsApp à Sarah Ben Ali',
+    'Cette alerte sera envoyÃ©e uniquement par WhatsApp Ã  Sarah Ben Ali',
     GETDATE(),
     1,
     2,
@@ -74,7 +74,7 @@ INSERT INTO Alerte (
 );
 
 DECLARE @AlerteId2 INT = SCOPE_IDENTITY();
-PRINT 'Alerte créée avec ID: ' + CAST(@AlerteId2 AS VARCHAR(10));
+PRINT 'Alerte crÃ©Ã©e avec ID: ' + CAST(@AlerteId2 AS VARCHAR(10));
 PRINT '';
 
 -- Test 3: Alerte Desktop pour Khalil (UserId=1)
@@ -94,7 +94,7 @@ INSERT INTO Alerte (
     1,  -- Obligatoire
     2,  -- Service
     'TEST - Alerte Desktop pour Khalil',
-    'Cette alerte sera envoyée uniquement par notification Desktop à Khalil',
+    'Cette alerte sera envoyÃ©e uniquement par notification Desktop Ã  Khalil',
     GETDATE(),
     1,
     2,
@@ -104,11 +104,11 @@ INSERT INTO Alerte (
 );
 
 DECLARE @AlerteId3 INT = SCOPE_IDENTITY();
-PRINT 'Alerte créée avec ID: ' + CAST(@AlerteId3 AS VARCHAR(10));
+PRINT 'Alerte crÃ©Ã©e avec ID: ' + CAST(@AlerteId3 AS VARCHAR(10));
 PRINT '';
 
--- Afficher les résultats avec jointures
-PRINT '6. RÉSULTATS - ALERTES AVEC PLATEFORMES ET DESTINATAIRES :';
+-- Afficher les rÃ©sultats avec jointures
+PRINT '6. RÃ‰SULTATS - ALERTES AVEC PLATEFORMES ET DESTINATAIRES :';
 SELECT 
     a.AlerteId,
     a.TitreAlerte,
@@ -125,9 +125,10 @@ WHERE a.AlerteId IN (@AlerteId1, @AlerteId2, @AlerteId3)
 ORDER BY a.AlerteId;
 
 PRINT '';
-PRINT '=== TESTS TERMINÉS AVEC SUCCÈS ! ===';
+PRINT '=== TESTS TERMINÃ‰S AVEC SUCCÃˆS ! ===';
 PRINT '';
 PRINT 'Maintenant vous pouvez :';
-PRINT '1. Spécifier la plateforme d''envoi (Email=1, WhatsApp=2, Desktop=3)';
-PRINT '2. Spécifier le destinataire spécifique (UserId)';
-PRINT '3. Combiner les deux pour un envoi ciblé';
+PRINT '1. SpÃ©cifier la plateforme d''envoi (Email=1, WhatsApp=2, Desktop=3)';
+PRINT '2. SpÃ©cifier le destinataire spÃ©cifique (UserId)';
+PRINT '3. Combiner les deux pour un envoi ciblÃ©';
+

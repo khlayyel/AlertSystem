@@ -1,4 +1,4 @@
--- Vérifier la structure finale de la table Users (simplifiée)
+﻿-- VÃ©rifier la structure finale de la table Users (simplifiÃ©e)
 SELECT 
     COLUMN_NAME,
     DATA_TYPE,
@@ -8,7 +8,7 @@ FROM INFORMATION_SCHEMA.COLUMNS
 WHERE TABLE_NAME = 'Users'
 ORDER BY ORDINAL_POSITION;
 
--- Vérifier les données existantes (structure finale)
+-- VÃ©rifier les donnÃ©es existantes (structure finale)
 SELECT 
     UserId,
     FullName,
@@ -25,3 +25,4 @@ SELECT
     COUNT(*) as Count
 FROM Users
 GROUP BY IsActive;
+

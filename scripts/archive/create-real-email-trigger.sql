@@ -1,5 +1,5 @@
--- Trigger avec envoi réel d'emails utilisant vos vraies informations Gmail
-USE AlertSystemDB;
+﻿-- Trigger avec envoi rÃ©el d'emails utilisant vos vraies informations Gmail
+USE BELVEDERE_17_10_2025;
 GO
 
 -- Supprimer l'ancien trigger
@@ -7,7 +7,7 @@ IF EXISTS (SELECT * FROM sys.triggers WHERE name = 'TR_Alerte_Hybrid_Send')
     DROP TRIGGER TR_Alerte_Hybrid_Send;
 GO
 
--- Créer le trigger avec envoi réel d'emails
+-- CrÃ©er le trigger avec envoi rÃ©el d'emails
 CREATE OR ALTER TRIGGER TR_Alerte_Real_Email_Send
 ON Alerte
 AFTER INSERT
@@ -22,7 +22,7 @@ BEGIN
     DECLARE @DestinataireId INT;
     DECLARE @PlateformeEnvoieId INT;
     
-    -- Récupérer les informations de l'alerte insérée
+    -- RÃ©cupÃ©rer les informations de l'alerte insÃ©rÃ©e
     SELECT 
         @AlerteId = AlerteId,
         @TitreAlerte = TitreAlerte,
@@ -32,10 +32,10 @@ BEGIN
         @PlateformeEnvoieId = PlateformeEnvoieId
     FROM inserted;
     
-    PRINT '🚀 TRIGGER REAL EMAIL: Nouvelle alerte - ID: ' + CAST(@AlerteId AS VARCHAR(10));
-    PRINT '📧 TRIGGER REAL EMAIL: Titre: ' + @TitreAlerte;
+    PRINT 'ðŸš€ TRIGGER REAL EMAIL: Nouvelle alerte - ID: ' + CAST(@AlerteId AS VARCHAR(10));
+    PRINT 'ðŸ“§ TRIGGER REAL EMAIL: Titre: ' + @TitreAlerte;
     
-    -- Créer l'historique pour le destinataire
+    -- CrÃ©er l'historique pour le destinataire
     IF @DestinataireId IS NOT NULL
     BEGIN
         INSERT INTO HistoriqueAlerte (
@@ -49,9 +49,9 @@ BEGIN
         FROM Users u
         WHERE u.UserId = @DestinataireId AND u.IsActive = 1;
         
-        PRINT '✅ TRIGGER REAL EMAIL: Destinataire ajouté à l''historique';
+        PRINT 'âœ… TRIGGER REAL EMAIL: Destinataire ajoutÃ© Ã  l''historique';
         
-        -- Récupérer les infos du destinataire
+        -- RÃ©cupÃ©rer les infos du destinataire
         DECLARE @Email NVARCHAR(MAX);
         DECLARE @PhoneNumber NVARCHAR(MAX);
         DECLARE @FullName NVARCHAR(MAX);
@@ -59,10 +59,10 @@ BEGIN
         SELECT @Email = Email, @PhoneNumber = PhoneNumber, @FullName = FullName
         FROM Users WHERE UserId = @DestinataireId;
         
-        -- Envoi Email réel (si plateforme = 1 ou NULL)
+        -- Envoi Email rÃ©el (si plateforme = 1 ou NULL)
         IF @PlateformeEnvoieId = 1 OR @PlateformeEnvoieId IS NULL
         BEGIN
-            -- Créer un fichier PowerShell temporaire pour éviter les problèmes de syntaxe
+            -- CrÃ©er un fichier PowerShell temporaire pour Ã©viter les problÃ¨mes de syntaxe
             DECLARE @PowerShellFile NVARCHAR(500) = 'C:\temp\send_alert_' + CAST(@AlerteId AS VARCHAR(10)) + '.ps1';
             DECLARE @PowerShellContent NVARCHAR(MAX);
             
@@ -81,42 +81,42 @@ BEGIN
                 '  Write-Host "Erreur envoi email: $($_.Exception.Message)"' + CHAR(13) + CHAR(10) +
                 '}';
             
-            -- Créer le répertoire temp s'il n'existe pas
+            -- CrÃ©er le rÃ©pertoire temp s'il n'existe pas
             EXEC xp_cmdshell 'if not exist C:\temp mkdir C:\temp';
             
-            -- Écrire le script PowerShell dans un fichier
+            -- Ã‰crire le script PowerShell dans un fichier
             DECLARE @EchoCmd NVARCHAR(MAX);
             SET @EchoCmd = 'echo ' + @PowerShellContent + ' > ' + @PowerShellFile;
             
-            -- Commande PowerShell simplifiée
+            -- Commande PowerShell simplifiÃ©e
             DECLARE @PowerShellCmd NVARCHAR(MAX);
             SET @PowerShellCmd = 'powershell.exe -ExecutionPolicy Bypass -File ' + @PowerShellFile;
             
             BEGIN TRY
                 EXEC xp_cmdshell @PowerShellCmd;
-                PRINT '📨 TRIGGER REAL EMAIL: Commande email exécutée pour ' + @Email;
+                PRINT 'ðŸ“¨ TRIGGER REAL EMAIL: Commande email exÃ©cutÃ©e pour ' + @Email;
                 
-                -- Marquer comme envoyé
+                -- Marquer comme envoyÃ©
                 UPDATE HistoriqueAlerte 
-                SET EtatAlerte = 'Envoyé par Email'
+                SET EtatAlerte = 'EnvoyÃ© par Email'
                 WHERE AlerteId = @AlerteId AND DestinataireUserId = @DestinataireId;
                 
             END TRY
             BEGIN CATCH
-                PRINT '❌ TRIGGER REAL EMAIL: Erreur lors de l''envoi email';
+                PRINT 'âŒ TRIGGER REAL EMAIL: Erreur lors de l''envoi email';
             END CATCH
         END
         
         -- WhatsApp (simulation pour l'instant)
         IF @PlateformeEnvoieId = 2 OR @PlateformeEnvoieId IS NULL
         BEGIN
-            PRINT '📱 TRIGGER REAL EMAIL: WhatsApp simulé pour ' + @PhoneNumber + ': ' + @TitreAlerte;
+            PRINT 'ðŸ“± TRIGGER REAL EMAIL: WhatsApp simulÃ© pour ' + @PhoneNumber + ': ' + @TitreAlerte;
         END
         
         -- Desktop (simulation pour l'instant)
         IF @PlateformeEnvoieId = 3 OR @PlateformeEnvoieId IS NULL
         BEGIN
-            PRINT '🖥️ TRIGGER REAL EMAIL: Desktop simulé pour ' + @FullName;
+            PRINT 'ðŸ–¥ï¸ TRIGGER REAL EMAIL: Desktop simulÃ© pour ' + @FullName;
         END
     END
     ELSE
@@ -134,23 +134,24 @@ BEGIN
         WHERE u.IsActive = 1;
         
         DECLARE @RecipientCount INT = @@ROWCOUNT;
-        PRINT '✅ TRIGGER REAL EMAIL: ' + CAST(@RecipientCount AS VARCHAR(10)) + ' destinataires ajoutés';
-        PRINT '📧 TRIGGER REAL EMAIL: Envoi à tous les utilisateurs (non implémenté dans ce trigger)';
+        PRINT 'âœ… TRIGGER REAL EMAIL: ' + CAST(@RecipientCount AS VARCHAR(10)) + ' destinataires ajoutÃ©s';
+        PRINT 'ðŸ“§ TRIGGER REAL EMAIL: Envoi Ã  tous les utilisateurs (non implÃ©mentÃ© dans ce trigger)';
     END
     
-    PRINT '🎉 TRIGGER REAL EMAIL: Traitement terminé pour alerte ' + CAST(@AlerteId AS VARCHAR(10));
+    PRINT 'ðŸŽ‰ TRIGGER REAL EMAIL: Traitement terminÃ© pour alerte ' + CAST(@AlerteId AS VARCHAR(10));
     PRINT '================================================';
 END;
 GO
 
-PRINT '🚀 Trigger TR_Alerte_Real_Email_Send créé avec succès !';
+PRINT 'ðŸš€ Trigger TR_Alerte_Real_Email_Send crÃ©Ã© avec succÃ¨s !';
 PRINT '';
-PRINT '✅ FONCTIONNALITÉS:';
+PRINT 'âœ… FONCTIONNALITÃ‰S:';
 PRINT '- Utilise vos vraies informations Gmail';
-PRINT '- Envoie des emails réels via PowerShell';
-PRINT '- Fonctionne sans que l''application soit démarrée';
-PRINT '- Met à jour l''historique automatiquement';
+PRINT '- Envoie des emails rÃ©els via PowerShell';
+PRINT '- Fonctionne sans que l''application soit dÃ©marrÃ©e';
+PRINT '- Met Ã  jour l''historique automatiquement';
 PRINT '';
-PRINT '🧪 POUR TESTER (copier-coller dans SQL Server):';
+PRINT 'ðŸ§ª POUR TESTER (copier-coller dans SQL Server):';
 PRINT 'INSERT INTO Alerte (AlertTypeId, AppId, ExpedTypeId, ExpediteurId, TitreAlerte, DescriptionAlerte, DateCreationAlerte, StatutId, EtatAlerteId, DestinataireId, PlateformeEnvoieId)';
-PRINT 'VALUES (2, 1, 1, 2, ''Test Email Réel'', ''Cet email sera vraiment envoyé !'', GETDATE(), 1, 2, 1, 1);';
+PRINT 'VALUES (2, 1, 1, 2, ''Test Email RÃ©el'', ''Cet email sera vraiment envoyÃ© !'', GETDATE(), 1, 2, 1, 1);';
+

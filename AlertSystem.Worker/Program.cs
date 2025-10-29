@@ -1,4 +1,4 @@
-using AlertSystem.Worker;
+﻿using AlertSystem.Worker;
 using AlertSystem.Data;
 using AlertSystem.Service.Services;
 using AlertSystem.Service;
@@ -10,8 +10,17 @@ using Serilog;
 using DotNetEnv;
 using Microsoft.AspNetCore.SignalR;
 
-// Load .env file
-Env.Load();
+// Load solution root .env (one level above the project directory)
+var rootEnvPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", ".env"));
+if (File.Exists(rootEnvPath))
+{
+    Env.Load(rootEnvPath);
+}
+else
+{
+    // Fallback: try current directory
+    Env.Load();
+}
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -33,13 +42,15 @@ try
         options.ServiceName = "AlertSystem.Worker";
     });
 
-    // Configure Database
+    // Configure Database (prefer .env root key CONNECTIONSTRINGS__DEFAULTCONNECTION)
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
     {
-        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? 
-                              Environment.GetEnvironmentVariable("CONNECTION_STRING") ??
-                              "Server=(localdb)\\mssqllocaldb;Database=BELVEDERE_17_10_2025;Trusted_Connection=true;MultipleActiveResultSets=true";
-        
+        var envConn = Environment.GetEnvironmentVariable("CONNECTIONSTRINGS__DEFAULTCONNECTION");
+        var connectionString = envConn
+            ?? builder.Configuration.GetConnectionString("DefaultConnection")
+            ?? Environment.GetEnvironmentVariable("CONNECTION_STRING")
+            ?? "Server=(localdb)\\MSSQLLocalDB;Database=BELVEDERE_17_10_2025;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=true";
+
         Log.Information("Worker using connection string: {ConnectionString}", connectionString);
         options.UseSqlServer(connectionString);
     });
@@ -101,4 +112,5 @@ finally
 {
     Log.CloseAndFlush();
 }
+
 

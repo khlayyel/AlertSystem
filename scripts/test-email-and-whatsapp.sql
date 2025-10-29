@@ -1,4 +1,4 @@
--- Create a manual alert and expected recipients for testing
+﻿-- Create a manual alert and expected recipients for testing
 DECLARE @now DATETIME2 = SYSUTCDATETIME();
 
 INSERT INTO Alerte (AlertTypeId, AppId, ExpedTypeId, ExpediteurId, TitreAlerte, DescriptionAlerte, DateCreationAlerte, StatutId, EtatAlerteId, PlateformeEnvoieId, DestinataireId)
@@ -15,4 +15,5 @@ INSERT INTO HistoriqueAlerte (AlerteId, DestinatairePhoneNumber, EtatAlerte)
 VALUES (@AlerteId, '21699414008', 'Non Lu');
 
 SELECT @AlerteId AS AlerteId;
+
 

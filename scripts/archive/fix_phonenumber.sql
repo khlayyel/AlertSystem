@@ -1,8 +1,8 @@
--- Script pour corriger le type PhoneNumber
-USE [AlertSystemDB]
+﻿-- Script pour corriger le type PhoneNumber
+USE [BELVEDERE_17_10_2025]
 GO
 
--- Vérifier le type actuel de PhoneNumber
+-- VÃ©rifier le type actuel de PhoneNumber
 SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, CHARACTER_MAXIMUM_LENGTH 
 FROM INFORMATION_SCHEMA.COLUMNS 
 WHERE TABLE_NAME = 'Users' AND COLUMN_NAME = 'PhoneNumber'
@@ -14,3 +14,4 @@ GO
 
 PRINT 'PhoneNumber column type updated to NVARCHAR(20)'
 GO
+

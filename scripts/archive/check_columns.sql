@@ -1,5 +1,5 @@
--- Vérifier les colonnes de la table AlertRecipients
-USE [AlertSystemDB]
+﻿-- VÃ©rifier les colonnes de la table AlertRecipients
+USE [BELVEDERE_17_10_2025]
 GO
 
 SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, CHARACTER_MAXIMUM_LENGTH 
@@ -7,3 +7,4 @@ FROM INFORMATION_SCHEMA.COLUMNS
 WHERE TABLE_NAME = 'AlertRecipients'
 ORDER BY ORDINAL_POSITION
 GO
+

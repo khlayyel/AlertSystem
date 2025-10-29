@@ -285,7 +285,12 @@ function renderInboxList(containerId, items){
   const c = document.getElementById(containerId); if(!c) return;
   c.innerHTML = (items||[]).map(a=> {
     const preview = (a.message||'').trim();
-    const dateText = new Date(a.createdAt||a.dateCreation).toLocaleDateString('fr-FR', { year:'numeric', month:'2-digit', day:'2-digit' });
+    const dRaw = a.createdAt || a.dateCreation || a.date || a.DateCreation;
+    let dateText = '';
+    try {
+      const d = new Date(dRaw);
+      dateText = isNaN(d.getTime()) ? '' : d.toLocaleString('fr-FR', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+    } catch { dateText = ''; }
     
     // Read state badge based on EtatAlerteId
     let readBadge = '';
@@ -355,7 +360,12 @@ function renderOutboxList(containerId, items){
   const c = document.getElementById(containerId); if(!c) return;
   c.innerHTML = (items||[]).map(a=> {
     const preview = (a.message||'').trim();
-    const dateText = new Date(a.createdAt||a.dateCreation).toLocaleDateString('fr-FR', { year:'numeric', month:'2-digit', day:'2-digit' });
+    const dRaw = a.createdAt || a.dateCreation || a.date || a.DateCreation;
+    let dateText = '';
+    try {
+      const d = new Date(dRaw);
+      dateText = isNaN(d.getTime()) ? '' : d.toLocaleString('fr-FR', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+    } catch { dateText = ''; }
     
     // Status badge based on status string from service
     let statusBadge = '';
@@ -452,7 +462,8 @@ async function loadInbox(){
   showLoading('inboxList');
   
   try {
-    const data = await fetchJson(`/Dashboard/GetInboxAlerts`);
+    const qs = buildFilterQuery();
+    const data = await fetchJson(`/Dashboard/GetInboxAlerts${qs}`);
     dbg('loadInbox: Received data', { 
       itemsCount: data.items?.length || 0, 
       total: data.total,
@@ -478,7 +489,8 @@ async function loadSent(){
   showLoading('sentList');
   
   try {
-    const data = await fetchJson(`/Dashboard/GetOutboxAlerts`);
+    const qs = buildFilterQuery();
+    const data = await fetchJson(`/Dashboard/GetOutboxAlerts${qs}`);
     dbg('loadSent: Received data', { 
       itemsCount: data.items?.length || 0, 
       total: data.total,
@@ -498,6 +510,25 @@ async function loadSent(){
     logError('loadSent: Failed to load sent items', error, { page: sentPage, pageSize });
     throw error;
   }
+}
+
+// Build query string from optional filter controls if present
+function buildFilterQuery(){
+  const startEl = document.getElementById('filterStart');
+  const endEl = document.getElementById('filterEnd');
+  const typeEl = document.getElementById('filterType');
+  const stateEl = document.getElementById('filterState');
+  const p = new URLSearchParams();
+  const sv = startEl?.value?.trim();
+  const ev = endEl?.value?.trim();
+  const tv = typeEl?.value?.trim();
+  const stv = stateEl?.value?.trim();
+  if (sv) p.set('startDate', sv);
+  if (ev) p.set('endDate', ev);
+  if (tv) p.set('typeId', tv);
+  if (stv) p.set('stateId', stv);
+  const s = p.toString();
+  return s ? `?${s}` : '';
 }
 
 async function loadInboxKpiData(){
@@ -775,11 +806,15 @@ function showDetailsModal(details){
     createdAt = 'Date non disponible';
   }
   
-  modalEl.querySelector('#detailTitle').value = title;
-  modalEl.querySelector('#detailMessage').textContent = msg;
-  modalEl.querySelector('#detailType').value = details.type || 'Type non spécifié';
-  modalEl.querySelector('#detailStatus').value = details.status || 'Statut non spécifié';
-  modalEl.querySelector('#detailCreatedAt').value = createdAt;
+  const titleEl = modalEl.querySelector('#detailTitle'); if (titleEl) titleEl.textContent = title;
+  const msgEl = modalEl.querySelector('#detailMessage'); if (msgEl) msgEl.textContent = msg;
+  const typeEl = modalEl.querySelector('#detailType'); if (typeEl) typeEl.textContent = details.type || 'Type non spécifié';
+  const statusEl = modalEl.querySelector('#detailStatus'); if (statusEl) {
+    const s = (details.status || '').toString().toLowerCase();
+    statusEl.textContent = details.status || 'Statut non spécifié';
+    statusEl.className = 'badge fs-6 ' + (s.includes('envoy') ? 'bg-success' : s.includes('échou') || s.includes('echec') ? 'bg-danger' : s.includes('cours') ? 'bg-warning' : 'bg-secondary');
+  }
+  const createdEl = modalEl.querySelector('#detailCreatedAt'); if (createdEl) createdEl.textContent = createdAt;
   
   // Show recipients if available (for sent alerts)
   const recipientsContainer = modalEl.querySelector('#recipientsContainer');
@@ -891,15 +926,88 @@ async function loadUsers(){
     usersList = (data && data.success !== false && Array.isArray(data.users)) ? data.users : [];
     dbg('loadUsers: Received users', { count: usersList.length });
     
-    // Populate the select element
-    const selectElement = document.getElementById('selectedUsers');
-    if (selectElement) {
-      selectElement.innerHTML = usersList.length > 0
-        ? usersList.map(user => `<option value="${user.id}">${user.name || user.login || ('ID '+user.id)} (${user.email || 'Pas d\'email'})</option>`).join('')
-        : '<option value="">Aucun utilisateur actif</option>';
-      
-      logSuccess('loadUsers: Users loaded successfully', { count: usersList.length });
+    // Preferred: render as dynamic table into #usersTableBody if present
+    const tableBody = document.getElementById('usersTableBody');
+    const searchBox = document.getElementById('userSearch');
+    if (tableBody) {
+      const render = ()=>{
+        const q = (searchBox?.value || '').toLowerCase();
+        const emailOn = document.getElementById('platformEmail')?.checked;
+        const waOn = document.getElementById('platformWhatsApp')?.checked;
+        const rows = usersList
+          .filter(u => (u.name||'').toLowerCase().includes(q))
+          .map(u=>{
+            const emailCell = emailOn ? (u.email || '<span class="text-muted">—</span>') : '';
+            const phoneCell = waOn ? (u.phoneNumber ? normalizePhone(u.phoneNumber) : '<span class="text-muted">—</span>') : '';
+            return `<tr>
+              <td class="fw-semibold">${u.name || ('ID '+u.id)}</td>
+              ${emailOn ? `<td>${emailCell}</td>` : ''}
+              ${waOn ? `<td>${phoneCell}</td>` : ''}
+              <td class="text-end">
+                <button type="button" class="btn btn-sm btn-outline-primary user-add" data-id="${u.id}">+
+                </button>
+              </td>
+            </tr>`;
+          }).join('');
+        tableBody.innerHTML = rows;
+        // wire + buttons
+        tableBody.querySelectorAll('.user-add').forEach(btn=>{
+          btn.addEventListener('click', ()=>{
+            const id = btn.getAttribute('data-id');
+            const user = usersList.find(x => (x.id ?? x.userId).toString() === id);
+            if (!user) return;
+            if (emailOn) {
+              if (user.email) addTagTo('destEmails', user.email);
+            }
+            if (waOn) {
+              if (user.phoneNumber) {
+                addTagTo('destPhones', user.phoneNumber);
+              } else {
+                try { showFinalStatusToast(`${user.name || 'Cet utilisateur'} n'a pas de numéro WhatsApp.`, 'warning'); } catch {}
+              }
+            }
+          });
+        });
+      };
+      // initial render and listeners
+      render();
+      searchBox?.addEventListener('input', render);
+      document.getElementById('platformEmail')?.addEventListener('change', render);
+      document.getElementById('platformWhatsApp')?.addEventListener('change', render);
     }
+
+    // Fallback: render as checkboxes into #usersCheckboxes
+    const boxContainer = document.getElementById('usersCheckboxes');
+    if (boxContainer) {
+      boxContainer.innerHTML = usersList.map(u=>{
+        const label = (u.name || u.login || ("ID "+u.id));
+        return `<div class="form-check"><input class="form-check-input user-check" type="checkbox" value="${u.id}" id="u_${u.id}"><label class="form-check-label" for="u_${u.id}">${label}</label></div>`;
+      }).join('');
+
+      // Hook checkbox change to auto-fill emails/phones when platforms selected
+      boxContainer.querySelectorAll('.user-check').forEach(cb=>{
+        cb.addEventListener('change', ()=>{
+          const userId = cb.value;
+          const user = usersList.find(x => (x.id ?? x.userId).toString() === userId);
+          const emailOn = document.getElementById('platformEmail')?.checked;
+          const waOn = document.getElementById('platformWhatsApp')?.checked;
+          if (cb.checked && user){
+            if (emailOn && user.email) addTagTo('destEmails', user.email);
+            if (waOn && user.phoneNumber) addTagTo('destPhones', normalizePhone(user.phoneNumber));
+          }
+        });
+      });
+    } else {
+      // Fallback: populate the legacy select element if present
+      const selectElement = document.getElementById('selectedUsers');
+      if (selectElement) {
+        selectElement.innerHTML = usersList.length > 0
+          ? usersList.map(user => `<option value="${user.id}">${user.name || user.login || ('ID '+user.id)} (${user.email || 'Pas d\'email'})</option>`).join('')
+          : '<option value="">Aucun utilisateur actif</option>';
+      }
+    }
+    
+    logSuccess('loadUsers: Users loaded successfully', { count: usersList.length });
   } catch (error) {
     logError('loadUsers: Failed to load users', error);
     const selectElement = document.getElementById('selectedUsers');
@@ -911,9 +1019,15 @@ async function loadUsers(){
 
 // Get selected users data
 function getSelectedUsersData(){
+  // Prefer checkboxes when present
+  const boxContainer = document.getElementById('usersCheckboxes');
+  if (boxContainer){
+    const ids = Array.from(boxContainer.querySelectorAll('.user-check:checked')).map(x=>x.value);
+    return usersList.filter(u => ids.includes((u.id ?? u.userId).toString()));
+  }
+  // Fallback legacy select
   const selectElement = document.getElementById('selectedUsers');
   if (!selectElement) return [];
-  
   const selectedValues = Array.from(selectElement.selectedOptions).map(option => option.value);
   return usersList.filter(user => selectedValues.includes((user.id ?? user.userId).toString()));
 }
@@ -959,6 +1073,20 @@ if (sendBtn){
           combinedPhones.push(user.phoneNumber);
         }
       });
+      // If user checked WhatsApp but provided no phone numbers explicitly,
+      // try to extract E.164-like numbers from the message body as a convenience.
+      if (combinedPhones.length === 0 && typeof message === 'string' && message.length > 0) {
+        try {
+          const rawMatches = message.match(/\+?\d[\d\s\-()]{7,}/g) || [];
+          const cleanedPhones = Array.from(new Set(rawMatches
+            .map(s => s.replace(/[^\d+]/g, ''))
+            .map(p => p.startsWith('+') ? p : ('+' + p))
+          ));
+          cleanedPhones.forEach(p => {
+            if (!combinedPhones.includes(p)) combinedPhones.push(p);
+          });
+        } catch (_) { /* ignore extraction errors */ }
+      }
     }
     
     // Get desktop user IDs (if Desktop platform is selected)
@@ -997,6 +1125,13 @@ if (sendBtn){
       alert('Veuillez ajouter au moins un destinataire (email, téléphone ou utilisateur)');
       return;
     }
+
+    // If WhatsApp is selected, ensure there is at least one phone number after extraction
+    if (platforms.WhatsApp && combinedPhones.length === 0) {
+      logError('SendButton: Validation failed', new Error('No WhatsApp phone numbers'));
+      alert('Veuillez ajouter au moins un numéro de téléphone pour WhatsApp (ex: +216XXXXXXXX)');
+      return;
+    }
     
     try {
       console.groupCollapsed('Send:compose');
@@ -1005,9 +1140,7 @@ if (sendBtn){
         payload: { title, message, emails: combinedEmails, phones: combinedPhones, desktopUserIds, platforms }
       });
       
-      // Show sending notification immediately
-      showSendingNotification();
-      dbg('SendButton: Sending notification displayed');
+      // No long-running spinner anymore; we'll show a short toast on success
       
       const payload = {
           title, 
@@ -1043,14 +1176,11 @@ if (sendBtn){
       const j = await r.json();
       dbg('SendButton: Response data', j);
       
-      // Start 5-second timer for undo functionality
-      if (j.success && j.alerteId) {
-        dbg('SendButton: Starting undo timer', { alerteId: j.alerteId, jobId: j.jobId });
-        startUndoTimer(j.alerteId, j.jobId);
-        // Hide the sending notification immediately on success
-        hideSendingNotification();
+      // Show queued toast immediately
+      if (j && (j.success === true || r.status === 200 || r.status === 207)) {
+        showFinalStatusToast("Alerte mise en file d'attente pour envoi.", 'info');
       } else {
-        logError('SendButton: Invalid response', new Error('Missing success or alerteId'), j);
+        logError('SendButton: Invalid response', new Error('Missing success flag'), j);
       }
       
       // Fermer le modal et recharger Inbox pour voir la nouvelle alerte
@@ -1063,13 +1193,14 @@ if (sendBtn){
       dbg('SendButton: Reloading inbox');
       inboxPage = 1; 
       await loadInbox();
+      try { loadOutboxKpiData(); } catch {}
+      try { loadInboxKpiData(); } catch {}
       
       logSuccess('SendButton: Alert sent successfully', { alerteId: j.alerteId });
       console.groupEnd();
     } catch(err){
       logError('SendButton: Send failed', err, { title, message, emails, phones, platforms });
       console.groupEnd();
-      hideSendingNotification();
       alert("Échec de création d'alerte: " + err.message);
     }
     finally { isSending = false; sendBtn.disabled = false; }
@@ -1113,6 +1244,9 @@ function makeTagInput(inputId, separatorRegex, normalizer){
     let v = (raw||'').trim();
     if (!v) return;
     if (normalizer) v = normalizer(v);
+    // Prevent duplicates
+    const existing = Array.from(list.querySelectorAll('.tag')).map(t=>t.firstChild.nodeValue);
+    if (existing.includes(v)) return;
     const tag = document.createElement('span'); tag.className='tag'; tag.textContent=v;
     const x = document.createElement('button'); x.type='button'; x.className='tag-x'; x.textContent='×';
     x.onclick = ()=>{ list.removeChild(tag); syncHidden(); };
@@ -1141,6 +1275,25 @@ function getTagValues(inputId){
   const hidden = document.getElementById(inputId);
   if (!hidden) return [];
   return (hidden.value||'').split(',').map(s=>s.trim()).filter(Boolean);
+}
+
+// Helper to programmatically add a tag to an input
+function addTagTo(inputId, value){
+  const hidden = document.getElementById(inputId);
+  if (!hidden) return;
+  const wrap = hidden.previousSibling;
+  if (!wrap || !wrap.classList || !wrap.classList.contains('tag-input')) return;
+  const list = wrap.querySelector('.tags');
+  const vals = Array.from(list.querySelectorAll('.tag')).map(t=>t.firstChild.nodeValue);
+  let v = value;
+  if (inputId === 'destPhones') v = normalizePhone(value);
+  if (vals.includes(v)) return;
+  const tag = document.createElement('span'); tag.className='tag'; tag.textContent=v;
+  const x = document.createElement('button'); x.type='button'; x.className='tag-x'; x.textContent='×';
+  x.onclick = ()=>{ list.removeChild(tag); const arr = Array.from(list.querySelectorAll('.tag')).map(t=>t.firstChild.nodeValue); hidden.value = arr.join(','); };
+  tag.appendChild(x); list.appendChild(tag);
+  const arr = Array.from(list.querySelectorAll('.tag')).map(t=>t.firstChild.nodeValue);
+  hidden.value = arr.join(',');
 }
 
 function normalizePhone(p){
@@ -1181,99 +1334,11 @@ async function updateMandatoryPendingKpi(){
 let undoTimeout = null;
 let currentAlertId = null;
 
-function showSendingNotification() {
-  // Remove any existing notification
-  hideSendingNotification();
-  
-  // Create notification bar
-  const notification = document.createElement('div');
-  notification.id = 'sendingNotification';
-  notification.className = 'alert alert-info alert-dismissible fade show position-fixed';
-  notification.style.cssText = 'bottom: 20px; left: 20px; z-index: 9999; min-width: 300px;';
-  notification.innerHTML = `
-    <div class="d-flex align-items-center">
-      <div class="spinner-border spinner-border-sm me-2" role="status">
-        <span class="visually-hidden">Loading...</span>
-      </div>
-      <span class="me-3">Envoi en cours...</span>
-      <button type="button" class="btn btn-sm btn-outline-danger" id="undoBtn">Annuler</button>
-    </div>
-  `;
-  
-  document.body.appendChild(notification);
-  
-  // Add undo button click handler
-  document.getElementById('undoBtn').addEventListener('click', cancelSend);
-}
-
-function hideSendingNotification() {
-  const notification = document.getElementById('sendingNotification');
-  if (notification) {
-    notification.remove();
-  }
-  if (undoTimeout) {
-    clearTimeout(undoTimeout);
-    undoTimeout = null;
-  }
-}
-
-function startUndoTimer(alerteId, jobId) {
-  currentAlertId = alerteId;
-  
-  // Set 5-second timeout
-  undoTimeout = setTimeout(async () => {
-    hideSendingNotification();
-    showFinalStatusToast('Alerte envoyée avec succès', 'success');
-  }, 5000);
-}
-
-async function cancelSend() {
-  dbg('cancelSend: Starting cancellation process', { currentAlertId });
-  
-  if (!currentAlertId) {
-    logError('cancelSend: No current alert ID available', new Error('No alert ID'));
-    showFinalStatusToast('Aucune alerte en cours d\'envoi', 'warning');
-    return;
-  }
-  
-  try {
-    dbg('cancelSend: Sending cancellation request', { 
-      alertId: currentAlertId, 
-      url: `/AlertsCrud/CancelSend/${currentAlertId}` 
-    });
-    
-    const response = await fetch(`/AlertsCrud/CancelSend/${currentAlertId}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
-    });
-    
-    dbg('cancelSend: Received response', { 
-      status: response.status, 
-      statusText: response.statusText,
-      ok: response.ok 
-    });
-    
-    if (response.ok) {
-      const responseData = await response.json();
-      dbg('cancelSend: Response data', responseData);
-      
-      hideSendingNotification();
-      showFinalStatusToast('Envoi annulé avec succès', 'warning');
-      logSuccess('cancelSend: Alert cancelled successfully', { alertId: currentAlertId });
-    } else {
-      const errorText = await response.text();
-      logError('cancelSend: Server error response', new Error(`HTTP ${response.status}: ${errorText}`), {
-        status: response.status,
-        statusText: response.statusText,
-        responseText: errorText
-      });
-      showFinalStatusToast('Erreur lors de l\'annulation', 'danger');
-    }
-  } catch (error) {
-    logError('cancelSend: Network or other error', error, { alertId: currentAlertId });
-    showFinalStatusToast('Erreur lors de l\'annulation', 'danger');
-  }
-}
+// Sending notification removed (legacy spinner/undo deleted)
+function showSendingNotification() {}
+function hideSendingNotification() {}
+function startUndoTimer(){ }
+async function cancelSend(){ }
 
 function showFinalStatusToast(message, type) {
   // Create toast notification
@@ -1390,32 +1455,11 @@ async function confirmAlert(alertId) {
 // Function to update sidebar counts in real-time
 async function updateSidebarCounts() {
   try {
-    // Update unread count
-    const unreadResponse = await fetch('/Alerts/UnreadCount');
-    if (unreadResponse.ok) {
-      const unreadCount = await unreadResponse.json();
-      const unreadBadge = document.querySelector('.sidebar .badge-danger');
-      if (unreadBadge) {
-        unreadBadge.textContent = unreadCount;
-      }
-    }
-    
-    // Update pending count
-    const pendingResponse = await fetch('/Alerts/MandatoryPendingCount');
-    if (pendingResponse.ok) {
-      const pendingCount = await pendingResponse.json();
-      const pendingBadge = document.querySelector('.sidebar .badge-warning');
-      if (pendingBadge) {
-        pendingBadge.textContent = pendingCount;
-      }
-    }
-    
-    // Update confirmed count
-    const confirmedResponse = await fetch('/Alerts/ConfirmedMandatoryCount');
-    if (confirmedResponse.ok) {
-      const confirmedCount = await confirmedResponse.json();
-      // You can update any confirmed count display here if needed
-    }
+    // Sidebar badges removed per UI polish; refresh KPI cards instead
+    await Promise.allSettled([
+      loadInboxKpiData().catch(()=>{}),
+      loadOutboxKpiData().catch(()=>{})
+    ]);
     
     dbg('updateSidebarCounts: Updated sidebar counts successfully');
   } catch (error) {
@@ -1492,7 +1536,31 @@ function initializeSignalR() {
             loadInboxKpiData();
             loadSidebarCounts(); // Update sidebar counts
             break;
+          case 'NewAlertReceived':
+            if (currentView === 'inbox') { loadInbox(); }
+            loadInboxKpiData();
+            loadSidebarCounts();
+            break;
+          case 'AlertStatusUpdated':
+            try {
+              loadInboxKpiData();
+              loadOutboxKpiData();
+              if (currentView === 'inbox') { loadInbox(); }
+              if (currentView === 'outbox') { loadSent(); }
+              const modal = document.getElementById('alertDetailsModal');
+              if (modal && modal.classList.contains('show')) {
+                const selectedRow = document.querySelector('#sentList .gmail-alert-row.selected');
+                const id = selectedRow?.getAttribute('data-id');
+                if (id) { loadOutboxDetails(parseInt(id,10)); }
+              }
+            } catch {}
+            break;
         }
+      });
+
+      // Dedicated KPI refresh channel
+      hubConnection.on('UpdateKpis', function(){
+        try { updateSidebarCounts(); } catch {}
       });
 
       // Handle outbox modal updates

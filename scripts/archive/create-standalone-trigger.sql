@@ -1,7 +1,7 @@
--- Trigger SQL autonome pour envoi direct sans application
+﻿-- Trigger SQL autonome pour envoi direct sans application
 -- Ce trigger envoie directement les notifications via SQL Server
 
-USE AlertSystemDB;
+USE BELVEDERE_17_10_2025;
 GO
 
 -- Supprimer l'ancien trigger s'il existe
@@ -9,7 +9,7 @@ IF EXISTS (SELECT * FROM sys.triggers WHERE name = 'TR_Alerte_AutoSend')
     DROP TRIGGER TR_Alerte_AutoSend;
 GO
 
--- Créer le nouveau trigger autonome
+-- CrÃ©er le nouveau trigger autonome
 CREATE OR ALTER TRIGGER TR_Alerte_AutoSend_Standalone
 ON Alerte
 AFTER INSERT
@@ -25,7 +25,7 @@ BEGIN
     DECLARE @DestinataireId INT;
     DECLARE @PlateformeEnvoieId INT;
     
-    -- Récupérer les informations de l'alerte insérée
+    -- RÃ©cupÃ©rer les informations de l'alerte insÃ©rÃ©e
     SELECT 
         @AlerteId = AlerteId,
         @TitreAlerte = TitreAlerte,
@@ -36,13 +36,13 @@ BEGIN
         @PlateformeEnvoieId = PlateformeEnvoieId
     FROM inserted;
     
-    PRINT 'TRIGGER STANDALONE: Nouvelle alerte détectée - ID: ' + CAST(@AlerteId AS VARCHAR(10));
+    PRINT 'TRIGGER STANDALONE: Nouvelle alerte dÃ©tectÃ©e - ID: ' + CAST(@AlerteId AS VARCHAR(10));
     PRINT 'TRIGGER STANDALONE: Titre: ' + @TitreAlerte;
     
-    -- Si DestinataireId est spécifié, créer pour ce destinataire uniquement
+    -- Si DestinataireId est spÃ©cifiÃ©, crÃ©er pour ce destinataire uniquement
     IF @DestinataireId IS NOT NULL
     BEGIN
-        PRINT 'TRIGGER STANDALONE: Destinataire spécifique - UserId: ' + CAST(@DestinataireId AS VARCHAR(10));
+        PRINT 'TRIGGER STANDALONE: Destinataire spÃ©cifique - UserId: ' + CAST(@DestinataireId AS VARCHAR(10));
         
         INSERT INTO HistoriqueAlerte (
             AlerteId,
@@ -70,7 +70,7 @@ BEGIN
         WHERE u.UserId = @DestinataireId AND u.IsActive = 1;
         
         DECLARE @RecipientCount INT = @@ROWCOUNT;
-        PRINT 'TRIGGER STANDALONE: ' + CAST(@RecipientCount AS VARCHAR(10)) + ' destinataire ajouté';
+        PRINT 'TRIGGER STANDALONE: ' + CAST(@RecipientCount AS VARCHAR(10)) + ' destinataire ajoutÃ©';
         
         -- Envoi direct selon la plateforme
         DECLARE @Email NVARCHAR(MAX);
@@ -99,7 +99,7 @@ BEGIN
                     @subject = @EmailSubject,
                     @body = @EmailBody;
                 
-                PRINT 'TRIGGER STANDALONE: Email envoyé à ' + @Email;
+                PRINT 'TRIGGER STANDALONE: Email envoyÃ© Ã  ' + @Email;
             END TRY
             BEGIN CATCH
                 PRINT 'TRIGGER STANDALONE: Erreur envoi email - ' + ERROR_MESSAGE();
@@ -110,11 +110,11 @@ BEGIN
         IF @PlateformeEnvoieId = 2 OR @PlateformeEnvoieId IS NULL
         BEGIN
             DECLARE @WhatsAppMessage NVARCHAR(MAX) = 
-                '🚨 *' + @TitreAlerte + '*' + CHAR(13) + CHAR(10) + CHAR(13) + CHAR(10) +
+                'ðŸš¨ *' + @TitreAlerte + '*' + CHAR(13) + CHAR(10) + CHAR(13) + CHAR(10) +
                 @DescriptionAlerte;
             
-            -- Ici vous pouvez ajouter l'appel à l'API WhatsApp
-            PRINT 'TRIGGER STANDALONE: WhatsApp à envoyer à ' + @PhoneNumber + ': ' + @WhatsAppMessage;
+            -- Ici vous pouvez ajouter l'appel Ã  l'API WhatsApp
+            PRINT 'TRIGGER STANDALONE: WhatsApp Ã  envoyer Ã  ' + @PhoneNumber + ': ' + @WhatsAppMessage;
         END
         
         -- Notification Desktop (si PlateformeEnvoieId = 3 ou NULL)
@@ -125,8 +125,8 @@ BEGIN
     END
     ELSE
     BEGIN
-        -- Comportement par défaut : tous les utilisateurs actifs
-        PRINT 'TRIGGER STANDALONE: Envoi à tous les utilisateurs actifs';
+        -- Comportement par dÃ©faut : tous les utilisateurs actifs
+        PRINT 'TRIGGER STANDALONE: Envoi Ã  tous les utilisateurs actifs';
         
         INSERT INTO HistoriqueAlerte (
             AlerteId,
@@ -154,14 +154,15 @@ BEGIN
         WHERE u.IsActive = 1;
         
         SET @RecipientCount = @@ROWCOUNT;
-        PRINT 'TRIGGER STANDALONE: ' + CAST(@RecipientCount AS VARCHAR(10)) + ' destinataires ajoutés';
+        PRINT 'TRIGGER STANDALONE: ' + CAST(@RecipientCount AS VARCHAR(10)) + ' destinataires ajoutÃ©s';
     END
     
-    PRINT 'TRIGGER STANDALONE: Traitement terminé pour l''alerte ' + CAST(@AlerteId AS VARCHAR(10));
+    PRINT 'TRIGGER STANDALONE: Traitement terminÃ© pour l''alerte ' + CAST(@AlerteId AS VARCHAR(10));
 END;
 GO
 
-PRINT 'Trigger TR_Alerte_AutoSend_Standalone créé avec succès !';
-PRINT 'Ce trigger fonctionne sans avoir besoin de démarrer l''application !';
+PRINT 'Trigger TR_Alerte_AutoSend_Standalone crÃ©Ã© avec succÃ¨s !';
+PRINT 'Ce trigger fonctionne sans avoir besoin de dÃ©marrer l''application !';
 PRINT '';
-PRINT 'Pour configurer l''envoi d''emails, exécutez aussi le script de configuration Database Mail.';
+PRINT 'Pour configurer l''envoi d''emails, exÃ©cutez aussi le script de configuration Database Mail.';
+

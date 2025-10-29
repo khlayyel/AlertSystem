@@ -1,5 +1,5 @@
--- Trigger simple avec envoi d'email réel
-USE AlertSystemDB;
+﻿-- Trigger simple avec envoi d'email rÃ©el
+USE BELVEDERE_17_10_2025;
 GO
 
 -- Supprimer l'ancien trigger
@@ -7,7 +7,7 @@ IF EXISTS (SELECT * FROM sys.triggers WHERE name = 'TR_Alerte_Real_Email_Send')
     DROP TRIGGER TR_Alerte_Real_Email_Send;
 GO
 
--- Créer le trigger simple
+-- CrÃ©er le trigger simple
 CREATE OR ALTER TRIGGER TR_Alerte_Simple_Email
 ON Alerte
 AFTER INSERT
@@ -21,7 +21,7 @@ BEGIN
     DECLARE @AlertTypeId INT;
     DECLARE @DestinataireId INT;
     
-    -- Récupérer les informations de l'alerte insérée
+    -- RÃ©cupÃ©rer les informations de l'alerte insÃ©rÃ©e
     SELECT 
         @AlerteId = AlerteId,
         @TitreAlerte = TitreAlerte,
@@ -32,7 +32,7 @@ BEGIN
     
     PRINT 'TRIGGER: Nouvelle alerte - ID: ' + CAST(@AlerteId AS VARCHAR(10));
     
-    -- Créer l'historique pour le destinataire spécifique
+    -- CrÃ©er l'historique pour le destinataire spÃ©cifique
     IF @DestinataireId IS NOT NULL
     BEGIN
         INSERT INTO HistoriqueAlerte (
@@ -46,28 +46,28 @@ BEGIN
         FROM Users u
         WHERE u.UserId = @DestinataireId AND u.IsActive = 1;
         
-        -- Récupérer les infos du destinataire
+        -- RÃ©cupÃ©rer les infos du destinataire
         DECLARE @Email NVARCHAR(MAX);
         DECLARE @FullName NVARCHAR(MAX);
         
         SELECT @Email = Email, @FullName = FullName
         FROM Users WHERE UserId = @DestinataireId;
         
-        -- Créer un script PowerShell simple
+        -- CrÃ©er un script PowerShell simple
         DECLARE @PSScript NVARCHAR(MAX);
         SET @PSScript = 'Send-MailMessage -To "' + @Email + '" -From "khalilouerghemmi@gmail.com" -Subject "AlertSystem: ' + @TitreAlerte + '" -Body "Bonjour ' + @FullName + ', Nouvelle alerte: ' + @TitreAlerte + '. Description: ' + @DescriptionAlerte + '" -SmtpServer "smtp.gmail.com" -Port 587 -UseSsl -Credential (New-Object System.Management.Automation.PSCredential("khalilouerghemmi@gmail.com", (ConvertTo-SecureString "xiczhnsf ywjqwgvd" -AsPlainText -Force)))';
         
-        -- Exécuter PowerShell
+        -- ExÃ©cuter PowerShell
         DECLARE @CMD NVARCHAR(MAX);
         SET @CMD = 'powershell.exe -Command "' + @PSScript + '"';
         
         BEGIN TRY
             EXEC xp_cmdshell @CMD;
-            PRINT 'TRIGGER: Email envoyé à ' + @Email;
+            PRINT 'TRIGGER: Email envoyÃ© Ã  ' + @Email;
             
-            -- Marquer comme envoyé
+            -- Marquer comme envoyÃ©
             UPDATE HistoriqueAlerte 
-            SET EtatAlerte = 'Envoyé par Email'
+            SET EtatAlerte = 'EnvoyÃ© par Email'
             WHERE AlerteId = @AlerteId AND DestinataireUserId = @DestinataireId;
             
         END TRY
@@ -76,9 +76,10 @@ BEGIN
         END CATCH
     END
     
-    PRINT 'TRIGGER: Traitement terminé pour alerte ' + CAST(@AlerteId AS VARCHAR(10));
+    PRINT 'TRIGGER: Traitement terminÃ© pour alerte ' + CAST(@AlerteId AS VARCHAR(10));
 END;
 GO
 
-PRINT 'Trigger TR_Alerte_Simple_Email créé avec succès !';
-PRINT 'Test avec: INSERT INTO Alerte (AlertTypeId, AppId, ExpedTypeId, ExpediteurId, TitreAlerte, DescriptionAlerte, DateCreationAlerte, StatutId, EtatAlerteId, DestinataireId, PlateformeEnvoieId) VALUES (2, 1, 1, 2, ''Test Email'', ''Test envoi réel'', GETDATE(), 1, 2, 1, 1);';
+PRINT 'Trigger TR_Alerte_Simple_Email crÃ©Ã© avec succÃ¨s !';
+PRINT 'Test avec: INSERT INTO Alerte (AlertTypeId, AppId, ExpedTypeId, ExpediteurId, TitreAlerte, DescriptionAlerte, DateCreationAlerte, StatutId, EtatAlerteId, DestinataireId, PlateformeEnvoieId) VALUES (2, 1, 1, 2, ''Test Email'', ''Test envoi rÃ©el'', GETDATE(), 1, 2, 1, 1);';
+

@@ -1,4 +1,4 @@
-# AlertSystem API Test Script
+﻿# AlertSystem API Test Script
 # This script demonstrates how to use the AlertSystem API
 
 $baseUrl = "http://localhost:5143"
@@ -42,9 +42,9 @@ Write-Host ""
 Write-Host "0. Checking server connectivity..." -ForegroundColor Yellow
 try {
     $response = Invoke-WebRequest -Uri "$baseUrl" -Method GET -UseBasicParsing
-    Write-Host "✅ Server is running on $baseUrl" -ForegroundColor Green
+    Write-Host "âœ… Server is running on $baseUrl" -ForegroundColor Green
 } catch {
-    Write-Host "❌ Server is not accessible: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "âŒ Server is not accessible: $($_.Exception.Message)" -ForegroundColor Red
     Write-Host "Make sure the application is running with 'dotnet run'" -ForegroundColor Yellow
     exit 1
 }
@@ -60,13 +60,13 @@ $clientData = @{
 
 try {
     $response = Invoke-RestMethod -Uri "$baseUrl/api/v1/clients" -Method POST -Body $clientData -ContentType "application/json" -ErrorAction Stop
-    Write-Host "✅ API Client created successfully!" -ForegroundColor Green
+    Write-Host "âœ… API Client created successfully!" -ForegroundColor Green
     Write-Host "Client ID: $($response.clientId)" -ForegroundColor Cyan
     Write-Host "API Key: $($response.apiKey)" -ForegroundColor Cyan
     $apiKey = $response.apiKey
     $clientId = $response.clientId
 } catch {
-    Write-Host "❌ Failed to create API client" -ForegroundColor Red
+    Write-Host "âŒ Failed to create API client" -ForegroundColor Red
     Write-Host "Status Code: $($_.Exception.Response.StatusCode)" -ForegroundColor Red
     Write-Host "Error: $($_.Exception.Message)" -ForegroundColor Red
     
@@ -97,10 +97,10 @@ $headers = @{
 
 try {
     $response = Invoke-RestMethod -Uri "$baseUrl/api/v1/keys/validate" -Method GET -Headers $headers
-    Write-Host "✅ API Key validation successful!" -ForegroundColor Green
+    Write-Host "âœ… API Key validation successful!" -ForegroundColor Green
     Write-Host "Valid: $($response.valid)" -ForegroundColor Cyan
 } catch {
-    Write-Host "❌ API key validation failed: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "âŒ API key validation failed: $($_.Exception.Message)" -ForegroundColor Red
 }
 
 Write-Host ""
@@ -110,7 +110,7 @@ Write-Host "3. Creating an alert..." -ForegroundColor Yellow
 $alertData = @{
     title = "Test Alert from PowerShell"
     message = "This is a test alert created via the API to demonstrate the multi-channel notification system."
-    alertType = "acquittementNonNécessaire"
+    alertType = "acquittementNonNÃ©cessaire"
     expedType = "Service"
     appId = 1
     recipients = @(
@@ -122,13 +122,13 @@ $alertData = @{
 
 try {
     $response = Invoke-RestMethod -Uri "$baseUrl/api/v1/alerts" -Method POST -Body $alertData -Headers $headers
-    Write-Host "✅ Alert created successfully!" -ForegroundColor Green
+    Write-Host "âœ… Alert created successfully!" -ForegroundColor Green
     Write-Host "Alert ID: $($response.alertId)" -ForegroundColor Cyan
     Write-Host "Recipients created: $($response.recipientsCreated)" -ForegroundColor Cyan
     Write-Host "Notifications sent: $($response.notificationsSent)" -ForegroundColor Cyan
     $alertId = $response.alertId
 } catch {
-    Write-Host "❌ Failed to create alert: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "âŒ Failed to create alert: $($_.Exception.Message)" -ForegroundColor Red
 }
 
 Write-Host ""
@@ -137,11 +137,11 @@ Write-Host ""
 Write-Host "4. Querying alerts..." -ForegroundColor Yellow
 try {
     $response = Invoke-RestMethod -Uri "$baseUrl/api/v1/alerts?page=1&size=5" -Method GET -Headers $headers
-    Write-Host "✅ Alert query successful!" -ForegroundColor Green
+    Write-Host "âœ… Alert query successful!" -ForegroundColor Green
     Write-Host "Total alerts: $($response.total)" -ForegroundColor Cyan
     Write-Host "Retrieved: $($response.items.Count)" -ForegroundColor Cyan
 } catch {
-    Write-Host "❌ Failed to query alerts: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "âŒ Failed to query alerts: $($_.Exception.Message)" -ForegroundColor Red
 }
 
 Write-Host ""
@@ -151,11 +151,11 @@ if ($alertId) {
     Write-Host "5. Getting alert details..." -ForegroundColor Yellow
     try {
         $response = Invoke-RestMethod -Uri "$baseUrl/api/v1/alerts/$alertId" -Method GET -Headers $headers
-        Write-Host "✅ Alert details retrieved!" -ForegroundColor Green
+        Write-Host "âœ… Alert details retrieved!" -ForegroundColor Green
         Write-Host "Title: $($response.title)" -ForegroundColor Cyan
         Write-Host "Recipients: $($response.recipients.Count)" -ForegroundColor Cyan
     } catch {
-        Write-Host "❌ Failed to get alert details: $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "âŒ Failed to get alert details: $($_.Exception.Message)" -ForegroundColor Red
     }
 }
 
@@ -163,3 +163,4 @@ Write-Host ""
 Write-Host "=== Test completed ===" -ForegroundColor Green
 Write-Host "API Key for dashboard: $apiKey" -ForegroundColor Yellow
 Write-Host "You can now use this API key in the dashboard to send alerts!" -ForegroundColor Yellow
+

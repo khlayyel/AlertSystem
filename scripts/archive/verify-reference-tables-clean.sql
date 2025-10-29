@@ -1,6 +1,6 @@
--- Script de vérification finale - Tables de référence nettoyées
+﻿-- Script de vÃ©rification finale - Tables de rÃ©fÃ©rence nettoyÃ©es
 
-PRINT '=== VÉRIFICATION FINALE DES TABLES DE RÉFÉRENCE ===';
+PRINT '=== VÃ‰RIFICATION FINALE DES TABLES DE RÃ‰FÃ‰RENCE ===';
 PRINT '';
 
 -- 1. AlertType (2 enregistrements attendus)
@@ -23,8 +23,8 @@ PRINT 'Etat (2 enregistrements) :';
 SELECT EtatAlerteId, EtatAlerte FROM Etat ORDER BY EtatAlerteId;
 PRINT '';
 
--- 5. Vérifier l'intégrité des références dans Alerte
-PRINT 'Vérification des références dans la table Alerte :';
+-- 5. VÃ©rifier l'intÃ©gritÃ© des rÃ©fÃ©rences dans Alerte
+PRINT 'VÃ©rification des rÃ©fÃ©rences dans la table Alerte :';
 
 SELECT 
     'AlertType' as Reference_Table,
@@ -64,19 +64,20 @@ GROUP BY a.EtatAlerteId, e.EtatAlerte
 ORDER BY Reference_Table, AlertTypeId;
 
 PRINT '';
-PRINT '=== RÉSUMÉ DU NETTOYAGE ===';
+PRINT '=== RÃ‰SUMÃ‰ DU NETTOYAGE ===';
 PRINT 'AVANT : ExpedType avait 4 enregistrements (2 doublons)';
-PRINT 'APRÈS : ExpedType a 2 enregistrements (doublons supprimés)';
+PRINT 'APRÃˆS : ExpedType a 2 enregistrements (doublons supprimÃ©s)';
 PRINT '';
 PRINT 'AVANT : AlertType avait 4 enregistrements (2 doublons)';
-PRINT 'APRÈS : AlertType a 2 enregistrements (doublons supprimés)';
+PRINT 'APRÃˆS : AlertType a 2 enregistrements (doublons supprimÃ©s)';
 PRINT '';
 PRINT 'AVANT : Statut avait 7 enregistrements (2 doublons)';
-PRINT 'APRÈS : Statut a 5 enregistrements (doublons supprimés)';
+PRINT 'APRÃˆS : Statut a 5 enregistrements (doublons supprimÃ©s)';
 PRINT '';
 PRINT 'AVANT : Etat avait 4 enregistrements (2 doublons)';
-PRINT 'APRÈS : Etat a 2 enregistrements (doublons supprimés)';
+PRINT 'APRÃˆS : Etat a 2 enregistrements (doublons supprimÃ©s)';
 PRINT '';
-PRINT '✅ TOUTES LES TABLES DE RÉFÉRENCE SONT MAINTENANT PROPRES !';
-PRINT '✅ TOUTES LES RÉFÉRENCES DANS ALERTE SONT VALIDES !';
-PRINT '✅ AUCUN DOUBLON RESTANT !';
+PRINT 'âœ… TOUTES LES TABLES DE RÃ‰FÃ‰RENCE SONT MAINTENANT PROPRES !';
+PRINT 'âœ… TOUTES LES RÃ‰FÃ‰RENCES DANS ALERTE SONT VALIDES !';
+PRINT 'âœ… AUCUN DOUBLON RESTANT !';
+

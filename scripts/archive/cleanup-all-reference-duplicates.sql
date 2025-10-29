@@ -1,15 +1,15 @@
--- Script complet pour nettoyer tous les doublons dans les tables de référence
+﻿-- Script complet pour nettoyer tous les doublons dans les tables de rÃ©fÃ©rence
 
-PRINT 'Début du nettoyage des doublons dans toutes les tables de référence...';
+PRINT 'DÃ©but du nettoyage des doublons dans toutes les tables de rÃ©fÃ©rence...';
 
 -- ========================================
 -- 1. NETTOYAGE AlertType
 -- ========================================
 PRINT 'Nettoyage AlertType...';
 
--- Mettre à jour les références dans Alerte
-UPDATE Alerte SET AlertTypeId = 1 WHERE AlertTypeId = 3; -- acquittementNécessaire
-UPDATE Alerte SET AlertTypeId = 2 WHERE AlertTypeId = 4; -- acquittementNonNécessaire
+-- Mettre Ã  jour les rÃ©fÃ©rences dans Alerte
+UPDATE Alerte SET AlertTypeId = 1 WHERE AlertTypeId = 3; -- acquittementNÃ©cessaire
+UPDATE Alerte SET AlertTypeId = 2 WHERE AlertTypeId = 4; -- acquittementNonNÃ©cessaire
 
 -- Supprimer les doublons
 DELETE FROM AlertType WHERE AlertTypeId IN (3, 4);
@@ -19,9 +19,9 @@ DELETE FROM AlertType WHERE AlertTypeId IN (3, 4);
 -- ========================================
 PRINT 'Nettoyage Statut...';
 
--- Mettre à jour les références dans Alerte
+-- Mettre Ã  jour les rÃ©fÃ©rences dans Alerte
 UPDATE Alerte SET StatutId = 1 WHERE StatutId = 5; -- En Cours
-UPDATE Alerte SET StatutId = 4 WHERE StatutId = 7; -- Échoué
+UPDATE Alerte SET StatutId = 4 WHERE StatutId = 7; -- Ã‰chouÃ©
 
 -- Supprimer les doublons
 DELETE FROM Statut WHERE StatutId IN (5, 7);
@@ -31,7 +31,7 @@ DELETE FROM Statut WHERE StatutId IN (5, 7);
 -- ========================================
 PRINT 'Nettoyage Etat...';
 
--- Mettre à jour les références dans Alerte
+-- Mettre Ã  jour les rÃ©fÃ©rences dans Alerte
 UPDATE Alerte SET EtatAlerteId = 2 WHERE EtatAlerteId = 3; -- Non Lu
 UPDATE Alerte SET EtatAlerteId = 1 WHERE EtatAlerteId = 4; -- Lu
 
@@ -39,9 +39,9 @@ UPDATE Alerte SET EtatAlerteId = 1 WHERE EtatAlerteId = 4; -- Lu
 DELETE FROM Etat WHERE EtatAlerteId IN (3, 4);
 
 -- ========================================
--- VÉRIFICATION FINALE
+-- VÃ‰RIFICATION FINALE
 -- ========================================
-PRINT 'Vérification finale...';
+PRINT 'VÃ©rification finale...';
 
 PRINT 'AlertType final :';
 SELECT AlertTypeId, AlertType FROM AlertType ORDER BY AlertTypeId;
@@ -55,8 +55,8 @@ SELECT StatutId, Statut FROM Statut ORDER BY StatutId;
 PRINT 'Etat final :';
 SELECT EtatAlerteId, EtatAlerte FROM Etat ORDER BY EtatAlerteId;
 
--- Vérifier qu'il n'y a plus de doublons
-PRINT 'Vérification des doublons restants :';
+-- VÃ©rifier qu'il n'y a plus de doublons
+PRINT 'VÃ©rification des doublons restants :';
 SELECT 'AlertType' as TableName, AlertType, COUNT(*) as Count
 FROM AlertType 
 GROUP BY AlertType
@@ -78,6 +78,7 @@ GROUP BY EtatAlerte
 HAVING COUNT(*) > 1;
 
 IF @@ROWCOUNT = 0
-    PRINT 'SUCCÈS : Tous les doublons ont été supprimés !';
+    PRINT 'SUCCÃˆS : Tous les doublons ont Ã©tÃ© supprimÃ©s !';
 
-PRINT 'Nettoyage terminé avec succès !';
+PRINT 'Nettoyage terminÃ© avec succÃ¨s !';
+

@@ -1,5 +1,5 @@
--- Trigger avec PowerShell pour envoi réel d'emails et notifications
-USE AlertSystemDB;
+﻿-- Trigger avec PowerShell pour envoi rÃ©el d'emails et notifications
+USE BELVEDERE_17_10_2025;
 GO
 
 -- Supprimer l'ancien trigger
@@ -11,7 +11,7 @@ IF EXISTS (SELECT * FROM sys.triggers WHERE name = 'TR_Alerte_AutoSend')
     DROP TRIGGER TR_Alerte_AutoSend;
 GO
 
--- Créer le nouveau trigger avec PowerShell
+-- CrÃ©er le nouveau trigger avec PowerShell
 CREATE OR ALTER TRIGGER TR_Alerte_PowerShell_Send
 ON Alerte
 AFTER INSERT
@@ -26,7 +26,7 @@ BEGIN
     DECLARE @DestinataireId INT;
     DECLARE @PlateformeEnvoieId INT;
     
-    -- Récupérer les informations de l'alerte insérée
+    -- RÃ©cupÃ©rer les informations de l'alerte insÃ©rÃ©e
     SELECT 
         @AlerteId = AlerteId,
         @TitreAlerte = TitreAlerte,
@@ -38,7 +38,7 @@ BEGIN
     
     PRINT 'TRIGGER POWERSHELL: Nouvelle alerte - ID: ' + CAST(@AlerteId AS VARCHAR(10));
     
-    -- Créer l'historique pour le destinataire spécifique
+    -- CrÃ©er l'historique pour le destinataire spÃ©cifique
     IF @DestinataireId IS NOT NULL
     BEGIN
         INSERT INTO HistoriqueAlerte (
@@ -52,7 +52,7 @@ BEGIN
         FROM Users u
         WHERE u.UserId = @DestinataireId AND u.IsActive = 1;
         
-        -- Récupérer les infos du destinataire
+        -- RÃ©cupÃ©rer les infos du destinataire
         DECLARE @Email NVARCHAR(MAX);
         DECLARE @PhoneNumber NVARCHAR(MAX);
         DECLARE @FullName NVARCHAR(MAX);
@@ -60,7 +60,7 @@ BEGIN
         SELECT @Email = Email, @PhoneNumber = PhoneNumber, @FullName = FullName
         FROM Users WHERE UserId = @DestinataireId;
         
-        -- Créer le script PowerShell pour envoi
+        -- CrÃ©er le script PowerShell pour envoi
         DECLARE @PowerShellScript NVARCHAR(MAX);
         SET @PowerShellScript = 
             'try {' +
@@ -72,12 +72,12 @@ BEGIN
             '  $Subject = "AlertSystem: ' + REPLACE(@TitreAlerte, '"', '\"') + '";' +
             '  $Body = "Bonjour ' + REPLACE(@FullName, '"', '\"') + ',\n\nNouvelle alerte: ' + REPLACE(@TitreAlerte, '"', '\"') + '\n\nDescription: ' + REPLACE(@DescriptionAlerte, '"', '\"') + '\n\nCordialement,\nAlertSystem";' +
             '  Send-MailMessage -To "' + @Email + '" -From $Username -Subject $Subject -Body $Body -SmtpServer $SMTPServer -Port $SMTPPort -UseSsl -Credential $Credential;' +
-            '  Write-Host "Email envoyé avec succès à ' + @Email + '";' +
+            '  Write-Host "Email envoyÃ© avec succÃ¨s Ã  ' + @Email + '";' +
             '} catch {' +
             '  Write-Host "Erreur envoi email: $($_.Exception.Message)";' +
             '}';
         
-        -- Exécuter PowerShell pour envoi email (si plateforme = 1 ou NULL)
+        -- ExÃ©cuter PowerShell pour envoi email (si plateforme = 1 ou NULL)
         IF @PlateformeEnvoieId = 1 OR @PlateformeEnvoieId IS NULL
         BEGIN
             DECLARE @PowerShellCmd NVARCHAR(MAX);
@@ -86,13 +86,13 @@ BEGIN
             DECLARE @Result INT;
             EXEC @Result = xp_cmdshell @PowerShellCmd;
             
-            PRINT 'TRIGGER POWERSHELL: Commande email exécutée pour ' + @Email;
+            PRINT 'TRIGGER POWERSHELL: Commande email exÃ©cutÃ©e pour ' + @Email;
         END
         
-        -- Log pour WhatsApp (nécessiterait une API externe)
+        -- Log pour WhatsApp (nÃ©cessiterait une API externe)
         IF @PlateformeEnvoieId = 2 OR @PlateformeEnvoieId IS NULL
         BEGIN
-            PRINT 'TRIGGER POWERSHELL: WhatsApp à envoyer à ' + @PhoneNumber + ': ' + @TitreAlerte;
+            PRINT 'TRIGGER POWERSHELL: WhatsApp Ã  envoyer Ã  ' + @PhoneNumber + ': ' + @TitreAlerte;
         END
         
         -- Log pour Desktop
@@ -102,15 +102,16 @@ BEGIN
         END
     END
     
-    PRINT 'TRIGGER POWERSHELL: Traitement terminé pour alerte ' + CAST(@AlerteId AS VARCHAR(10));
+    PRINT 'TRIGGER POWERSHELL: Traitement terminÃ© pour alerte ' + CAST(@AlerteId AS VARCHAR(10));
 END;
 GO
 
-PRINT 'Trigger TR_Alerte_PowerShell_Send créé avec succès !';
+PRINT 'Trigger TR_Alerte_PowerShell_Send crÃ©Ã© avec succÃ¨s !';
 PRINT '';
 PRINT 'IMPORTANT: Modifiez le mot de passe Gmail dans le script PowerShell !';
 PRINT 'Remplacez "votre_mot_de_passe_app" par votre vrai mot de passe d''application Gmail.';
 PRINT '';
-PRINT 'Pour activer xp_cmdshell (nécessaire pour PowerShell) :';
+PRINT 'Pour activer xp_cmdshell (nÃ©cessaire pour PowerShell) :';
 PRINT 'EXEC sp_configure ''show advanced options'', 1; RECONFIGURE;';
 PRINT 'EXEC sp_configure ''xp_cmdshell'', 1; RECONFIGURE;';
+

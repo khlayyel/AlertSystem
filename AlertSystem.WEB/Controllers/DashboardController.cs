@@ -43,6 +43,90 @@ namespace AlertSystem.WEB.Controllers
             return View();
         }
 
+        // Lightweight DTOs for list rendering
+        private sealed record AlertListItemDto(
+            int Id,
+            string? Title,
+            string? Message,
+            int? AlertTypeId,
+            int? StatutId,
+            int? EtatAlerteId,
+            DateTime DateCreation,
+            string? SenderName
+        );
+
+        [HttpGet("GetInboxAlerts")]
+        public async Task<IActionResult> GetInboxAlerts(DateTime? startDate = null, DateTime? endDate = null, int? typeId = null, int? stateId = null)
+        {
+            var currentUserId = _currentUserService.GetCurrentUserId();
+            if (!currentUserId.HasValue)
+            {
+                return Json(new { alerts = Array.Empty<AlertListItemDto>(), total = 0, error = "User not authenticated" });
+            }
+
+            var q = _db.Alerte
+                .AsNoTracking()
+                .Where(a => a.DestinataireUserId == currentUserId.Value);
+
+            if (startDate.HasValue) q = q.Where(a => a.DateCreationAlerte >= startDate.Value);
+            if (endDate.HasValue) q = q.Where(a => a.DateCreationAlerte < endDate.Value);
+            if (typeId.HasValue) q = q.Where(a => a.AlertTypeId == typeId.Value);
+            if (stateId.HasValue) q = q.Where(a => a.EtatAlerteId == stateId.Value);
+
+            var items = await q
+                .OrderByDescending(a => a.DateCreationAlerte)
+                .Take(200)
+                .Select(a => new AlertListItemDto(
+                    a.AlertRecordId,
+                    a.TitreAlerte,
+                    a.DescriptionAlerte,
+                    a.AlertTypeId,
+                    a.StatutId,
+                    a.EtatAlerteId,
+                    a.DateCreationAlerte,
+                    _db.DefUtilisateurs.Where(u => u.util_id == a.ExpediteurId).Select(u => (u.util_prenom+" "+u.util_nom).Trim()).FirstOrDefault()
+                ))
+                .ToListAsync();
+
+            return Json(new { alerts = items, total = items.Count });
+        }
+
+        [HttpGet("GetOutboxAlerts")]
+        public async Task<IActionResult> GetOutboxAlerts(DateTime? startDate = null, DateTime? endDate = null, int? typeId = null, int? stateId = null)
+        {
+            var currentUserId = _currentUserService.GetCurrentUserId();
+            if (!currentUserId.HasValue)
+            {
+                return Json(new { alerts = Array.Empty<AlertListItemDto>(), total = 0, error = "User not authenticated" });
+            }
+
+            var q = _db.Alerte
+                .AsNoTracking()
+                .Where(a => a.ExpediteurId == currentUserId.Value);
+
+            if (startDate.HasValue) q = q.Where(a => a.DateCreationAlerte >= startDate.Value);
+            if (endDate.HasValue) q = q.Where(a => a.DateCreationAlerte < endDate.Value);
+            if (typeId.HasValue) q = q.Where(a => a.AlertTypeId == typeId.Value);
+            if (stateId.HasValue) q = q.Where(a => a.StatutId == stateId.Value || a.EtatAlerteId == stateId.Value);
+
+            var items = await q
+                .OrderByDescending(a => a.DateCreationAlerte)
+                .Take(200)
+                .Select(a => new AlertListItemDto(
+                    a.AlertRecordId,
+                    a.TitreAlerte,
+                    a.DescriptionAlerte,
+                    a.AlertTypeId,
+                    a.StatutId,
+                    a.EtatAlerteId,
+                    a.DateCreationAlerte,
+                    _db.DefUtilisateurs.Where(u => u.util_id == a.ExpediteurId).Select(u => (u.util_prenom+" "+u.util_nom).Trim()).FirstOrDefault()
+                ))
+                .ToListAsync();
+
+            return Json(new { alerts = items, total = items.Count });
+        }
+
         [HttpGet("InboxKpiData")]
         public async Task<IActionResult> GetInboxKpiData()
         {
@@ -99,6 +183,8 @@ namespace AlertSystem.WEB.Controllers
                 var sentToday = await _db.Alerte
                     .Where(a => a.ExpediteurId == currentUserId.Value && 
                                a.DateCreationAlerte >= today && a.DateCreationAlerte < tomorrow)
+                    .Select(a => a.AlertGroupId)
+                    .Distinct()
                     .CountAsync();
 
                 // Confirmées: alertes envoyées par l'utilisateur et lues par au moins un destinataire
@@ -148,115 +234,28 @@ namespace AlertSystem.WEB.Controllers
             }
         }
 
+        [HttpGet("GetUsers")]
+        public async Task<IActionResult> GetUsers2()
+        {
+            var users = await _db.DefUtilisateurs
+                .AsNoTracking()
+                .Select(u => new
+                {
+                    id = u.util_id,
+                    userId = u.util_id,
+                    name = (u.util_prenom + " " + u.util_nom).Trim(),
+                    email = u.util_email,
+                    phoneNumber = (string?)null
+                })
+                .Take(500)
+                .ToListAsync();
+
+            return Json(new { success = true, users });
+        }
+
         
 
-        [HttpGet("GetUsers")]
-        public async Task<IActionResult> GetUsers()
-        {
-            try
-            {
-                // Return all active users regardless of current auth state to populate the compose dialog reliably
-                var activeUsers = await _db.DefUtilisateurs
-                    .Where(u => u.util_compte_active)
-                    .Select(u => new
-                    {
-                        id = u.util_id,
-                        name = (u.util_prenom + " " + u.util_nom).Trim(),
-                        email = u.util_email,
-                        login = u.util_login
-                    })
-                    .OrderBy(u => u.name)
-                    .ToListAsync();
-
-                return Json(new { success = true, users = activeUsers });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = ex.Message });
-            }
-        }
-
-        [HttpGet("GetInboxAlerts")]
-        public async Task<IActionResult> GetInboxAlerts()
-        {
-            try
-            {
-                var currentUserId = _currentUserService.GetCurrentUserId();
-                if (!currentUserId.HasValue)
-                {
-                    return Json(new { success = false, message = "User not authenticated" });
-                }
-
-                var alerts = await _db.Alerte
-                    .Include(a => a.AlertType)
-                    .Include(a => a.Statut)
-                    .Include(a => a.Etat)
-                    .Include(a => a.PlateformeEnvoie)
-                    .Where(a => a.DestinataireUserId == currentUserId.Value)
-                    .OrderByDescending(a => a.DateCreationAlerte)
-                    .Select(a => new
-                    {
-                        id = a.AlertRecordId,
-                        title = a.TitreAlerte,
-                        message = a.DescriptionAlerte,
-                        date = a.DateCreationAlerte,
-                        status = a.Statut.StatutName,
-                        state = a.Etat.EtatAlerteName,
-                        platform = a.PlateformeEnvoie.Plateforme,
-                        alertType = a.AlertType.AlertTypeName,
-                        senderId = a.ExpediteurId
-                    })
-                    .ToListAsync();
-
-                return Json(new { success = true, alerts = alerts });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = ex.Message });
-            }
-        }
-
-        [HttpGet("GetOutboxAlerts")]
-        public async Task<IActionResult> GetOutboxAlerts()
-        {
-            try
-            {
-                var currentUserId = _currentUserService.GetCurrentUserId();
-                if (!currentUserId.HasValue)
-                {
-                    return Json(new { success = false, message = "User not authenticated" });
-                }
-
-                var alerts = await _db.Alerte
-                    .Include(a => a.AlertType)
-                    .Include(a => a.Statut)
-                    .Include(a => a.Etat)
-                    .Include(a => a.PlateformeEnvoie)
-                    .Where(a => a.ExpediteurId == currentUserId.Value)
-                    .OrderByDescending(a => a.DateCreationAlerte)
-                    .Select(a => new
-                    {
-                        id = a.AlertRecordId,
-                        title = a.TitreAlerte,
-                        message = a.DescriptionAlerte,
-                        date = a.DateCreationAlerte,
-                        status = a.Statut.StatutName,
-                        state = a.Etat.EtatAlerteName,
-                        platform = a.PlateformeEnvoie.Plateforme,
-                        alertType = a.AlertType.AlertTypeName,
-                        recipientId = a.DestinataireUserId,
-                        recipientEmail = a.DestinataireEmail,
-                        recipientPhone = a.DestinatairePhoneNumber
-                    })
-                    .ToListAsync();
-
-                return Json(new { success = true, alerts = alerts });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = ex.Message });
-            }
-        }
+        // Removed legacy duplicate endpoints to avoid route conflicts
 
         [HttpPost("ConfirmAlert/{alertId}")]
         public async Task<IActionResult> ConfirmAlert(int alertId)
@@ -296,23 +295,25 @@ namespace AlertSystem.WEB.Controllers
         {
             try
             {
+                // Load the group id for this alert, then group recipients by user and collapse platforms
+                var group = await _db.Alerte.Where(x => x.AlertRecordId == alerteId)
+                    .Select(x => x.AlertGroupId).FirstOrDefaultAsync();
+                if (group == Guid.Empty)
+                {
+                    return Json(new { recipients = new object[0] });
+                }
+
                 var recipients = await _db.Alerte
-                    .Include(a => a.PlateformeEnvoie)
                     .Include(a => a.DestinataireUser)
-                    .Where(a => a.AlertRecordId == alerteId)
-                    .Select(a => new
+                    .Where(a => a.AlertGroupId == group)
+                    .GroupBy(a => new { a.DestinataireUserId, Name = a.DestinataireUser != null ? (a.DestinataireUser.util_prenom + " " + a.DestinataireUser.util_nom).Trim() : (string?)null })
+                    .Select(g => new
                     {
-                        recipientId = a.AlertRecordId,
-                        recipientEmail = a.DestinataireEmail,
-                        recipientPhone = a.DestinatairePhoneNumber,
-                        recipientDesktop = a.DestinataireDesktop,
-                        recipientUserId = a.DestinataireUserId,
-                        recipientName = a.DestinataireUser != null ? a.DestinataireUser.util_nom : null,
-                        platform = a.PlateformeEnvoie != null ? a.PlateformeEnvoie.Plateforme : "Inconnu",
-                        status = a.EtatAlerteId == 1 ? "Non Lu" : a.EtatAlerteId == 2 ? "Lu" : "Inconnu",
-                        readDate = a.DateLecture,
-                        isRead = a.EtatAlerteId == 2 || a.DateLecture != null,
-                        etatAlerteId = a.EtatAlerteId
+                        recipientUserId = g.Key.DestinataireUserId,
+                        recipientName = g.Key.Name ?? ("User " + g.Key.DestinataireUserId),
+                        isRead = g.Any(x => x.EtatAlerteId == 2),
+                        readDate = g.Where(x => x.DateLecture != null).OrderBy(x => x.DateLecture).Select(x => x.DateLecture).FirstOrDefault(),
+                        status = g.Any(x => x.EtatAlerteId == 2) ? "Lu" : "Non Lu"
                     })
                     .ToListAsync();
 

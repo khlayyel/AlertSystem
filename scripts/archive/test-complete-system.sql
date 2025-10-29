@@ -1,13 +1,13 @@
--- TEST COMPLET DU SYSTÈME CORRIGÉ
-USE AlertSystemDB;
+﻿-- TEST COMPLET DU SYSTÃˆME CORRIGÃ‰
+USE BELVEDERE_17_10_2025;
 GO
 
-PRINT '🧪 TEST COMPLET DU SYSTÈME ALERTSYSTEM';
+PRINT 'ðŸ§ª TEST COMPLET DU SYSTÃˆME ALERTSYSTEM';
 PRINT '=====================================';
 PRINT '';
 
--- Vérifier le trigger installé
-PRINT '1. VÉRIFICATION DU TRIGGER:';
+-- VÃ©rifier le trigger installÃ©
+PRINT '1. VÃ‰RIFICATION DU TRIGGER:';
 SELECT name, is_disabled FROM sys.triggers WHERE parent_id = OBJECT_ID('Alerte');
 PRINT '';
 
@@ -18,8 +18,8 @@ INSERT INTO Alerte (
     DescriptionAlerte, DateCreationAlerte, StatutId, EtatAlerteId, 
     DestinataireId, PlateformeEnvoieId
 ) VALUES (
-    2, 1, 1, 2, 'TEST SYSTÈME CORRIGÉ - Email', 
-    'Test du système complètement corrigé - Email pour Khalil', 
+    2, 1, 1, 2, 'TEST SYSTÃˆME CORRIGÃ‰ - Email', 
+    'Test du systÃ¨me complÃ¨tement corrigÃ© - Email pour Khalil', 
     GETDATE(), 1, 2, 1, 1
 );
 PRINT '';
@@ -31,8 +31,8 @@ INSERT INTO Alerte (
     DescriptionAlerte, DateCreationAlerte, StatutId, EtatAlerteId, 
     DestinataireId, PlateformeEnvoieId
 ) VALUES (
-    2, 1, 1, 2, 'TEST SYSTÈME CORRIGÉ - WhatsApp', 
-    'Test du système complètement corrigé - WhatsApp pour Zied', 
+    2, 1, 1, 2, 'TEST SYSTÃˆME CORRIGÃ‰ - WhatsApp', 
+    'Test du systÃ¨me complÃ¨tement corrigÃ© - WhatsApp pour Zied', 
     GETDATE(), 1, 2, 2, 2
 );
 PRINT '';
@@ -44,24 +44,24 @@ INSERT INTO Alerte (
     DescriptionAlerte, DateCreationAlerte, StatutId, EtatAlerteId, 
     DestinataireId, PlateformeEnvoieId
 ) VALUES (
-    1, 1, 2, 1, 'TEST SYSTÈME CORRIGÉ - Multi-canal', 
-    'Test du système complètement corrigé - Tous les canaux pour tous les utilisateurs', 
+    1, 1, 2, 1, 'TEST SYSTÃˆME CORRIGÃ‰ - Multi-canal', 
+    'Test du systÃ¨me complÃ¨tement corrigÃ© - Tous les canaux pour tous les utilisateurs', 
     GETDATE(), 1, 2, NULL, NULL
 );
 PRINT '';
 
-PRINT '5. RÉSULTATS DES TESTS:';
+PRINT '5. RÃ‰SULTATS DES TESTS:';
 PRINT '';
 
--- Voir les alertes créées
-PRINT 'Alertes créées:';
+-- Voir les alertes crÃ©Ã©es
+PRINT 'Alertes crÃ©Ã©es:';
 SELECT TOP 3 AlerteId, TitreAlerte, DateCreationAlerte, DestinataireId, PlateformeEnvoieId
 FROM Alerte 
 ORDER BY AlerteId DESC;
 PRINT '';
 
--- Voir l'historique créé
-PRINT 'Historique créé:';
+-- Voir l'historique crÃ©Ã©
+PRINT 'Historique crÃ©Ã©:';
 SELECT 
     h.AlerteId,
     h.DestinataireUserId,
@@ -87,22 +87,23 @@ PRINT '';
 PRINT 'Statistiques:';
 SELECT 
     COUNT(*) as 'Total Historique',
-    COUNT(DISTINCT h.AlerteId) as 'Alertes traitées',
-    COUNT(DISTINCT h.DestinataireUserId) as 'Utilisateurs concernés'
+    COUNT(DISTINCT h.AlerteId) as 'Alertes traitÃ©es',
+    COUNT(DISTINCT h.DestinataireUserId) as 'Utilisateurs concernÃ©s'
 FROM HistoriqueAlerte h
 WHERE h.AlerteId IN (
     SELECT TOP 3 AlerteId FROM Alerte ORDER BY AlerteId DESC
 );
 PRINT '';
 
-PRINT '✅ TESTS TERMINÉS !';
+PRINT 'âœ… TESTS TERMINÃ‰S !';
 PRINT '';
-PRINT '🎯 SYSTÈME FONCTIONNEL:';
-PRINT '- Trigger installé et opérationnel';
-PRINT '- Historique créé automatiquement';
+PRINT 'ðŸŽ¯ SYSTÃˆME FONCTIONNEL:';
+PRINT '- Trigger installÃ© et opÃ©rationnel';
+PRINT '- Historique crÃ©Ã© automatiquement';
 PRINT '- Support multi-canal et multi-utilisateur';
-PRINT '- Prêt pour utilisation en production';
+PRINT '- PrÃªt pour utilisation en production';
 PRINT '';
-PRINT '📝 POUR TESTER MANUELLEMENT:';
+PRINT 'ðŸ“ POUR TESTER MANUELLEMENT:';
 PRINT 'INSERT INTO Alerte (AlertTypeId, AppId, ExpedTypeId, ExpediteurId, TitreAlerte, DescriptionAlerte, DateCreationAlerte, StatutId, EtatAlerteId, DestinataireId, PlateformeEnvoieId)';
 PRINT 'VALUES (2, 1, 1, 2, ''Mon Test'', ''Description'', GETDATE(), 1, 2, 1, 1);';
+
