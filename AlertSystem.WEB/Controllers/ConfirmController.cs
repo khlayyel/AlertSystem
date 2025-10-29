@@ -43,11 +43,19 @@ namespace AlertSystem.WEB.Controllers
                 return View("Error", new { Message = "Alerte introuvable", Title = "Erreur de confirmation" });
             }
 
-            // Mark as Lu for matching destinataires
+            // Resolve the alert group and destinatary user, then mark ALL rows for this user+group as read
+            var baseRow = await _db.Alerte
+                .Where(a => a.AlertRecordId == payload.AlerteId)
+                .Select(a => new { a.AlertGroupId, a.DestinataireUserId, a.ExpediteurId })
+                .FirstOrDefaultAsync();
+
+            if (baseRow == null)
+            {
+                return View("Error", new { Message = "Alerte introuvable (groupe)", Title = "Erreur de confirmation" });
+            }
+
             var rows = await _db.Alerte
-                .Where(a => a.AlertRecordId == payload.AlerteId && (
-                    (payload.Kind == "wa" && a.DestinatairePhoneNumber == payload.Value) ||
-                    (payload.Kind == "email" && a.DestinataireEmail == payload.Value)))
+                .Where(a => a.AlertGroupId == baseRow.AlertGroupId && a.DestinataireUserId == baseRow.DestinataireUserId)
                 .ToListAsync();
 
             var confirmedCount = 0;
@@ -63,22 +71,19 @@ namespace AlertSystem.WEB.Controllers
 
             await _db.SaveChangesAsync();
 
-            // Broadcast real-time update
+            // Broadcast real-time update (both recipient and sender)
             try
             {
                 var hub = HttpContext.RequestServices.GetService<IHubContext<AlertSystem.Infrastructure.Hubs.NotificationHub>>();
                 if (hub != null && alerte.DestinataireUserId.HasValue)
                 {
-                    await hub.Clients.Group($"user_{alerte.DestinataireUserId.Value}").SendCoreAsync(
-                        "ReceiveNotification",
-                        new object[] { "AlertProcessed", new { alertId = alerte.AlertRecordId, status = "Lu" } });
-                    // KPIs refresh for the recipient
                     await hub.Clients.Group($"user_{alerte.DestinataireUserId.Value}").SendAsync("UpdateKpis");
-                    // KPIs refresh for the sender as well
-                    if (alerte.ExpediteurId.HasValue)
-                    {
-                        await hub.Clients.Group($"user_{alerte.ExpediteurId.Value}").SendAsync("UpdateKpis");
-                    }
+                    await hub.Clients.Group($"user_{alerte.DestinataireUserId.Value}").SendAsync("AlertStatusUpdated", new { groupId = baseRow.AlertGroupId, userId = alerte.DestinataireUserId.Value, status = "Lu", readAt = DateTime.UtcNow });
+                }
+                if (hub != null && alerte.ExpediteurId.HasValue)
+                {
+                    await hub.Clients.Group($"user_{alerte.ExpediteurId.Value}").SendAsync("UpdateKpis");
+                    await hub.Clients.Group($"user_{alerte.ExpediteurId.Value}").SendAsync("AlertStatusUpdated", new { groupId = baseRow.AlertGroupId, userId = alerte.DestinataireUserId, status = "Lu", readAt = DateTime.UtcNow });
                 }
             }
             catch { }

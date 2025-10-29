@@ -73,18 +73,23 @@ namespace AlertSystem.WEB.Controllers
             if (typeId.HasValue) q = q.Where(a => a.AlertTypeId == typeId.Value);
             if (stateId.HasValue) q = q.Where(a => a.EtatAlerteId == stateId.Value);
 
+            // Group by AlertGroupId to avoid duplicates per recipient/platform
             var items = await q
-                .OrderByDescending(a => a.DateCreationAlerte)
+                .GroupBy(a => a.AlertGroupId)
+                .OrderByDescending(g => g.Max(a => a.DateCreationAlerte))
                 .Take(200)
-                .Select(a => new AlertListItemDto(
-                    a.AlertRecordId,
-                    a.TitreAlerte,
-                    a.DescriptionAlerte,
-                    a.AlertTypeId,
-                    a.StatutId,
-                    a.EtatAlerteId,
-                    a.DateCreationAlerte,
-                    _db.DefUtilisateurs.Where(u => u.util_id == a.ExpediteurId).Select(u => (u.util_prenom+" "+u.util_nom).Trim()).FirstOrDefault()
+                .Select(g => new AlertListItemDto(
+                    g.Min(a => a.AlertRecordId),
+                    g.Select(a => a.TitreAlerte).FirstOrDefault(),
+                    g.Select(a => a.DescriptionAlerte).FirstOrDefault(),
+                    g.Select(a => (int?)a.AlertTypeId).FirstOrDefault(),
+                    g.Max(a => a.StatutId),
+                    g.Any(a => a.EtatAlerteId == 1) ? 1 : 2,
+                    g.Max(a => a.DateCreationAlerte),
+                    _db.DefUtilisateurs
+                        .Where(u => u.util_id == g.Select(a => a.ExpediteurId).FirstOrDefault())
+                        .Select(u => (u.util_prenom + " " + u.util_nom).Trim())
+                        .FirstOrDefault()
                 ))
                 .ToListAsync();
 
@@ -109,22 +114,42 @@ namespace AlertSystem.WEB.Controllers
             if (typeId.HasValue) q = q.Where(a => a.AlertTypeId == typeId.Value);
             if (stateId.HasValue) q = q.Where(a => a.StatutId == stateId.Value || a.EtatAlerteId == stateId.Value);
 
-            var items = await q
-                .OrderByDescending(a => a.DateCreationAlerte)
-                .Take(200)
-                .Select(a => new AlertListItemDto(
-                    a.AlertRecordId,
-                    a.TitreAlerte,
-                    a.DescriptionAlerte,
-                    a.AlertTypeId,
-                    a.StatutId,
-                    a.EtatAlerteId,
-                    a.DateCreationAlerte,
-                    _db.DefUtilisateurs.Where(u => u.util_id == a.ExpediteurId).Select(u => (u.util_prenom+" "+u.util_nom).Trim()).FirstOrDefault()
+            // 1) First, group by AlertGroupId to collapse platform rows within a send
+            var initial = await q
+                .GroupBy(a => a.AlertGroupId)
+                .OrderByDescending(g => g.Max(a => a.DateCreationAlerte))
+                .Take(400)
+                .Select(g => new AlertListItemDto(
+                    g.Min(a => a.AlertRecordId),
+                    g.Select(a => a.TitreAlerte).FirstOrDefault(),
+                    g.Select(a => a.DescriptionAlerte).FirstOrDefault(),
+                    g.Select(a => (int?)a.AlertTypeId).FirstOrDefault(),
+                    g.Max(a => a.StatutId),
+                    g.Any(a => a.EtatAlerteId == 1) ? 1 : 2,
+                    g.Max(a => a.DateCreationAlerte),
+                    _db.DefUtilisateurs
+                        .Where(u => u.util_id == g.Select(a => a.ExpediteurId).FirstOrDefault())
+                        .Select(u => (u.util_prenom + " " + u.util_nom).Trim())
+                        .FirstOrDefault()
                 ))
                 .ToListAsync();
 
-            return Json(new { alerts = items, total = items.Count });
+            // 2) Then, collapse accidental duplicate sends created within the same minute
+            var final = initial
+                .GroupBy(x => new
+                {
+                    Title = x.Title ?? string.Empty,
+                    Message = x.Message ?? string.Empty,
+                    Minute = new DateTime(x.DateCreation.Year, x.DateCreation.Month, x.DateCreation.Day, x.DateCreation.Hour, x.DateCreation.Minute, 0)
+                })
+                .Select(g => g
+                    .OrderByDescending(x => x.DateCreation)
+                    .First())
+                .OrderByDescending(x => x.DateCreation)
+                .Take(200)
+                .ToList();
+
+            return Json(new { alerts = final, total = final.Count });
         }
 
         [HttpGet("InboxKpiData")]
@@ -152,9 +177,9 @@ namespace AlertSystem.WEB.Controllers
                     .Where(a => a.DestinataireUserId == currentUserId.Value && a.EtatAlerteId == 1)
                     .CountAsync();
 
-                // En attente de confirmation (acquittementNécessaire non confirmées) reçues par l'utilisateur
+                // En attente de confirmation (acquittementNecessaire non confirmées) reçues par l'utilisateur
                 var pendingConfirmation = await _db.Alerte
-                    .Where(a => a.DestinataireUserId == currentUserId.Value && a.EtatAlerteId == 1 && a.AlertTypeId == 3)
+                    .Where(a => a.DestinataireUserId == currentUserId.Value && a.EtatAlerteId == 1 && a.AlertTypeId == 2)
                     .CountAsync();
 
                 return Json(new { receivedToday, unreadAlerts, pendingConfirmation });
@@ -192,9 +217,9 @@ namespace AlertSystem.WEB.Controllers
                     .Where(a => a.ExpediteurId == currentUserId.Value && a.EtatAlerteId == 2)
                     .CountAsync();
 
-                // En attente de confirmation: acquittementNécessaire envoyées par l'utilisateur avec au moins un destinataire non lu
+                // En attente de confirmation: acquittementNecessaire envoyées par l'utilisateur avec au moins un destinataire non lu
                 var pendingConfirmation = await _db.Alerte
-                    .Where(a => a.ExpediteurId == currentUserId.Value && a.AlertTypeId == 3 && a.EtatAlerteId == 1)
+                    .Where(a => a.ExpediteurId == currentUserId.Value && a.AlertTypeId == 2 && a.EtatAlerteId == 1)
                     .CountAsync();
 
                 return Json(new { sentToday, confirmedAlerts, pendingConfirmation });
@@ -223,7 +248,7 @@ namespace AlertSystem.WEB.Controllers
 
                 // Nombre d'alertes en attente envoyées par l'utilisateur
                 var outboxPendingCount = await _db.Alerte
-                    .Where(a => a.ExpediteurId == currentUserId.Value && a.AlertTypeId == 3 && a.EtatAlerteId == 1)
+                    .Where(a => a.ExpediteurId == currentUserId.Value && a.AlertTypeId == 2 && a.EtatAlerteId == 1)
                     .CountAsync();
 
                 return Json(new { inboxUnreadCount, outboxPendingCount });
@@ -310,7 +335,9 @@ namespace AlertSystem.WEB.Controllers
                     .Select(g => new
                     {
                         recipientUserId = g.Key.DestinataireUserId,
-                        recipientName = g.Key.Name ?? ("User " + g.Key.DestinataireUserId),
+                        recipientName = g.Key.Name,
+                        recipientEmail = g.Where(x => x.DestinataireEmail != null && x.DestinataireEmail != "").Select(x => x.DestinataireEmail).FirstOrDefault(),
+                        recipientPhone = g.Where(x => x.DestinatairePhoneNumber != null && x.DestinatairePhoneNumber != "").Select(x => x.DestinatairePhoneNumber).FirstOrDefault(),
                         isRead = g.Any(x => x.EtatAlerteId == 2),
                         readDate = g.Where(x => x.DateLecture != null).OrderBy(x => x.DateLecture).Select(x => x.DateLecture).FirstOrDefault(),
                         status = g.Any(x => x.EtatAlerteId == 2) ? "Lu" : "Non Lu"

@@ -7,7 +7,7 @@ namespace AlertSystem.Service.Services
 {
     public interface IEmailTemplateService
     {
-        string CreateAlertEmailTemplate(string title, string message, string senderName, DateTime timestamp, string confirmationUrl);
+        string CreateAlertEmailTemplate(string title, string message, string senderName, DateTime timestamp, string confirmationUrl, string confirmLabel);
     }
 
     public class EmailTemplateService : IEmailTemplateService
@@ -32,7 +32,7 @@ namespace AlertSystem.Service.Services
             }
         }
 
-        public string CreateAlertEmailTemplate(string title, string message, string senderName, DateTime timestamp, string confirmationUrl)
+        public string CreateAlertEmailTemplate(string title, string message, string senderName, DateTime timestamp, string confirmationUrl, string confirmLabel)
         {
             try
             {
@@ -45,7 +45,8 @@ namespace AlertSystem.Service.Services
                     .Replace("{{MESSAGE}}", message.Replace("\n", "<br>"))
                     .Replace("{{SENDER_NAME}}", senderName)
                     .Replace("{{TIMESTAMP}}", timestamp.ToString("dd/MM/yyyy HH:mm:ss"))
-                    .Replace("{{CONFIRMATION_URL}}", confirmationUrl);
+                    .Replace("{{CONFIRMATION_URL}}", confirmationUrl)
+                    .Replace("{{CONFIRM_LABEL}}", confirmLabel);
 
                 return html;
             }

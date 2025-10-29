@@ -7,7 +7,7 @@ namespace AlertSystem.Service.Services
 {
     public interface IWhatsAppTemplateService
     {
-        Task<bool> SendAlertTemplateAsync(string phoneNumber, string title, string message, string senderName, string confirmationUrl);
+        Task<bool> SendAlertTemplateAsync(string phoneNumber, string title, string message, string senderName, string confirmationUrl, bool requiresConfirmation);
     }
 
     public class WhatsAppTemplateService : IWhatsAppTemplateService
@@ -23,14 +23,16 @@ namespace AlertSystem.Service.Services
             _configuration = configuration;
         }
 
-        public async Task<bool> SendAlertTemplateAsync(string phoneNumber, string title, string message, string senderName, string confirmationUrl)
+        public async Task<bool> SendAlertTemplateAsync(string phoneNumber, string title, string message, string senderName, string confirmationUrl, bool requiresConfirmation)
         {
             try
             {
                 _logger.LogInformation("Sending WhatsApp template alert to {PhoneNumber}", phoneNumber);
 
                 // Read template configuration from appsettings.json
-                var templateName = _configuration["WhatsApp:DefaultTemplateName"] ?? "alert_confirmation";
+                var templateName = requiresConfirmation
+                    ? (_configuration["WhatsApp:DefaultTemplateNameConfirm"] ?? _configuration["WhatsApp:DefaultTemplateName"] ?? "alert_confirmation")
+                    : (_configuration["WhatsApp:DefaultTemplateNameMarkRead"] ?? _configuration["WhatsApp:DefaultTemplateName"] ?? "alert_confirmation");
                 var languageCode = _configuration["WhatsApp:DefaultTemplateLang"] ?? "fr";
 
                 _logger.LogInformation("🔧 TEMPLATE SERVICE DEBUG: TemplateName={TemplateName}, LanguageCode={LanguageCode}", 

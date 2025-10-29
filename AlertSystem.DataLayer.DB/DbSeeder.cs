@@ -91,6 +91,20 @@ namespace AlertSystem
             }
 
             await context.SaveChangesAsync();
+
+            // Normalize lookup values to remove accents if they slipped in
+            try
+            {
+                await context.Database.ExecuteSqlRawAsync(@"UPDATE dbo.Statut SET StatutName = 'EnCours' WHERE StatutId = 1;
+UPDATE dbo.Statut SET StatutName = 'Envoye' WHERE StatutId = 2;
+UPDATE dbo.Statut SET StatutName = 'Annule' WHERE StatutId = 3;
+UPDATE dbo.Statut SET StatutName = 'Echoue' WHERE StatutId = 4;
+UPDATE dbo.Etat SET EtatAlerteName = 'NonLu' WHERE EtatAlerteId = 1;
+UPDATE dbo.Etat SET EtatAlerteName = 'Lu' WHERE EtatAlerteId = 2;
+UPDATE dbo.AlertType SET AlertTypeName = 'acquittementNecessaire' WHERE AlertTypeId = 1;
+UPDATE dbo.AlertType SET AlertTypeName = 'acquittementNonNecessaire' WHERE AlertTypeId = 2;");
+            }
+            catch { }
         }
 
     }

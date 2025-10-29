@@ -5,6 +5,8 @@ using AlertSystem.Service.Interfaces;
 using AlertSystem.Services;
 using AlertSystem.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.SignalR;
+using AlertSystem.Infrastructure.Hubs;
 
 namespace AlertSystem.WEB.Controllers
 {

@@ -105,14 +105,19 @@ namespace AlertSystem.Service.Services
                             Kind = "email",
                             Value = alert.DestinataireEmail
                         });
-                        var confirmationUrl = $"https://localhost:5185/confirm?t={token}";
+                        var req = _httpContextAccessor.HttpContext?.Request;
+                        var scheme = req?.Scheme ?? (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development" ? "http" : "https");
+                        var host = req != null ? req.Host.ToString() : (_cfg["App:PublicHost"] ?? "localhost:5185");
+                        var confirmationUrl = $"{scheme}://{host}/confirm?t={token}";
 
+                        var confirmLabel = (alert.AlertTypeId == 2) ? "✅ Confirmer la réception" : "👁️ Marquer comme lu";
                         var htmlContent = _emailTemplateService.CreateAlertEmailTemplate(
                             alert.TitreAlerte,
                             alert.DescriptionAlerte,
                             senderDisplay,
                             DateTime.Now,
-                            confirmationUrl);
+                            confirmationUrl,
+                            confirmLabel);
                         success = await _notificationService.SendHtmlEmailAsync(alert.DestinataireEmail, alert.TitreAlerte, htmlContent);
                     }
                     else
@@ -150,13 +155,17 @@ namespace AlertSystem.Service.Services
                             Kind = "wa",
                             Value = alert.DestinatairePhoneNumber
                         });
-                        var confirmationUrl = $"https://localhost:5185/confirm?t={tokenWa}";
+                        var reqWa = _httpContextAccessor.HttpContext?.Request;
+                        var schemeWa = reqWa?.Scheme ?? (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development" ? "http" : "https");
+                        var hostWa = reqWa != null ? reqWa.Host.ToString() : (_cfg["App:PublicHost"] ?? "localhost:5185");
+                        var confirmationUrl = $"{schemeWa}://{hostWa}/confirm?t={tokenWa}";
                         success = await _whatsAppTemplateService.SendAlertTemplateAsync(
                             alert.DestinatairePhoneNumber, 
                             alert.TitreAlerte, 
                             alert.DescriptionAlerte, 
                             senderDisplay,
-                            confirmationUrl);
+                            confirmationUrl,
+                            alert.AlertTypeId == 2);
                     }
                     else
                     {
@@ -207,7 +216,7 @@ namespace AlertSystem.Service.Services
                 }
 
                 // Gérer les rappels pour les alertes obligatoires
-                if (alert.AlertTypeId == 2) // Obligatoire
+                if (alert.AlertTypeId == 2) // Obligatoire (acquittementNecessaire)
                 {
                     alert.RappelSuivant = DateTime.UtcNow.AddHours(24);
                 }

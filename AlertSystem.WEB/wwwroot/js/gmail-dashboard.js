@@ -192,8 +192,8 @@ if (saveQuickBtn){
       if (modalEl && window.bootstrap?.Modal){
         e.preventDefault();
         window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
-        // initialize defaults
-        const t = document.getElementById('composeType'); if (t) t.value = 'Information';
+        // initialize defaults to non-obligatory key
+        const t = document.getElementById('composeType'); if (t) t.value = 'acquittementNonNecessaire';
         setupDynamicPlatforms();
         setupTagInputs();
       }
@@ -286,28 +286,44 @@ function renderInboxList(containerId, items){
   c.innerHTML = (items||[]).map(a=> {
     const preview = (a.message||'').trim();
     const dRaw = a.createdAt || a.dateCreation || a.date || a.DateCreation;
+    const idVal = a.id ?? a.Id ?? a.alertId ?? a.AlertId ?? a.historiqueId ?? a.HistoriqueId;
+    const alertTypeId = a.alertTypeId ?? a.AlertTypeId;
+    let etatVal = (a.etatAlerteId ?? a.EtatAlerteId ?? a.readStateId);
+    if (etatVal == null) etatVal = 1; // default to unread when backend omits state
     let dateText = '';
     try {
       const d = new Date(dRaw);
       dateText = isNaN(d.getTime()) ? '' : d.toLocaleString('fr-FR', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
     } catch { dateText = ''; }
     
-    // Read state badge based on EtatAlerteId
+    // Determine if this alert requires confirmation (obligatoire)
+    const requiresConfirmation = (alertTypeId === 2) || (a.alertType === 'acquittementNecessaire' || a.alertType === 'acquittementNécessaire');
+
+    // Read state badge based strictly on EtatAlerteId, with wording depending on alert type
     let readBadge = '';
     let readClass = '';
-    switch(a.etatAlerteId || a.readStateId) {
-      case 1: readBadge = 'Non Lu'; readClass = 'bg-danger'; break;
-      case 2: readBadge = 'Lu'; readClass = 'bg-success'; break;
-      default: readBadge = ''; readClass = ''; break;
+    switch(etatVal) {
+      case 1:
+        readBadge = 'Non Lu';
+        readClass = 'bg-danger';
+        break;
+      case 2:
+        readBadge = requiresConfirmation ? 'Confirmé' : 'Lu';
+        readClass = 'bg-success';
+        break;
+      default:
+        readBadge = '';
+        readClass = '';
+        break;
     }
     
-    // Check if this alert requires confirmation and is unread
-    const requiresConfirmation = (a.alertType === 'acquittementNécessaire' || a.alertType === 'acquittementNecessaire' || a.alertTypeId === 3);
-    const isUnread = (a.state === 'NonLu' || a.etatAlerteId === 1);
-    const showConfirmButton = requiresConfirmation && isUnread;
+    // Show action buttons for UNREAD items
+    const isUnread = (etatVal === 1) || (a.state === 'NonLu');
+    const showConfirmButton = isUnread && requiresConfirmation;
+    const showMarkAsReadButton = isUnread && !requiresConfirmation;
     
     return `
-    <div class="gmail-alert-row" data-id="${a.id}" data-historique-id="${a.id}">
+    <div class="gmail-alert-row" data-id="${idVal}" data-historique-id="${idVal}">
       <div class="row-left title-col">
         <div class="d-flex align-items-center">
           <div class="flex-grow-1">
@@ -321,7 +337,8 @@ function renderInboxList(containerId, items){
       </div>
       <div class="row-main desc-col">${preview}</div>
       <div class="row-right actions-col">
-        ${showConfirmButton ? `<button class="btn btn-success btn-sm me-2" onclick="confirmAlert(${a.id})">Confirmer</button>` : ''}
+        ${showConfirmButton ? `<button class=\"btn btn-success btn-sm me-2 inbox-action\" data-id=\"${a.id}\" data-action=\"confirm\">Confirmer</button>` : ''}
+        ${showMarkAsReadButton ? `<button class=\"btn btn-secondary btn-sm me-2 inbox-action\" data-id=\"${a.id}\" data-action=\"read\">Marquer comme lu</button>` : ''}
         <span class="text-muted small">${dateText}</span>
       </div>
     </div>`;
@@ -354,11 +371,31 @@ function renderInboxList(containerId, items){
       }
     });
   });
+
+  // Wire action buttons (stop propagation so row click doesn't fire)
+  c.querySelectorAll('.inbox-action').forEach(btn=>{
+    btn.addEventListener('click', (ev)=>{
+      ev.stopPropagation();
+      const id = parseInt(btn.getAttribute('data-id'));
+      const action = btn.getAttribute('data-action');
+      if (action === 'confirm') { try { confirmAlert(id); } catch(e){ console.error(e);} }
+      else { try { markRead(id); } catch(e){ console.error(e);} }
+    });
+  });
 }
 
 function renderOutboxList(containerId, items){
   const c = document.getElementById(containerId); if(!c) return;
-  c.innerHTML = (items||[]).map(a=> {
+  // Client-side de-duplication fallback in case backend returns duplicate groups
+  const uniqueMap = new Map();
+  (items||[]).forEach(a=>{
+    const dRaw = a.createdAt || a.dateCreation || a.date || a.DateCreation || '';
+    const dKey = typeof dRaw === 'string' ? dRaw : (new Date(dRaw).toISOString().slice(0,16));
+    const key = `${a.title||a.Title||''}|${a.message||a.Message||''}|${dKey}`;
+    if (!uniqueMap.has(key)) uniqueMap.set(key, a);
+  });
+  const list = Array.from(uniqueMap.values());
+  c.innerHTML = list.map(a=> {
     const preview = (a.message||'').trim();
     const dRaw = a.createdAt || a.dateCreation || a.date || a.DateCreation;
     let dateText = '';
@@ -755,6 +792,11 @@ async function confirmAlert(alertId) {
   }
 }
 
+// Mark-as-read for information alerts shares the same backend endpoint
+async function markRead(alertId) {
+  return confirmAlert(alertId);
+}
+
 async function loadInboxDetails(alertId) {
   try {
     const data = await fetchJson(`/Dashboard/GetInboxAlerts`);
@@ -808,7 +850,14 @@ function showDetailsModal(details){
   
   const titleEl = modalEl.querySelector('#detailTitle'); if (titleEl) titleEl.textContent = title;
   const msgEl = modalEl.querySelector('#detailMessage'); if (msgEl) msgEl.textContent = msg;
-  const typeEl = modalEl.querySelector('#detailType'); if (typeEl) typeEl.textContent = details.type || 'Type non spécifié';
+  const typeEl = modalEl.querySelector('#detailType');
+  if (typeEl) {
+    const tRaw = (details.type||'').toString();
+    const tId = details.alertTypeId;
+    const isOblig = (tId === 2) || /acquittementn[ée]cessaire/i.test(tRaw) || /obligatoire/i.test(tRaw);
+    typeEl.textContent = isOblig ? 'Obligatoire' : 'Information';
+    typeEl.className = 'badge fs-6 ' + (isOblig ? 'bg-danger' : 'bg-info');
+  }
   const statusEl = modalEl.querySelector('#detailStatus'); if (statusEl) {
     const s = (details.status || '').toString().toLowerCase();
     statusEl.textContent = details.status || 'Statut non spécifié';
@@ -822,6 +871,7 @@ function showDetailsModal(details){
     recipientsContainer.style.display = 'block';
     const recipientsList = modalEl.querySelector('#recipientsList');
     if (recipientsList) {
+      const requiresConfirmation = (details.alertTypeId === 2 || details.type === 'acquittementNecessaire' || details.type === 'acquittementNécessaire');
       recipientsList.innerHTML = details.recipients.map(recipient => {
         // Determine the best identifier to display
         let identifier = '';
@@ -838,16 +888,15 @@ function showDetailsModal(details){
         }
         
         const statusClass = recipient.isRead ? 'text-success' : 'text-danger';
-        const statusText = recipient.isRead ? 'Lu' : 'Non Lu';
+        const statusText = recipient.isRead ? (requiresConfirmation ? 'Confirmé' : 'Lu') : 'Non Lu';
         const readDate = recipient.readDate ? new Date(recipient.readDate).toLocaleString('fr-FR') : '';
-        const platformBadge = recipient.platform ? `<span class="badge bg-info me-1">${recipient.platform}</span>` : '';
+        // Platform-level details intentionally hidden in UI (kept in DB for traceability)
         
         return `
           <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
             <div>
               <div class="fw-semibold">${identifier}</div>
               <div class="small text-muted">
-                ${platformBadge}
                 ${readDate ? `Lu le: ${readDate}` : ''}
               </div>
             </div>
@@ -934,6 +983,9 @@ async function loadUsers(){
         const q = (searchBox?.value || '').toLowerCase();
         const emailOn = document.getElementById('platformEmail')?.checked;
         const waOn = document.getElementById('platformWhatsApp')?.checked;
+        // Toggle header columns visibility
+        const colEmail = document.getElementById('colEmail'); if (colEmail) colEmail.style.display = emailOn ? '' : 'none';
+        const colWa = document.getElementById('colWa'); if (colWa) colWa.style.display = waOn ? '' : 'none';
         const rows = usersList
           .filter(u => (u.name||'').toLowerCase().includes(q))
           .map(u=>{
@@ -1142,6 +1194,7 @@ if (sendBtn){
       
       // No long-running spinner anymore; we'll show a short toast on success
       
+      const typeVal = document.getElementById('composeType')?.value || 'acquittementNonNecessaire';
       const payload = {
           title, 
           message, 
@@ -1153,7 +1206,7 @@ if (sendBtn){
             WhatsApp: !!platforms.WhatsApp,
             Desktop: !!platforms.Desktop
         },
-        alertTypeId: (document.getElementById('composeType')?.value === 'Obligatoire' ? 3 : 1)
+        alertTypeId: (typeVal === 'acquittementNecessaire' ? 2 : 1)
       };
       console.debug('Send:compose', payload);
       const r = await fetch('/AlertsCrud/Send', {
