@@ -309,8 +309,9 @@
         </h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body">
+            <div class="modal-body">
         <div class="row g-4">
+          <!-- Title Card -->
           <div class="col-12">
             <div class="card border-0 shadow-sm">
               <div class="card-header bg-light">
@@ -324,6 +325,7 @@
             </div>
           </div>
           
+          <!-- Message Card -->
           <div class="col-12">
             <div class="card border-0 shadow-sm">
               <div class="card-header bg-light">
@@ -337,6 +339,7 @@
             </div>
           </div>
           
+          <!-- Type, Statut, Date Cards -->
           <div class="col-md-4">
             <div class="card border-0 shadow-sm">
               <div class="card-header bg-light">
@@ -372,6 +375,18 @@
               </div>
               <div class="card-body text-center">
                 <div id="detailCreatedAt" class="text-muted"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ACTION BAR (paste this block after the date/status/type) -->
+          <div class="col-12" id="modalActionSection">
+            <div class="card border-0 shadow-sm mt-3">
+              <div class="card-header bg-light">
+                <h6 class="mb-0 fw-semibold"><i class="bi bi-bolt me-1"></i>Action</h6>
+              </div>
+              <div class="card-body text-center" id="detailsActionBtnContainer">
+                <!-- The JS will inject the proper action button here dynamically -->
               </div>
             </div>
           </div>

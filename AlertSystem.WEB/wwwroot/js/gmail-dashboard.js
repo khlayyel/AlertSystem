@@ -34,6 +34,11 @@ function logSuccess(context, data = {}) {
     timestamp: new Date().toISOString()
   });
 }
+function showLoading(containerId) {
+  const c = document.getElementById(containerId);
+  if (!c) return;
+  c.innerHTML = '<div class="gmail-loading"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Chargement...</span></div><span class="ms-2">Chargement des alertes...</span></div>';
+}
 
 document.addEventListener('DOMContentLoaded', function() {
   dbg('DOMContentLoaded: Starting initialization');
@@ -279,32 +284,36 @@ async function fetchJson(url){
   }
 }
 
-function showLoading(containerId){ const c = document.getElementById(containerId); if(!c) return; c.innerHTML = '<div class="gmail-loading"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Chargement...</span></div><span class="ms-2">Chargement des alertes...</span></div>'; }
+function renderInboxList(containerId, items) {
+  const c = document.getElementById(containerId); if (!c) return;
 
-function renderInboxList(containerId, items){
-  const c = document.getElementById(containerId); if(!c) return;
-  c.innerHTML = (items||[]).map(a=> {
-    const preview = (a.message||'').trim();
+  // INBOX HEADER ROW
+  c.innerHTML = `
+    <div class="gmail-inbox-header-row d-flex align-items-center fw-bold bg-light border-bottom" style="min-height:44px;">
+      <div style="min-width:210px;" class="ps-3 flex-shrink-0">Titre Alerte</div>
+      <div class="flex-grow-1 ps-2 pe-2">Description</div>
+      <div style="width:130px;" class="text-center flex-shrink-0">Statut</div>
+      <div style="min-width:160px;" class="text-end pe-3 flex-shrink-0">Date</div>
+    </div>
+  `;
+  c.innerHTML += (items || []).map(a => {
+    const preview = (a.message || '').trim();
     const dRaw = a.createdAt || a.dateCreation || a.date || a.DateCreation;
     const idVal = a.id ?? a.Id ?? a.alertId ?? a.AlertId ?? a.historiqueId ?? a.HistoriqueId;
     const alertTypeId = a.alertTypeId ?? a.AlertTypeId;
     let etatVal = (a.etatAlerteId ?? a.EtatAlerteId ?? a.readStateId);
-    if (etatVal == null) etatVal = 1; // default to unread when backend omits state
+    if (etatVal == null) etatVal = 1;
     let dateText = '';
     try {
       const d = new Date(dRaw);
-      dateText = isNaN(d.getTime()) ? '' : d.toLocaleString('fr-FR', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+      dateText = isNaN(d.getTime()) ? '' : d.toLocaleString('fr-FR', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
     } catch { dateText = ''; }
-    
-    // Determine if this alert requires confirmation (obligatoire)
     const requiresConfirmation = (alertTypeId === 2) || (a.alertType === 'acquittementNecessaire' || a.alertType === 'acquittementNécessaire');
-
-    // Read state badge based strictly on EtatAlerteId, with wording depending on alert type
     let readBadge = '';
     let readClass = '';
-    switch(etatVal) {
+    switch (etatVal) {
       case 1:
-        readBadge = 'Non Lu';
+        readBadge = requiresConfirmation ? 'Non confirmé' : 'Non Lu';
         readClass = 'bg-danger';
         break;
       case 2:
@@ -316,70 +325,39 @@ function renderInboxList(containerId, items){
         readClass = '';
         break;
     }
-    
-    // Show action buttons for UNREAD items
-    const isUnread = (etatVal === 1) || (a.state === 'NonLu');
-    const showConfirmButton = isUnread && requiresConfirmation;
-    const showMarkAsReadButton = isUnread && !requiresConfirmation;
-    
     return `
-    <div class="gmail-alert-row" data-id="${idVal}" data-historique-id="${idVal}">
-      <div class="row-left title-col">
-        <div class="d-flex align-items-center">
-          <div class="flex-grow-1">
-            <div class="fw-semibold">${(a.title||'Sans titre')}</div>
-            <div class="text-muted small">De: ${a.senderName || a.sender || 'Système'}</div>
-          </div>
-          <div class="ms-2">
-            ${readBadge ? `<span class="badge ${readClass} me-1">${readBadge}</span>` : ''}
-          </div>
+      <div class="gmail-alert-row d-flex align-items-center" style="min-height:56px; border-bottom:1px solid #f1f1f1;" data-id="${idVal}" data-historique-id="${idVal}">
+        <div class="row-left title-col flex-shrink-0 ps-3" style="min-width:210px;">
+          <div class="fw-semibold">${(a.title || 'Sans titre')}</div>
+          <div class="text-muted small">De: ${a.senderName || a.sender || 'Système'}</div>
+        </div>
+        <div class="row-main desc-col flex-grow-1 ps-2 pe-2">${preview}</div>
+        <div class="row-status flex-shrink-0 text-center align-self-stretch d-flex align-items-center justify-content-center" style="width:130px;">
+          ${readBadge ? `<span class="badge ${readClass} px-3 py-2 fs-6">${readBadge}</span>` : ''}
+        </div>
+        <div class="row-right date-col flex-shrink-0 text-end pe-3" style="min-width:160px;">
+          <span class="text-muted small">${dateText}</span>
         </div>
       </div>
-      <div class="row-main desc-col">${preview}</div>
-      <div class="row-right actions-col">
-        ${showConfirmButton ? `<button class=\"btn btn-success btn-sm me-2 inbox-action\" data-id=\"${a.id}\" data-action=\"confirm\">Confirmer</button>` : ''}
-        ${showMarkAsReadButton ? `<button class=\"btn btn-secondary btn-sm me-2 inbox-action\" data-id=\"${a.id}\" data-action=\"read\">Marquer comme lu</button>` : ''}
-        <span class="text-muted small">${dateText}</span>
-      </div>
-    </div>`;
+    `;
   }).join('');
   
-  // Add click handlers for inbox rows
-  c.querySelectorAll('.gmail-alert-row').forEach(row=>{
-    row.addEventListener('click', async ()=>{
+  // Keep all click handlers and selection logic the same
+  c.querySelectorAll('.gmail-alert-row').forEach(row => {
+    row.addEventListener('click', async () => {
       const id = row.getAttribute('data-id');
-      
-      // Add visual selection feedback
+      // selection, loading details etc (unchanged)
       dbg('renderInboxList: Alert row clicked', { id, containerId });
-      
-      // Remove selection from all rows in this container
       c.querySelectorAll('.gmail-alert-row').forEach(r => r.classList.remove('selected'));
-      
-      // Add selection to clicked row
       row.classList.add('selected');
-      
       try {
-        // show loading state in details modal first
         showDetailsModal({ title: 'Chargement…', message: 'Veuillez patienter…' });
-        
-        // For inbox alerts, show normal details
         const details = await fetchJson(`/Alerts/Details?id=${id}`);
         showDetailsModal(details);
-      } catch (err){
+      } catch (err) {
         showDetailsModal({ title: 'Erreur', message: "Impossible de charger les détails de l'alerte." });
         console.error('Details load error', err);
       }
-    });
-  });
-
-  // Wire action buttons (stop propagation so row click doesn't fire)
-  c.querySelectorAll('.inbox-action').forEach(btn=>{
-    btn.addEventListener('click', (ev)=>{
-      ev.stopPropagation();
-      const id = parseInt(btn.getAttribute('data-id'));
-      const action = btn.getAttribute('data-action');
-      if (action === 'confirm') { try { confirmAlert(id); } catch(e){ console.error(e);} }
-      else { try { markRead(id); } catch(e){ console.error(e);} }
     });
   });
 }
@@ -821,11 +799,11 @@ async function loadInboxDetails(alertId) {
 function showDetailsModal(details){
   const modalEl = document.getElementById('alertDetailsModal');
   if (!modalEl) return;
-  
+
   const title = details.title || 'Titre non disponible';
   const msg = details.message || 'Message non disponible';
   let createdAt = '';
-  
+
   // Better date handling
   if (details.createdAt) {
     try {
@@ -847,9 +825,12 @@ function showDetailsModal(details){
   } else {
     createdAt = 'Date non disponible';
   }
-  
+
+  // Populate modal fields
   const titleEl = modalEl.querySelector('#detailTitle'); if (titleEl) titleEl.textContent = title;
   const msgEl = modalEl.querySelector('#detailMessage'); if (msgEl) msgEl.textContent = msg;
+  
+  // Type badge
   const typeEl = modalEl.querySelector('#detailType');
   if (typeEl) {
     const tRaw = (details.type||'').toString();
@@ -858,14 +839,41 @@ function showDetailsModal(details){
     typeEl.textContent = isOblig ? 'Obligatoire' : 'Information';
     typeEl.className = 'badge fs-6 ' + (isOblig ? 'bg-danger' : 'bg-info');
   }
+  // Status badge
   const statusEl = modalEl.querySelector('#detailStatus'); if (statusEl) {
     const s = (details.status || '').toString().toLowerCase();
     statusEl.textContent = details.status || 'Statut non spécifié';
     statusEl.className = 'badge fs-6 ' + (s.includes('envoy') ? 'bg-success' : s.includes('échou') || s.includes('echec') ? 'bg-danger' : s.includes('cours') ? 'bg-warning' : 'bg-secondary');
   }
+  // Date
   const createdEl = modalEl.querySelector('#detailCreatedAt'); if (createdEl) createdEl.textContent = createdAt;
-  
-  // Show recipients if available (for sent alerts)
+
+  // --- ACTION BUTTON LOGIC (new: shows only if unread) ---
+  const actionBtnContainer = modalEl.querySelector('#detailsActionBtnContainer');
+  if (actionBtnContainer) {
+    // Determine read state: 1 = unread
+    const stateId = details.stateId ?? details.etatAlerteId ?? details.readStateId;
+    const alertTypeId = details.alertTypeId ?? details.typeId;
+    const theId = details.id ?? details.Id ?? details.alertId ?? details.AlertId;
+
+    if (stateId === 1) {
+      if (alertTypeId === 2 || details.type === 'acquittementNecessaire' || details.type === 'acquittementNécessaire') {
+        actionBtnContainer.innerHTML = `
+          <button class="btn btn-success btn-lg" onclick="confirmAlert(${theId})">
+            <i class="bi bi-check2-circle me-1"></i>Confirmer
+          </button>`;
+      } else {
+        actionBtnContainer.innerHTML = `
+          <button class="btn btn-secondary btn-lg" onclick="markRead(${theId})">
+            <i class="bi bi-eye me-1"></i>Marquer comme lu
+          </button>`;
+      }
+    } else {
+      actionBtnContainer.innerHTML = `<span class="text-success fw-semibold">Déjà confirmé ou lu</span>`;
+    }
+  }
+
+  // Show recipients (for sent alerts - optional, you can remove if not needed)
   const recipientsContainer = modalEl.querySelector('#recipientsContainer');
   if (recipientsContainer && details.recipients && details.recipients.length > 0) {
     recipientsContainer.style.display = 'block';
@@ -886,12 +894,9 @@ function showDetailsModal(details){
         } else {
           identifier = `ID: ${recipient.recipientId}`;
         }
-        
         const statusClass = recipient.isRead ? 'text-success' : 'text-danger';
         const statusText = recipient.isRead ? (requiresConfirmation ? 'Confirmé' : 'Lu') : 'Non Lu';
         const readDate = recipient.readDate ? new Date(recipient.readDate).toLocaleString('fr-FR') : '';
-        // Platform-level details intentionally hidden in UI (kept in DB for traceability)
-        
         return `
           <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
             <div>
@@ -908,8 +913,10 @@ function showDetailsModal(details){
   } else if (recipientsContainer) {
     recipientsContainer.style.display = 'none';
   }
-  
-  if (window.bootstrap && window.bootstrap.Modal){ window.bootstrap.Modal.getOrCreateInstance(modalEl).show(); }
+
+  if (window.bootstrap && window.bootstrap.Modal) {
+    window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
+  }
 }
 
 // Web Push subscription flow
