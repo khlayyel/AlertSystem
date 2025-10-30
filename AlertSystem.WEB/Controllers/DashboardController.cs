@@ -64,6 +64,7 @@ namespace AlertSystem.WEB.Controllers
             var currentUserId = _currentUserService.GetCurrentUserId();
             if (!currentUserId.HasValue)
             {
+                Response.StatusCode = 401; // Unauthorized (better for frontend detection)
                 return Json(new { alerts = Array.Empty<AlertListItemDto>(), total = 0, error = "User not authenticated" });
             }
 
@@ -105,6 +106,7 @@ namespace AlertSystem.WEB.Controllers
             var currentUserId = _currentUserService.GetCurrentUserId();
             if (!currentUserId.HasValue)
             {
+                Response.StatusCode = 401; // Unauthorized (better for frontend detection)
                 return Json(new { alerts = Array.Empty<AlertListItemDto>(), total = 0, error = "User not authenticated" });
             }
 

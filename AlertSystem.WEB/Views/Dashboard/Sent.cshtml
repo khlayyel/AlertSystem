@@ -66,7 +66,7 @@
                     <span class="input-group-text">
                         <i class="bi bi-search"></i>
                     </span>
-                    <input id="alertSearch" class="form-control form-control-lg" placeholder="Rechercher une alerte (titre, expéditeur, contenu, destinataire)..." />
+                    <input id="alertSearch" name="alertSearch" class="form-control form-control-lg" placeholder="Rechercher une alerte (titre, expéditeur, contenu, destinataire)..." />
                 </div>
             </div>
             <div class="col-md-4">
@@ -91,10 +91,10 @@
                 <span id="sentRangeStart">1</span>-<span id="sentRangeEnd">50</span> sur <span id="sentTotal">0</span>
             </span>
             <div class="gmail-pagination-controls">
-                <button id="sentPrevBtn" class="btn btn-sm btn-outline-secondary me-2" disabled>
+                <button id="sentPrevBtn" type="button" class="btn btn-sm btn-outline-secondary me-2" disabled>
                     <i class="bi bi-chevron-left"></i>
                 </button>
-                <button id="sentNextBtn" class="btn btn-sm btn-outline-secondary" disabled>
+                <button id="sentNextBtn" type="button" class="btn btn-sm btn-outline-secondary" disabled>
                     <i class="bi bi-chevron-right"></i>
                 </button>
             </div>
@@ -149,23 +149,23 @@
         <!-- Titre & message -->
         <div class="row g-4 mb-4">
           <div class="col-12">
-            <label class="form-label fw-semibold">
+            <label class="form-label fw-semibold" for="composeTitle">
               <i class="bi bi-tag me-1"></i>Titre de l'alerte *
             </label>
-            <input id="composeTitle" class="form-control form-control-lg" placeholder="Entrez le titre de l'alerte..." />
+            <input id="composeTitle" name="composeTitle" class="form-control form-control-lg" placeholder="Entrez le titre de l'alerte..." />
           </div>
           <div class="col-12">
-            <label class="form-label fw-semibold">
+            <label class="form-label fw-semibold" for="composeMessage">
               <i class="bi bi-chat-text me-1"></i>Message
             </label>
-            <textarea id="composeMessage" rows="6" class="form-control" placeholder="Entrez le message de l'alerte..."></textarea>
+            <textarea id="composeMessage" name="composeMessage" rows="6" class="form-control" placeholder="Entrez le message de l'alerte..."></textarea>
           </div>
         </div>
 
         <!-- Type d'alerte -->
         <div class="row g-4 mb-4">
           <div class="col-12">
-            <label class="form-label fw-semibold">
+            <label class="form-label fw-semibold" for="composeType">
               <i class="bi bi-exclamation-triangle me-1"></i>Type d'alerte
             </label>
             <select id="composeType" class="form-select form-select-lg">
@@ -227,11 +227,11 @@
             <!-- Sélection d'utilisateurs existants -->
             <div class="row g-4 mb-4">
               <div class="col-12">
-                <label class="form-label fw-semibold">
+                <label class="form-label fw-semibold" for="userSearch">
                   <i class="bi bi-person-check me-1"></i>Utilisateurs du système
                 </label>
                 <div class="mb-2">
-                  <input id="userSearch" class="form-control" placeholder="Rechercher par nom..." />
+                  <input id="userSearch" name="userSearch" class="form-control" placeholder="Rechercher par nom..." />
                 </div>
                 <!-- Tabs will be injected by JS (userTabs) under the search bar -->
                 <div class="table-responsive border rounded">
@@ -257,17 +257,17 @@
             
             <div class="row g-4">
               <div class="col-12 col-md-6">
-                <label class="form-label fw-semibold">
+                <label class="form-label fw-semibold" for="destEmails">
                   <i class="bi bi-envelope me-1"></i>Emails
                 </label>
-                <input id="destEmails" class="form-control" placeholder="ex: a@ex.com, b@ex.com" />
+                <input id="destEmails" name="destEmails" class="form-control" placeholder="ex: a@ex.com, b@ex.com" />
                 <div class="form-text">Séparés par des virgules</div>
               </div>
               <div class="col-12 col-md-6">
-                <label class="form-label fw-semibold">
+                <label class="form-label fw-semibold" for="destPhones">
                   <i class="bi bi-phone me-1"></i>Téléphones WhatsApp
                 </label>
-                <input id="destPhones" class="form-control" placeholder="ex: +21612345678, +21698765432" />
+                <input id="destPhones" name="destPhones" class="form-control" placeholder="ex: +21612345678, +21698765432" />
                 <div class="form-text">Format international requis</div>
               </div>
             </div>
@@ -404,5 +404,5 @@
 </div>
 
 @section Scripts {
-<script src="~/js/gmail-dashboard.js"></script>
+<script type="module" src="~/js/alert-dashboard.js"></script>
 }

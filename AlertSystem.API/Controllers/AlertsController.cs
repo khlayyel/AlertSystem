@@ -125,7 +125,7 @@ namespace AlertSystem.Controllers.Api.V1
 
                 if (plateformeEnvoieId.HasValue)
                     query = query.Where(a => a.PlateformeEnvoieId == plateformeEnvoieId.Value);
-
+                
                 if (appId.HasValue)
                     query = query.Where(a => a.AppId == appId.Value);
 
