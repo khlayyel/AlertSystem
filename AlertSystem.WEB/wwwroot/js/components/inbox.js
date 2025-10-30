@@ -72,3 +72,8 @@ export function renderInboxList(containerId, items) {
     });
   });
 }
+
+// Export for external refresh
+export function reloadInbox(containerId = 'inboxList') {
+  if (window.loadInbox) window.loadInbox();
+}

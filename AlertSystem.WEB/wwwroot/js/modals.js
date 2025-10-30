@@ -36,10 +36,17 @@ export function showDetailsModal(details){
     typeEl.textContent = isOblig ? 'Obligatoire' : 'Information';
     typeEl.className = 'badge fs-6 ' + (isOblig ? 'bg-danger' : 'bg-info');
   }
-  const statusEl = modalEl.querySelector('#detailStatus'); if (statusEl) {
-    const s = (details.status || '').toString().toLowerCase();
-    statusEl.textContent = details.status || 'Statut non spécifié';
-    statusEl.className = 'badge fs-6 ' + (s.includes('envoy') ? 'bg-success' : s.includes('échou') || s.includes('echec') ? 'bg-danger' : s.includes('cours') ? 'bg-warning' : 'bg-secondary');
+  const statusEl = modalEl.querySelector('#detailStatus');
+  if (statusEl) {
+    // Use badge & class from modalStatus if passed (from outbox)
+    if (details.modalStatus && details.modalStatus.badge) {
+      statusEl.textContent = details.modalStatus.badge;
+      statusEl.className = 'badge fs-6 ' + (details.modalStatus.class || 'bg-light text-dark');
+    } else {
+      const s = (details.status || '').toString().toLowerCase();
+      statusEl.textContent = details.status || 'Statut non spécifié';
+      statusEl.className = 'badge fs-6 ' + (s.includes('envoy') ? 'bg-success' : s.includes('échou') || s.includes('echec') ? 'bg-danger' : s.includes('cours') ? 'bg-warning' : 'bg-secondary');
+    }
   }
   const createdEl = modalEl.querySelector('#detailCreatedAt'); if (createdEl) createdEl.textContent = createdAt;
   const actionBtnContainer = modalEl.querySelector('#detailsActionBtnContainer');
@@ -50,15 +57,32 @@ export function showDetailsModal(details){
     if (stateId === 1) {
       if (alertTypeId === 2 || details.type === 'acquittementNecessaire' || details.type === 'acquittementNécessaire') {
         actionBtnContainer.innerHTML = `
-          <button class="btn btn-success btn-lg" onclick="confirmAlert(${theId})">
+          <button class="btn btn-success btn-lg" id="modalConfirmBtn" type="button">
             <i class="bi bi-check2-circle me-1"></i>Confirmer
           </button>`;
       } else {
         actionBtnContainer.innerHTML = `
-          <button class="btn btn-secondary btn-lg" onclick="markRead(${theId})">
+          <button class="btn btn-secondary btn-lg" id="modalReadBtn" type="button">
             <i class="bi bi-eye me-1"></i>Marquer comme lu
           </button>`;
       }
+      // --- DYNAMIQUE: patch pour que le bouton soit remplacé dynamiquement après succès ---
+      const confirmBtn = modalEl.querySelector('#modalConfirmBtn');
+      if (confirmBtn) confirmBtn.addEventListener('click', async e => {
+        confirmBtn.disabled = true;
+        try {
+          await window.confirmAlert(theId); // Promise
+          setTimeout(() => { actionBtnContainer.innerHTML = `<span class="text-success fw-semibold">Déjà confirmé ou lu</span>`; }, 350);
+        } catch { confirmBtn.disabled = false; }
+      });
+      const readBtn = modalEl.querySelector('#modalReadBtn');
+      if (readBtn) readBtn.addEventListener('click', async e => {
+        readBtn.disabled = true;
+        try {
+          await window.markRead(theId);
+          setTimeout(() => { actionBtnContainer.innerHTML = `<span class="text-success fw-semibold">Déjà confirmé ou lu</span>`; }, 350);
+        } catch { readBtn.disabled = false; }
+      });
     } else {
       actionBtnContainer.innerHTML = `<span class="text-success fw-semibold">Déjà confirmé ou lu</span>`;
     }
@@ -126,4 +150,5 @@ export function setupModalA11y(){
 if (typeof window !== "undefined") {
   window.showDetailsModal = showDetailsModal;
   window.setupModalA11y = setupModalA11y;
+  window.reloadInbox = (window.reloadInbox || (window.loadInbox ? window.loadInbox.bind(window) : null));
 }

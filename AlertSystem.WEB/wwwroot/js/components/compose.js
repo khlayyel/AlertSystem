@@ -52,6 +52,7 @@ export async function loadUsers() {
       usersActiveTab = tab;
       tabs.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
       (tab === 'def' ? tabDef : tabGrh)?.classList.add('active');
+      searchBox.value = '';
       renderRows();
     };
     tabDef?.addEventListener('click', ()=> setActive('def'));
@@ -98,7 +99,10 @@ export async function loadUsers() {
       });
     });
   };
-  searchBox.addEventListener('input', renderRows);
+  searchBox.removeEventListener('input', renderRows); // defensive
+  searchBox.addEventListener('input', ()=>{
+    renderRows();
+  });
   const emailCheck = document.getElementById('platformEmail');
   const waCheck = document.getElementById('platformWhatsApp');
   if (emailCheck) emailCheck.addEventListener('change', renderRows);
@@ -225,6 +229,7 @@ export function setupComposeHandlers() {
         if (modalEl && window.bootstrap?.Modal){ window.bootstrap.Modal.getOrCreateInstance(modalEl).hide(); }
         dbg('SendButton: Reloading inbox');
         if (window.loadInbox) window.loadInbox();
+        if (window.loadSent) window.loadSent();
         try { if (window.loadOutboxKpiData) window.loadOutboxKpiData(); } catch {}
         try { if (window.loadInboxKpiData) window.loadInboxKpiData(); } catch {}
         logSuccess('SendButton: Alert sent successfully', { alerteId: j.alerteId });

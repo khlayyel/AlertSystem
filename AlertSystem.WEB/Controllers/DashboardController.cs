@@ -88,7 +88,8 @@ namespace AlertSystem.WEB.Controllers
                     g.Select(a => a.DescriptionAlerte).FirstOrDefault(),
                     g.Select(a => (int?)a.AlertTypeId).FirstOrDefault(),
                     g.Max(a => a.StatutId),
-                    g.Any(a => a.EtatAlerteId == 1) ? 1 : 2,
+                    // FIX: Only count current logged-in user's read state
+                    g.Where(a => a.DestinataireUserId == currentUserId.Value).Any(a => a.EtatAlerteId == 1) ? 1 : 2,
                     g.Max(a => a.DateCreationAlerte),
                     _db.DefUtilisateurs
                         .Where(u => u.util_id == g.Select(a => a.ExpediteurId).FirstOrDefault())
@@ -222,10 +223,11 @@ namespace AlertSystem.WEB.Controllers
                     .Where(a => a.ExpediteurId == currentUserId.Value && a.EtatAlerteId == 2)
                     .CountAsync();
 
-                // En attente de confirmation: acquittementNecessaire envoyées par l'utilisateur avec au moins un destinataire non lu
+                // En attente de confirmation: nombre d’alertes obligatoires envoyées PAR L’UTILISATEUR pour lesquelles il reste au moins un non-confirmé
                 var pendingConfirmation = await _db.Alerte
-                    .Where(a => a.ExpediteurId == currentUserId.Value && a.AlertTypeId == 2 && a.EtatAlerteId == 1)
-                    .CountAsync();
+                    .Where(a => a.ExpediteurId == currentUserId.Value && a.AlertTypeId == 2)
+                    .GroupBy(a => a.AlertGroupId)
+                    .CountAsync(g => g.Any(x => x.EtatAlerteId == 1));
 
                 return Json(new { sentToday, confirmedAlerts, pendingConfirmation });
             }
