@@ -45,8 +45,21 @@ try
     builder.Services.AddScoped<AlertAuditService>();
     builder.Services.AddScoped<AlertSystem.DataLayer.Interfaces.IHotelUserRepository, AlertSystem.Repository.Implementations.HotelUserRepository>();
 
-    // Register Watcher Service
-    builder.Services.AddHostedService<WatcherService>();
+    // Shared infra
+    builder.Services.AddSingleton<AlertSystem.WatcherWorker.Services.ITimeProvider, AlertSystem.WatcherWorker.Services.SystemTimeProvider>();
+    builder.Services.AddSingleton<AlertSystem.WatcherWorker.Services.IAppResolver, AlertSystem.WatcherWorker.Services.AppResolver>();
+    builder.Services.AddSingleton<AlertSystem.WatcherWorker.Services.ICapabilityResolver, AlertSystem.WatcherWorker.Services.CapabilityResolver>();
+    builder.Services.AddScoped<AlertSystem.WatcherWorker.Services.IRecipientResolver, AlertSystem.WatcherWorker.Services.RecipientResolver>();
+    builder.Services.AddScoped<AlertSystem.WatcherWorker.Services.IAlertWriter, AlertSystem.WatcherWorker.Services.AlertWriter>();
+
+    // Domain watchers
+    builder.Services.AddHostedService<AlertSystem.WatcherWorker.Watchers.ReservationsWatcher>();
+    builder.Services.AddHostedService<AlertSystem.WatcherWorker.Watchers.TpvBillingWatcher>();
+    builder.Services.AddHostedService<AlertSystem.WatcherWorker.Watchers.HrWatcher>();
+    builder.Services.AddHostedService<AlertSystem.WatcherWorker.Watchers.EventsWatcher>();
+    builder.Services.AddHostedService<AlertSystem.WatcherWorker.Watchers.TreasuryWatcher>();
+
+    // No intermediary queue service required anymore
 
     var host = builder.Build();
     

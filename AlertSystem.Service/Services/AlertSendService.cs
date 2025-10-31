@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Http;
+using System.Data.Common;
 
 namespace AlertSystem.Service.Services
 {
@@ -80,7 +81,7 @@ namespace AlertSystem.Service.Services
                 {
                     if (!string.IsNullOrEmpty(alert.DestinataireEmail))
                     {
-                        // Build sender display with real expediteur info
+                        // Build sender display: if system alert (ExpediteurId NULL) use application name from AppId
                         string senderDisplay = "AlertSystem";
                         if (alert.ExpediteurId.HasValue)
                         {
@@ -95,6 +96,14 @@ namespace AlertSystem.Service.Services
                                 senderDisplay = string.IsNullOrWhiteSpace(email)
                                     ? fullName
                                     : string.IsNullOrWhiteSpace(fullName) ? email : $"{fullName} <{email}>";
+                            }
+                        }
+                        else if (alert.AppId.HasValue)
+                        {
+                            var appName = await GetApplicationDisplayAsync(alert.AppId.Value);
+                            if (!string.IsNullOrWhiteSpace(appName))
+                            {
+                                senderDisplay = appName!;
                             }
                         }
 
@@ -130,7 +139,7 @@ namespace AlertSystem.Service.Services
                 {
                     if (!string.IsNullOrEmpty(alert.DestinatairePhoneNumber))
                     {
-                        // Build sender display with real expediteur info
+                        // Build sender display for WhatsApp
                         string senderDisplay = "AlertSystem";
                         if (alert.ExpediteurId.HasValue)
                         {
@@ -145,6 +154,14 @@ namespace AlertSystem.Service.Services
                                 senderDisplay = string.IsNullOrWhiteSpace(email)
                                     ? fullName
                                     : string.IsNullOrWhiteSpace(fullName) ? email : $"{fullName} <{email}>";
+                            }
+                        }
+                        else if (alert.AppId.HasValue)
+                        {
+                            var appName = await GetApplicationDisplayAsync(alert.AppId.Value);
+                            if (!string.IsNullOrWhiteSpace(appName))
+                            {
+                                senderDisplay = appName!;
                             }
                         }
                         // Use IWhatsAppTemplateService to send with approved Meta template
@@ -173,27 +190,33 @@ namespace AlertSystem.Service.Services
                         success = false;
                     }
                 }
-                else if (alert.PlateformeEnvoieId == 3) // Desktop WebPush
+                else if (alert.PlateformeEnvoieId == 3) // Desktop (dashboard delivery + optional WebPush)
                 {
-                    try
+                    // Design decision: Desktop delivery is considered "sent" once the Alerte row exists with a valid DestinataireUserId.
+                    // Web push notification is best-effort and must NOT downgrade the outcome to failure.
+                    if (alert.DestinataireUserId.HasValue)
                     {
-                        var title = string.IsNullOrWhiteSpace(alert.TitreAlerte) ? "Alerte" : alert.TitreAlerte;
-                        var body = alert.DescriptionAlerte ?? string.Empty;
-                        var url = "/Dashboard";
-                        if (alert.DestinataireUserId.HasValue)
+                        success = true; // mark as sent for dashboard delivery
+                        try
                         {
+                            var title = string.IsNullOrWhiteSpace(alert.TitreAlerte) ? "Alerte" : alert.TitreAlerte;
+                            var body = alert.DescriptionAlerte ?? string.Empty;
+                            var url = "/Dashboard";
                             var uid = Convert.ToInt32(alert.DestinataireUserId.Value);
-                            success = await _notificationService.SendPushNotificationAsync(uid, title, body, url);
+                            var pushOk = await _notificationService.SendPushNotificationAsync(uid, title, body, url);
+                            if (!pushOk)
+                            {
+                                _logger.LogWarning("Web push not delivered for alert {AlertRecordId}, keeping status as sent due to dashboard delivery", alertRecordId);
+                            }
                         }
-                        else
+                        catch (Exception pushEx)
                         {
-                            _logger.LogWarning("No DestinataireUserId for desktop push on alert {AlertRecordId}", alertRecordId);
-                            success = false;
+                            _logger.LogWarning(pushEx, "Web push error for alert {AlertRecordId}, keeping status as sent due to dashboard delivery", alertRecordId);
                         }
                     }
-                    catch (Exception pushEx)
+                    else
                     {
-                        _logger.LogError(pushEx, "Error sending web push for alert {AlertRecordId}", alertRecordId);
+                        _logger.LogWarning("No DestinataireUserId for desktop delivery on alert {AlertRecordId}", alertRecordId);
                         success = false;
                     }
                 }
@@ -207,7 +230,7 @@ namespace AlertSystem.Service.Services
                 if (success)
                 {
                     alert.StatutId = 2; // Envoyé
-                    alert.DateLecture = DateTime.UtcNow;
+                    // Do not force read/DateLecture here; reading is driven by recipient action
                     _logger.LogInformation("Alert {AlertRecordId} sent successfully", alertRecordId);
                 }
                 else
@@ -296,6 +319,33 @@ namespace AlertSystem.Service.Services
                 DateCreationAlerte = DateTime.UtcNow,
                 ProcessedByWorker = false
             };
+        }
+
+        private async Task<string?> GetApplicationDisplayAsync(int appId)
+        {
+            // Reads application name from hotel DB without requiring an EF entity mapping
+            // Prefers application_lbl if present
+            try
+            {
+                await using DbConnection conn = _db.Database.GetDbConnection();
+                if (conn.State != System.Data.ConnectionState.Open)
+                {
+                    await conn.OpenAsync();
+                }
+                await using var cmd = conn.CreateCommand();
+                cmd.CommandText = @"SELECT TOP 1 COALESCE(NULLIF(LTRIM(RTRIM(application_lbl)), ''), CAST(application_id AS varchar(20)))
+                                     FROM def_application WHERE application_id = @id";
+                var p = cmd.CreateParameter();
+                p.ParameterName = "@id";
+                p.Value = appId;
+                cmd.Parameters.Add(p);
+                var result = await cmd.ExecuteScalarAsync();
+                return result?.ToString();
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
     }
 }

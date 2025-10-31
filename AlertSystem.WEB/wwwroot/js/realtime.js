@@ -71,7 +71,16 @@ export function initializeSignalR() {
       }
     });
     connection.start()
-      .then(() => { dbg('SignalR: Connected') })
+      .then(async () => {
+        dbg('SignalR: Connected');
+        try {
+          const me = await fetchJson('/Dashboard/MyId');
+          if (me && me.userId) {
+            await connection.invoke('JoinUserGroup', String(me.userId));
+            dbg('SignalR: Joined group for user', me.userId);
+          }
+        } catch (e) { dbg('SignalR: JoinUserGroup failed', e); }
+      })
       .catch(err=>{ logError('SignalR connect error', err); });
   } else {
     dbg('SignalR: signalR.HubConnectionBuilder not found.');

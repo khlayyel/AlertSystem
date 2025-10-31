@@ -70,14 +70,38 @@
                     <input id="alertSearch" name="alertSearch" class="form-control form-control-lg" placeholder="Rechercher une alerte (titre, expéditeur, contenu, destinataire)..." />
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="d-flex gap-2">
-                    <button class="btn btn-outline-primary" type="button">
+            <div class="col-md-4 text-end">
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary dropdown-toggle w-100" type="button" id="inboxFiltersBtn" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="bi bi-funnel me-1"></i>Filtres
                     </button>
-                    <button class="btn btn-outline-secondary" type="button">
-                        <i class="bi bi-arrow-clockwise me-1"></i>Actualiser
-                    </button>
+                    <div class="dropdown-menu dropdown-menu-end p-3 shadow" aria-labelledby="inboxFiltersBtn" style="min-width: 320px;">
+                        <div class="mb-2">
+                            <label class="form-label small text-muted mb-1">Période</label>
+                            <div class="row g-2">
+                                <div class="col-6"><input id="filterStart" type="date" class="form-control" /></div>
+                                <div class="col-6"><input id="filterEnd" type="date" class="form-control" /></div>
+                            </div>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <label class="form-label small text-muted mb-1">Type</label>
+                                <select id="filterType" class="form-select">
+                                    <option value="">Tous</option>
+                                    <option value="1">Information</option>
+                                    <option value="2">Obligatoire</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small text-muted mb-1">Statut</label>
+                                <select id="filterState" class="form-select">
+                                    <option value="">Tous</option>
+                                    <option value="1">Non lu</option>
+                                    <option value="2">Lu</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -270,6 +294,13 @@
                 </label>
                 <input id="destPhones" name="destPhones" class="form-control" placeholder="ex: +21612345678, +21698765432" />
                 <div class="form-text">Format international requis</div>
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold" for="destUsers">
+                  <i class="bi bi-person-badge me-1"></i>Utilisateurs (réception sur tableau de bord)
+                </label>
+                <input id="destUsers" name="destUsers" class="form-control" placeholder="Ajouter des utilisateurs (IDs système)" />
+                <div class="form-text">Les utilisateurs ajoutés ici recevront l'alerte sur leur tableau de bord (plateforme Desktop). Utile s'ils n'ont ni email ni WhatsApp.</div>
               </div>
             </div>
             <div class="form-text mt-2">

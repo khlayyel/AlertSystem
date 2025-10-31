@@ -54,6 +54,7 @@ export function makeTagInput(inputId, separatorRegex, normalizer) {
 export function setupTagInputs() {
   makeTagInput('destEmails', /[\,\s]/);
   makeTagInput('destPhones', /[\,\s]/, normalizePhone);
+  makeTagInput('destUsers', /[\,\s]/);
 }
 
 export function addTagTo(inputId, value) {
@@ -74,9 +75,47 @@ export function addTagTo(inputId, value) {
   hidden.value = arr.join(',');
 }
 
+// Adds a user tag displaying Full Name while storing numeric userId in the hidden input
+export function addUserTag(userId, displayName) {
+  const hidden = document.getElementById('destUsers');
+  if (!hidden) return;
+  const wrap = hidden.previousSibling;
+  if (!wrap || !wrap.classList || !wrap.classList.contains('tag-input')) return;
+  const list = wrap.querySelector('.tags');
+  const existingKeys = Array.from(list.querySelectorAll('.tag')).map(t => (t.dataset.value && t.dataset.value !== '') ? t.dataset.value : (t.firstChild?.nodeValue || ''));
+  const idStr = (userId !== null && userId !== undefined) ? String(userId) : '';
+  const key = idStr || (displayName || '');
+  if (existingKeys.includes(key)) return;
+  const tag = document.createElement('span');
+  tag.className = 'tag';
+  if (idStr) tag.dataset.value = idStr; // optional value used for sending
+  tag.textContent = displayName || idStr; // label for UI
+  const x = document.createElement('button'); x.type='button'; x.className='tag-x'; x.textContent='×';
+  x.onclick = ()=>{
+    list.removeChild(tag);
+    const arr = Array.from(list.querySelectorAll('.tag')).map(t=> t.dataset.value || (t.firstChild?.nodeValue || ''));
+    hidden.value = arr.join(',');
+  };
+  tag.appendChild(x);
+  list.appendChild(tag);
+  const arr = Array.from(list.querySelectorAll('.tag')).map(t=> t.dataset.value || (t.firstChild?.nodeValue || ''));
+  hidden.value = arr.join(',');
+}
+
 export function getTagValues(inputId) {
   const hidden = document.getElementById(inputId);
   if (!hidden) return [];
+  if (inputId === 'destUsers') {
+    // Prefer reading from DOM to ensure we return IDs even if labels differ
+    const wrap = hidden.previousSibling;
+    const list = wrap && wrap.querySelector ? wrap.querySelector('.tags') : null;
+    if (list) {
+      return Array.from(list.querySelectorAll('.tag'))
+        .map(t => t.dataset.value || (t.firstChild?.nodeValue || ''))
+        .map(s=>s.trim())
+        .filter(Boolean);
+    }
+  }
   return (hidden.value||'').split(',').map(s=>s.trim()).filter(Boolean);
 }
 
@@ -85,5 +124,6 @@ if (typeof window !== "undefined") {
   window.makeTagInput = makeTagInput;
   window.setupTagInputs = setupTagInputs;
   window.addTagTo = addTagTo;
+  window.addUserTag = addUserTag;
   window.getTagValues = getTagValues;
 }

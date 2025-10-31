@@ -105,6 +105,8 @@ namespace AlertSystem.WEB.Controllers
                 dto.Emails = dto.Emails ?? Array.Empty<string>();
                 dto.Phones = dto.Phones ?? Array.Empty<string>();
                 dto.UserIds = dto.UserIds ?? Array.Empty<int>();
+                dto.EmailUserMap = dto.EmailUserMap ?? new Dictionary<string, int>();
+                dto.PhoneUserMap = dto.PhoneUserMap ?? new Dictionary<string, int>();
 
                 _logger.LogInformation("Send: payload normalized. title='{Title}', msgLen={MsgLen}, emails={Emails}, phones={Phones}, desktop={Desktop}, typeId={TypeId}",
                     dto.Title, (dto.Message?.Length ?? 0), dto.Emails.Length, dto.Phones.Length, dto.Platforms.Desktop, dto.AlertTypeId);
@@ -135,6 +137,17 @@ namespace AlertSystem.WEB.Controllers
                     return Unauthorized("User not authenticated");
                 }
 
+                // Helper local functions
+                static string NormalizeEmail(string? e) => (e ?? string.Empty).Trim().ToLowerInvariant();
+                static string NormalizePhone(string? p)
+                {
+                    if (string.IsNullOrWhiteSpace(p)) return string.Empty;
+                    var digits = new string(p.Where(char.IsDigit).ToArray());
+                    if (digits.StartsWith("00")) digits = digits.Substring(2);
+                    if (digits.Length == 8) digits = "216" + digits; // assume TN local fallback
+                    return digits; // compare as digits only
+                }
+
                 // Create alert in database first (with pending status)
                 // Generate a new AlertGroupId for this alert group
                 var alertGroupId = Guid.NewGuid();
@@ -145,9 +158,31 @@ namespace AlertSystem.WEB.Controllers
                 // Add email recipients
                 if (dto.Platforms?.Email == true && dto.Emails != null)
                 {
+                    // preload users for case-insensitive compare
+                    var allUsers = await _db.DefUtilisateurs
+                        .Select(u => new { u.util_id, email = u.util_email })
+                        .ToListAsync();
                     foreach (var email in dto.Emails)
                     {
-                        var user = await _db.DefUtilisateurs.FirstOrDefaultAsync(u => u.util_email == email);
+                        var norm = NormalizeEmail(email);
+                        // 1) Prefer explicit mapping provided by UI when selecting with "+"
+                        AlertSystem.Entities.Entities.DefUtilisateur? resolvedUser = null;
+                        // exact key
+                        if (dto.EmailUserMap.TryGetValue(email, out var mappedUserId))
+                        {
+                            resolvedUser = await _db.DefUtilisateurs.FirstOrDefaultAsync(u => u.util_id == mappedUserId);
+                        }
+                        // case-insensitive key search
+                        if (resolvedUser == null && dto.EmailUserMap.Count > 0)
+                        {
+                            var kv = dto.EmailUserMap.FirstOrDefault(k => string.Equals(k.Key?.Trim(), email?.Trim(), StringComparison.OrdinalIgnoreCase));
+                            if (!string.IsNullOrEmpty(kv.Key) && kv.Value > 0)
+                            {
+                                resolvedUser = await _db.DefUtilisateurs.FirstOrDefaultAsync(u => u.util_id == kv.Value);
+                            }
+                        }
+                        // 2) Fallback to DB email match (case-insensitive)
+                        var userEntry = allUsers.FirstOrDefault(u => NormalizeEmail(u.email) == norm);
                         var alertRecord = new AlertSystem.Entities.Entities.Alerte
                         {
                             AlertGroupId = alertGroupId,
@@ -160,7 +195,7 @@ namespace AlertSystem.WEB.Controllers
                             PlateformeEnvoieId = 1, // Email
                             ExpediteurId = currentUserId.Value, // Set sender ID
                             DestinataireEmail = email,
-                            DestinataireUserId = user?.util_id,
+                            DestinataireUserId = resolvedUser?.util_id ?? userEntry?.util_id,
                             ProcessedByWorker = false // Let WatcherWorker process this
                         };
                         alertRecords.Add(alertRecord);
@@ -170,10 +205,62 @@ namespace AlertSystem.WEB.Controllers
                 // Add WhatsApp recipients
                 if (dto.Platforms?.WhatsApp == true && dto.Phones != null)
                 {
+                    // Preload users with possible GRH phone by joining on grh_emp_id best-effort
+                    var usersWithEmp = await _db.DefUtilisateurs
+                        .Select(u => new { u.util_id, u.grh_emp_id })
+                        .ToListAsync();
+                    var grhPhones = new Dictionary<decimal, string>();
+                    try
+                    {
+                        var conn = _db.Database.GetDbConnection();
+                        if (conn.State != System.Data.ConnectionState.Open) await conn.OpenAsync();
+                        using var cmd = conn.CreateCommand();
+                        cmd.CommandText = @"SELECT CAST(e.grh_emp_id AS decimal(18,2)), NULLIF(LTRIM(RTRIM(ISNULL(e.grh_emp_gsm,''))), '') FROM grh_employe e";
+                        using var reader = await cmd.ExecuteReaderAsync();
+                        while (await reader.ReadAsync())
+                        {
+                            if (!reader.IsDBNull(1)) grhPhones[reader.GetDecimal(0)] = reader.GetString(1);
+                        }
+                    }
+                    catch { }
+                    // Build phone index
+                    var userPhoneIndex = new Dictionary<string, decimal>();
+                    foreach (var u in usersWithEmp)
+                    {
+                        if (u.grh_emp_id.HasValue && grhPhones.TryGetValue(u.grh_emp_id.Value, out var ph))
+                        {
+                            var key = NormalizePhone(ph);
+                            if (!string.IsNullOrEmpty(key) && !userPhoneIndex.ContainsKey(key))
+                                userPhoneIndex[key] = u.util_id;
+                        }
+                    }
                     foreach (var phone in dto.Phones)
                     {
-                        // Match user by phone number if such mapping exists; otherwise do not attempt user lookup
+                        // Try map phone to a userId provided by UI, validate existence
                         AlertSystem.Entities.Entities.DefUtilisateur? user = null;
+                        if (dto.PhoneUserMap.TryGetValue(phone, out var phoneUserId))
+                        {
+                            user = await _db.DefUtilisateurs.FirstOrDefaultAsync(u => u.util_id == phoneUserId);
+                        }
+                        // case-insensitive / normalized match
+                        if (user == null && dto.PhoneUserMap.Count > 0)
+                        {
+                            string NormDigits(string s){ var d=new string((s??string.Empty).Where(char.IsDigit).ToArray()); if (d.StartsWith("00")) d=d.Substring(2); return d; }
+                            var target = NormDigits(phone);
+                            var kv = dto.PhoneUserMap.FirstOrDefault(k => NormDigits(k.Key) == target);
+                            if (!string.IsNullOrEmpty(kv.Key) && kv.Value > 0)
+                            {
+                                user = await _db.DefUtilisateurs.FirstOrDefaultAsync(u => u.util_id == kv.Value);
+                            }
+                        }
+                        if (user == null)
+                        {
+                            var key = NormalizePhone(phone);
+                            if (userPhoneIndex.TryGetValue(key, out var uid))
+                            {
+                                user = await _db.DefUtilisateurs.FirstOrDefaultAsync(u => u.util_id == uid);
+                            }
+                        }
                         var alertRecord = new AlertSystem.Entities.Entities.Alerte
                         {
                             AlertGroupId = alertGroupId,
@@ -196,7 +283,13 @@ namespace AlertSystem.WEB.Controllers
                 // Add desktop recipients
                 if (dto.Platforms?.Desktop == true && userIds != null)
                 {
-                    foreach (var userId in userIds)
+                    // validate user ids exist to avoid FK errors
+                    // Use in-memory intersection to avoid SQL syntax edge-cases observed on some servers
+                    var allIds = await _db.DefUtilisateurs
+                        .Select(u => (int)u.util_id)
+                        .ToListAsync();
+                    var existingIds = userIds.Intersect(allIds).ToList();
+                    foreach (var userId in existingIds)
                     {
                         var alertRecord = new AlertSystem.Entities.Entities.Alerte
                         {
@@ -321,6 +414,8 @@ namespace AlertSystem.WEB.Controllers
             public string[]? Emails { get; set; }
             public string[]? Phones { get; set; }
             public int[]? UserIds { get; set; }
+            public Dictionary<string,int>? EmailUserMap { get; set; }
+            public Dictionary<string,int>? PhoneUserMap { get; set; }
             public PlatformsDto? Platforms { get; set; }
             public int? AlertTypeId { get; set; }
         }

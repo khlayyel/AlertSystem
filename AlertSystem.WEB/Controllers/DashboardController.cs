@@ -46,6 +46,14 @@ namespace AlertSystem.WEB.Controllers
             return View();
         }
 
+        [HttpGet("MyId")]
+        public IActionResult MyId()
+        {
+            var id = _currentUserService.GetCurrentUserId();
+            if (!id.HasValue) return Unauthorized();
+            return Json(new { userId = id.Value });
+        }
+
         // Lightweight DTOs for list rendering
         private sealed record AlertListItemDto(
             int Id,
@@ -59,7 +67,7 @@ namespace AlertSystem.WEB.Controllers
         );
 
         [HttpGet("GetInboxAlerts")]
-        public async Task<IActionResult> GetInboxAlerts(DateTime? startDate = null, DateTime? endDate = null, int? typeId = null, int? stateId = null)
+        public async Task<IActionResult> GetInboxAlerts(DateTime? startDate = null, DateTime? endDate = null, int? typeId = null, int? stateId = null, string? q = null)
         {
             var currentUserId = _currentUserService.GetCurrentUserId();
             if (!currentUserId.HasValue)
@@ -68,17 +76,29 @@ namespace AlertSystem.WEB.Controllers
                 return Json(new { alerts = Array.Empty<AlertListItemDto>(), total = 0, error = "User not authenticated" });
             }
 
-            var q = _db.Alerte
+            var query = _db.Alerte
                 .AsNoTracking()
                 .Where(a => a.DestinataireUserId == currentUserId.Value);
 
-            if (startDate.HasValue) q = q.Where(a => a.DateCreationAlerte >= startDate.Value);
-            if (endDate.HasValue) q = q.Where(a => a.DateCreationAlerte < endDate.Value);
-            if (typeId.HasValue) q = q.Where(a => a.AlertTypeId == typeId.Value);
-            if (stateId.HasValue) q = q.Where(a => a.EtatAlerteId == stateId.Value);
+            if (startDate.HasValue) query = query.Where(a => a.DateCreationAlerte >= startDate.Value);
+            if (endDate.HasValue) query = query.Where(a => a.DateCreationAlerte < endDate.Value);
+            if (typeId.HasValue) query = query.Where(a => a.AlertTypeId == typeId.Value);
+            if (stateId.HasValue) query = query.Where(a => a.EtatAlerteId == stateId.Value);
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                var ql = q.Trim().ToLower();
+                query = query.Where(a =>
+                    (a.TitreAlerte != null && a.TitreAlerte.ToLower().Contains(ql)) ||
+                    (a.DescriptionAlerte != null && a.DescriptionAlerte.ToLower().Contains(ql)) ||
+                    (((_db.DefUtilisateurs
+                        .Where(u => u.util_id == a.ExpediteurId)
+                        .Select(u => ((u.util_prenom ?? "") + " " + (u.util_nom ?? "")))
+                        .FirstOrDefault() ?? "").ToLower()).Contains(ql))
+                );
+            }
 
             // Group by AlertGroupId to avoid duplicates per recipient/platform
-            var items = await q
+            var items = await query
                 .GroupBy(a => a.AlertGroupId)
                 .OrderByDescending(g => g.Max(a => a.DateCreationAlerte))
                 .Take(200)
@@ -102,7 +122,7 @@ namespace AlertSystem.WEB.Controllers
         }
 
         [HttpGet("GetOutboxAlerts")]
-        public async Task<IActionResult> GetOutboxAlerts(DateTime? startDate = null, DateTime? endDate = null, int? typeId = null, int? stateId = null)
+        public async Task<IActionResult> GetOutboxAlerts(DateTime? startDate = null, DateTime? endDate = null, int? typeId = null, int? stateId = null, string? q = null)
         {
             var currentUserId = _currentUserService.GetCurrentUserId();
             if (!currentUserId.HasValue)
@@ -111,17 +131,31 @@ namespace AlertSystem.WEB.Controllers
                 return Json(new { alerts = Array.Empty<AlertListItemDto>(), total = 0, error = "User not authenticated" });
             }
 
-            var q = _db.Alerte
+            var query = _db.Alerte
                 .AsNoTracking()
                 .Where(a => a.ExpediteurId == currentUserId.Value);
 
-            if (startDate.HasValue) q = q.Where(a => a.DateCreationAlerte >= startDate.Value);
-            if (endDate.HasValue) q = q.Where(a => a.DateCreationAlerte < endDate.Value);
-            if (typeId.HasValue) q = q.Where(a => a.AlertTypeId == typeId.Value);
-            if (stateId.HasValue) q = q.Where(a => a.StatutId == stateId.Value || a.EtatAlerteId == stateId.Value);
+            if (startDate.HasValue) query = query.Where(a => a.DateCreationAlerte >= startDate.Value);
+            if (endDate.HasValue) query = query.Where(a => a.DateCreationAlerte < endDate.Value);
+            if (typeId.HasValue) query = query.Where(a => a.AlertTypeId == typeId.Value);
+            if (stateId.HasValue) query = query.Where(a => a.StatutId == stateId.Value || a.EtatAlerteId == stateId.Value);
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                var ql = q.Trim().ToLower();
+                query = query.Where(a =>
+                    (a.TitreAlerte != null && a.TitreAlerte.ToLower().Contains(ql)) ||
+                    (a.DescriptionAlerte != null && a.DescriptionAlerte.ToLower().Contains(ql)) ||
+                    (a.DestinataireEmail != null && a.DestinataireEmail.ToLower().Contains(ql)) ||
+                    (a.DestinatairePhoneNumber != null && a.DestinatairePhoneNumber.ToLower().Contains(ql)) ||
+                    (((_db.DefUtilisateurs
+                        .Where(u => u.util_id == a.DestinataireUserId)
+                        .Select(u => ((u.util_prenom ?? "") + " " + (u.util_nom ?? "")))
+                        .FirstOrDefault() ?? "").ToLower()).Contains(ql))
+                );
+            }
 
             // 1) First, group by AlertGroupId to collapse platform rows within a send
-            var initial = await q
+            var initial = await query
                 .GroupBy(a => a.AlertGroupId)
                 .OrderByDescending(g => g.Max(a => a.DateCreationAlerte))
                 .Take(400)
@@ -283,10 +317,17 @@ namespace AlertSystem.WEB.Controllers
                 })
                 .ToListAsync();
 
+            // Build mapping from GRH employee to system user when available
+            var grhEmpIdToUserId = defUsersRaw
+                .Where(u => u.empId.HasValue)
+                .GroupBy(u => (decimal)u.empId!.Value)
+                .ToDictionary(g => g.Key, g => g.Select(x => (decimal)x.id).First());
+
             // 2) Load GRH phones (safe raw SQL in case entity isn't mapped)
             var grhPhones = new Dictionary<decimal, string>();
             try
             {
+                // Try simplest compatible SQL first (only grh_emp_gsm)
                 var conn = _db.Database.GetDbConnection();
                 await conn.OpenAsync();
                 using (var cmd = conn.CreateCommand())
@@ -310,10 +351,34 @@ namespace AlertSystem.WEB.Controllers
                         }
                     }
                 }
+
+                // Best-effort enrichment with alternative columns (ignore if columns don't exist)
+                try
+                {
+                    using var cmd2 = _db.Database.GetDbConnection().CreateCommand();
+                    if (cmd2.Connection!.State != System.Data.ConnectionState.Open) await cmd2.Connection.OpenAsync();
+                    cmd2.CommandText = @"
+                        SELECT CAST(e.grh_emp_id AS decimal(18,2)) AS id,
+                               NULLIF(LTRIM(RTRIM(
+                                   COALESCE(NULLIF(e.grh_emp_gsm,''), NULLIF(e.grh_emp_tel,''), NULLIF(e.grh_emp_telephone,''), NULLIF(e.gsm,''), NULLIF(e.tel,''), '')
+                               )), '') AS phone
+                        FROM grh_employe e";
+                    using var r2 = await cmd2.ExecuteReaderAsync();
+                    while (await r2.ReadAsync())
+                    {
+                        if (!r2.IsDBNull(1))
+                        {
+                            var id = r2.GetDecimal(0);
+                            var phone = r2.GetString(1);
+                            if (!grhPhones.ContainsKey(id)) grhPhones[id] = phone;
+                        }
+                    }
+                }
+                catch { /* ignore enrichment errors */ }
             }
             catch
             {
-                // Fallback to alternative table name: grh_employee
+                // Fallback to alternative table name: grh_employee (simple first)
                 try
                 {
                     var conn2 = _db.Database.GetDbConnection();
@@ -339,6 +404,29 @@ namespace AlertSystem.WEB.Controllers
                             }
                         }
                     }
+
+                    // Try enrichment with alternative columns on this table
+                    try
+                    {
+                        using var cmd3 = conn2.CreateCommand();
+                        cmd3.CommandText = @"
+                            SELECT CAST(e.grh_emp_id AS decimal(18,2)) AS id,
+                                   NULLIF(LTRIM(RTRIM(
+                                       COALESCE(NULLIF(e.grh_emp_gsm,''), NULLIF(e.grh_emp_tel,''), NULLIF(e.grh_emp_telephone,''), NULLIF(e.gsm,''), NULLIF(e.tel,''), '')
+                                   )), '') AS phone
+                            FROM grh_employee e";
+                        using var r3 = await cmd3.ExecuteReaderAsync();
+                        while (await r3.ReadAsync())
+                        {
+                            if (!r3.IsDBNull(1))
+                            {
+                                var id = r3.GetDecimal(0);
+                                var phone = r3.GetString(1);
+                                if (!grhPhones.ContainsKey(id)) grhPhones[id] = phone;
+                            }
+                        }
+                    }
+                    catch { }
                 }
                 catch { }
             }
@@ -371,30 +459,40 @@ namespace AlertSystem.WEB.Controllers
             {
                 var conn = _db.Database.GetDbConnection();
                 if (conn.State != System.Data.ConnectionState.Open) await conn.OpenAsync();
-                using var cmd = conn.CreateCommand();
-                cmd.CommandText = $@"
-                    SELECT TOP 5000 
-                           CAST(e.grh_emp_id AS decimal(18,2)) AS id,
-                           LTRIM(RTRIM(ISNULL(e.grh_emp_prenom, ''))) + ' ' + LTRIM(RTRIM(ISNULL(e.grh_emp_nom,''))) AS name,
-                           NULLIF(LTRIM(RTRIM(ISNULL(e.grh_emp_email, ''))), '') AS email,
-                           NULLIF(LTRIM(RTRIM(ISNULL(e.grh_emp_gsm, ''))), '') AS phoneNumber
-                    FROM {table} e
-                    WHERE LTRIM(RTRIM(ISNULL(e.grh_emp_prenom, ''))) + ' ' + LTRIM(RTRIM(ISNULL(e.grh_emp_nom,''))) <> ''";
-                using var reader = await cmd.ExecuteReaderAsync();
-                while (await reader.ReadAsync())
+                // Try simple select first (only gsm)
+                var sqls = new[] {
+                    $@"SELECT TOP 5000 CAST(e.grh_emp_id AS decimal(18,2)) AS id,
+                        LTRIM(RTRIM(ISNULL(e.grh_emp_prenom, ''))) + ' ' + LTRIM(RTRIM(ISNULL(e.grh_emp_nom,''))) AS name,
+                        NULLIF(LTRIM(RTRIM(ISNULL(e.grh_emp_email, ''))), '') AS email,
+                        NULLIF(LTRIM(RTRIM(ISNULL(e.grh_emp_gsm, ''))), '') AS phoneNumber
+                       FROM {table} e
+                       WHERE LTRIM(RTRIM(ISNULL(e.grh_emp_prenom, ''))) + ' ' + LTRIM(RTRIM(ISNULL(e.grh_emp_nom,''))) <> ''",
+                    $@"SELECT TOP 5000 CAST(e.grh_emp_id AS decimal(18,2)) AS id,
+                        LTRIM(RTRIM(ISNULL(e.grh_emp_prenom, ''))) + ' ' + LTRIM(RTRIM(ISNULL(e.grh_emp_nom,''))) AS name,
+                        NULLIF(LTRIM(RTRIM(ISNULL(e.grh_emp_email, ''))), '') AS email,
+                        NULLIF(LTRIM(RTRIM(COALESCE(NULLIF(e.grh_emp_gsm,''), NULLIF(e.grh_emp_tel,''), NULLIF(e.grh_emp_telephone,''), NULLIF(e.gsm,''), NULLIF(e.tel,''), ''))), '') AS phoneNumber
+                       FROM {table} e
+                       WHERE LTRIM(RTRIM(ISNULL(e.grh_emp_prenom, ''))) + ' ' + LTRIM(RTRIM(ISNULL(e.grh_emp_nom,''))) <> ''"
+                };
+                foreach (var sql in sqls)
                 {
-                    var id = reader.GetDecimal(0);
-                    var name = reader.IsDBNull(1) ? "" : reader.GetString(1);
-                    var email = reader.IsDBNull(2) ? null : reader.GetString(2);
-                    var phone = reader.IsDBNull(3) ? null : reader.GetString(3);
-                    if (!string.IsNullOrWhiteSpace(phone) && phone.Trim() != "00000000" && phone.Trim() != "0")
+                    try
                     {
-                        grhList.Add(new UserListItem(id, id, name, email, phone));
+                        using var cmd = conn.CreateCommand();
+                        cmd.CommandText = sql;
+                        using var reader = await cmd.ExecuteReaderAsync();
+                        while (await reader.ReadAsync())
+                        {
+                            var id = reader.GetDecimal(0);
+                            var name = reader.IsDBNull(1) ? "" : reader.GetString(1);
+                            var email = reader.IsDBNull(2) ? null : reader.GetString(2);
+                            var phone = reader.IsDBNull(3) ? null : reader.GetString(3);
+                            decimal? mappedUserId = grhEmpIdToUserId.TryGetValue(id, out var uid) ? uid : (decimal?)null;
+                            grhList.Add(new UserListItem(id, mappedUserId ?? id, name, email, phone));
+                        }
+                        if (grhList.Count > 0) break;
                     }
-                    else if (!string.IsNullOrWhiteSpace(name))
-                    {
-                        grhList.Add(new UserListItem(id, id, name, email, null));
-                    }
+                    catch { /* try next variant */ }
                 }
             }
             // Try multiple table name variants to maximize compatibility
@@ -475,7 +573,7 @@ namespace AlertSystem.WEB.Controllers
                     return Json(new { recipients = new object[0] });
                 }
 
-                var recipients = await _db.Alerte
+                    var recipients = await _db.Alerte
                     .Include(a => a.DestinataireUser)
                     .Where(a => a.AlertGroupId == group)
                     .GroupBy(a => new { a.DestinataireUserId, Name = a.DestinataireUser != null ? (a.DestinataireUser.util_prenom + " " + a.DestinataireUser.util_nom).Trim() : (string?)null })
@@ -485,8 +583,8 @@ namespace AlertSystem.WEB.Controllers
                         recipientName = g.Key.Name,
                         recipientEmail = g.Where(x => x.DestinataireEmail != null && x.DestinataireEmail != "").Select(x => x.DestinataireEmail).FirstOrDefault(),
                         recipientPhone = g.Where(x => x.DestinatairePhoneNumber != null && x.DestinatairePhoneNumber != "").Select(x => x.DestinatairePhoneNumber).FirstOrDefault(),
-                        isRead = g.Any(x => x.EtatAlerteId == 2),
-                        readDate = g.Where(x => x.DateLecture != null).OrderBy(x => x.DateLecture).Select(x => x.DateLecture).FirstOrDefault(),
+                            isRead = g.Any(x => x.EtatAlerteId == 2),
+                            readDate = g.Where(x => x.EtatAlerteId == 2 && x.DateLecture != null).OrderBy(x => x.DateLecture).Select(x => x.DateLecture).FirstOrDefault(),
                         status = g.Any(x => x.EtatAlerteId == 2) ? "Lu" : "Non Lu"
                     })
                     .ToListAsync();

@@ -33,7 +33,9 @@ function getGlobalUsers(tab) {
 export async function loadUsers() {
   dbg('loadUsers: Starting');
   await ensureUsersLoaded(); // Always fill usersState if needed
-  let usersDefList = usersState.usersDefList || [], usersGrhList = usersState.usersGrhList || [], usersActiveTab = 'def';
+  let usersDefList = usersState.usersDefList || [], usersGrhList = usersState.usersGrhList || [];
+  // Persist active tab across reloads to avoid snapping back to "Utilisateurs"
+  let usersActiveTab = (window.usersState && window.usersState.activeTab) ? window.usersState.activeTab : 'def';
   const tableBody = document.getElementById('usersTableBody');
   const searchBox = document.getElementById('userSearch');
   if (!tableBody || !searchBox) { dbg('loadUsers: tableBody or searchBox not found'); return; }
@@ -50,6 +52,7 @@ export async function loadUsers() {
     const tabGrh = tabs.querySelector('#userTabGrh');
     const setActive = (tab)=>{
       usersActiveTab = tab;
+      if (window.usersState) window.usersState.activeTab = tab;
       tabs.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
       (tab === 'def' ? tabDef : tabGrh)?.classList.add('active');
       searchBox.value = '';
@@ -66,8 +69,17 @@ export async function loadUsers() {
     const colWa = document.getElementById('colWa');
     if (colEmail) colEmail.style.display = emailOn ? '' : 'none';
     if (colWa) colWa.style.display = waOn ? '' : 'none';
-    const source = usersActiveTab === 'def' ? usersDefList : usersGrhList;
-    const filtered = source.filter(u => (u.name||'').toLowerCase().includes(q));
+    const source = (usersActiveTab === 'def') ? usersDefList : usersGrhList;
+    const filtered = source.filter(u => {
+      const name = (u.name||'').toLowerCase();
+      const email = (u.email||'').toLowerCase();
+      // For GRH we want search to match raw and normalized phones
+      const phoneRaw = (u.phoneNumber||'');
+      const phone = phoneRaw.toLowerCase();
+      const phones = (window.splitPhones ? window.splitPhones(phoneRaw) : []);
+      const phoneMatch = phone.includes(q) || phones.some(p=>p.replace('+','').includes(q.replace('+','')));
+      return name.includes(q) || email.includes(q) || phoneMatch;
+    });
     dbg('renderRows', { tab: usersActiveTab, total: source.length, filtered: filtered.length, emailOn, waOn });
     if (filtered.length === 0) {
       tableBody.innerHTML = '<tr><td colspan="4" class="text-muted text-center">Aucun résultat</td></tr>';
@@ -86,6 +98,32 @@ export async function loadUsers() {
         const list = usersActiveTab === 'def' ? usersDefList : usersGrhList;
         const user = list.find(x => (x.id ?? x.userId).toString() === id);
         if (!user) return;
+        // Always add to Users field with name; resolve util_id if possible
+        const tryResolveId = () => {
+          const raw = (user.userId ?? user.id);
+          let n = raw !== undefined && raw !== null ? parseInt(raw, 10) : NaN;
+          if (!isNaN(n) && n > 0 && n <= 9999) return n;
+          const norm = (s)=> (s||'').toString().trim().toLowerCase().replace(/\s+/g,' ');
+          const uName = norm(user.name);
+          const defList = (Array.isArray(window.usersState?.usersDefList)?window.usersState.usersDefList:[]);
+          const match = defList.find(d => norm(d.name) === uName);
+          if (match) {
+            const mid = parseInt(match.userId ?? match.id, 10);
+            if (!isNaN(mid) && mid>0 && mid<=9999) return mid;
+          }
+          return null;
+        };
+        const resolvedId = tryResolveId();
+        const label = user.name || (resolvedId ? `ID ${resolvedId}` : 'Utilisateur');
+        if (window.addUserTag) window.addUserTag(resolvedId, label); else addTagTo('destUsers', resolvedId? String(resolvedId) : label);
+        // Ensure Desktop platform is enabled when adding a dashboard user via "+"
+        const desk = document.getElementById('platformDesktop');
+        if (desk && !desk.checked) {
+          desk.checked = true;
+          // trigger visibility update / listeners bound elsewhere
+          const evt = new Event('change', { bubbles: true });
+          desk.dispatchEvent(evt);
+        }
         const emailOnNow = document.getElementById('platformEmail')?.checked || false;
         const waOnNow = document.getElementById('platformWhatsApp')?.checked || false;
         if (emailOnNow && user.email) addTagTo('destEmails', user.email);
@@ -150,11 +188,14 @@ export function setupComposeHandlers() {
       const message = document.getElementById('composeMessage')?.value || '';
       const emails = getTagValues('destEmails');
       const phones = getTagValues('destPhones');
+      const userTags = getTagValues('destUsers').map(x=>parseInt(x,10)).filter(n=>!isNaN(n));
       const platforms = {
         Email: document.getElementById('platformEmail')?.checked || false,
         WhatsApp: document.getElementById('platformWhatsApp')?.checked || false,
         Desktop: document.getElementById('platformDesktop')?.checked || false
       };
+      const norm = (s)=> (s||'').toString().trim().toLowerCase().replace(/\s+/g,' ');
+      const allDef = (Array.isArray(window.usersState?.usersDefList)?window.usersState.usersDefList:[]);
       let usersList = [];
       try {
         const data = await fetchJson('/Dashboard/GetUsers');
@@ -172,11 +213,36 @@ export function setupComposeHandlers() {
       if (platforms.Email) {
         selectedUsers.forEach(user=>{ if(user.email && !combinedEmails.includes(user.email)) combinedEmails.push(user.email); });
       }
+      // Build maps email->userId and phone->userId using combined lists (after merging)
+      const emailUserMap = {};
+      const phoneUserMap = {};
+      combinedEmails.forEach(e=>{
+        const m = allDef.find(d=> (d.email||'').toLowerCase() === (e||'').toLowerCase());
+        if (m) { const id = parseInt(m.userId ?? m.id, 10); if (!isNaN(id)) emailUserMap[e]=id; }
+      });
+      const onlyDigits = s => (s||'').toString().replace(/\D/g,'');
+      combinedPhones.forEach(p=>{
+        const target = onlyDigits(p).replace(/^00/, '');
+        const found = allDef.find(d=>{
+          const src = onlyDigits(d.phoneNumber||'');
+          if (!src) return false;
+          return src.endsWith(target) || target.endsWith(src);
+        });
+        if (found) { const id = parseInt(found.userId ?? found.id, 10); if (!isNaN(id)) phoneUserMap[p]=id; }
+      });
       if (platforms.WhatsApp) {
         selectedUsers.forEach(user=>{ if(user.phoneNumber && !combinedPhones.includes(user.phoneNumber)) combinedPhones.push(user.phoneNumber); });
       }
       // Desktop platform: récupère userIds cochés
-      const desktopUserIds = platforms.Desktop ? selectedUsers.map(u => u.userId) : [];
+      let desktopUserIds = platforms.Desktop ? selectedUsers.map(u => parseInt(u.userId ?? u.id, 10)).filter(n=>!isNaN(n) && n>0 && n<=9999) : [];
+      // Merge with user tags (destUsers) to always include explicit user ids
+      if (userTags.length) {
+        if (!platforms.Desktop) { // ensure platform Desktop if user ids provided
+          platforms.Desktop = true;
+        }
+        // keep only util_id range (numeric(4,0))
+        desktopUserIds = Array.from(new Set([ ...desktopUserIds, ...userTags.filter(n=>n>0 && n<=9999) ]));
+      }
       dbg('SendButton: Collected form data', { title, message, emails:combinedEmails, phones:combinedPhones, desktopUserIds, platforms, selectedUsersCount:selectedUsers.length });
       // Validation complète legacy :
       if (!title.trim()) {
@@ -209,6 +275,8 @@ export function setupComposeHandlers() {
           emails: combinedEmails,
           phones: combinedPhones,
           userIds: desktopUserIds,
+          emailUserMap,
+          phoneUserMap,
           platforms: {
             Email: !!platforms.Email,
             WhatsApp: !!platforms.WhatsApp,
@@ -258,15 +326,19 @@ export function getSelectedUsersData(){
 export function setupDynamicPlatforms(){
   const emailChk = document.getElementById('platformEmail');
   const waChk = document.getElementById('platformWhatsApp');
+  const deskChk = document.getElementById('platformDesktop');
   const emailInput = document.getElementById('destEmails')?.closest('.col-12');
   const phoneInput = document.getElementById('destPhones')?.closest('.col-12');
+  const usersInput = document.getElementById('destUsers')?.closest('.col-12');
   const updateVis = () => {
     if (emailInput) emailInput.style.display = emailChk?.checked ? '' : 'none';
     if (phoneInput) phoneInput.style.display = waChk?.checked ? '' : 'none';
+    if (usersInput) usersInput.style.display = deskChk?.checked ? '' : '';
     dbg('platforms:toggle', { email: !!emailChk?.checked, whatsapp: !!waChk?.checked });
   };
   emailChk?.addEventListener('change', updateVis);
   waChk?.addEventListener('change', updateVis);
+  deskChk?.addEventListener('change', updateVis);
   updateVis();
 }
 // Expose helpers to window

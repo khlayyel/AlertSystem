@@ -1016,7 +1016,13 @@ async function loadUsers(){
       const source = usersActiveTab === 'def' ? usersDefList : usersGrhList;
       const filtered = source.filter(u => {
         const name = (u.name||'').toLowerCase();
-        return name.includes(q);
+        const email = (u.email||'').toLowerCase();
+        const phoneRaw = (u.phoneNumber||'');
+        const phoneTxt = phoneRaw.toLowerCase();
+        // also match normalized phone digits
+        const nums = splitPhones(phoneRaw);
+        const phoneMatch = phoneTxt.includes(q) || nums.some(p=> p.replace('+','').includes(q.replace('+','')));
+        return name.includes(q) || email.includes(q) || phoneMatch;
       });
       
       dbg('renderRows', { tab: usersActiveTab, total: source.length, filtered: filtered.length, emailOn, waOn });
@@ -1226,6 +1232,40 @@ if (sendBtn){
     
     // Get desktop user IDs (if Desktop platform is selected)
     const desktopUserIds = platforms.Desktop ? selectedUsers.map(user => user.userId) : [];
+
+    // Build explicit maps: email -> util_id, phone -> util_id to help backend set DestinataireUserId
+    const emailUserMap = {};
+    const phoneUserMap = {};
+    try {
+      const defList = usersDefList || [];
+      const normEmail = e => (e||'').toString().trim().toLowerCase();
+      const normPhoneDigits = p => {
+        let s = (p||'').toString();
+        s = s.replace(/[^+\d]/g,'');
+        if (s.startsWith('00')) s = '+'+s.substring(2);
+        if (!s.startsWith('+') && /^\d{8,15}$/.test(s)) { if (s.length===8) s = '+216'+s; else s = '+'+s; }
+        return s.replace(/\D/g,'');
+      };
+      // Map emails to util_id
+      combinedEmails.forEach(e=>{
+        const m = defList.find(d => normEmail(d.email) === normEmail(e));
+        if (m && m.userId) emailUserMap[e] = m.userId;
+      });
+      // For phones, try direct match on numbers present in defList via usersGrhList linkage when possible
+      const phoneIndex = new Map();
+      [...usersDefList, ...usersGrhList].forEach(u=>{
+        const nums = (u.phoneNumber ? (u.phoneNumber.match(/\d{8,15}/g) || []) : []);
+        nums.forEach(n=>{
+          const key = normPhoneDigits(n);
+          if (key && !phoneIndex.has(key)) phoneIndex.set(key, u.userId || u.id);
+        });
+      });
+      combinedPhones.forEach(p=>{
+        const key = normPhoneDigits(p);
+        const uid = phoneIndex.get(key);
+        if (uid) phoneUserMap[p] = uid;
+      });
+    } catch {}
     
     dbg('SendButton: Collected form data', { 
       title, 
@@ -1291,6 +1331,8 @@ if (sendBtn){
           emails: combinedEmails,
           phones: combinedPhones,
           userIds: desktopUserIds,
+          emailUserMap,
+          phoneUserMap,
           platforms: {
             Email: !!platforms.Email,
             WhatsApp: !!platforms.WhatsApp,

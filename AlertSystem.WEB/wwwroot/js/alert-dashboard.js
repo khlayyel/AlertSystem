@@ -30,15 +30,18 @@ function buildFilterQuery(){
   const endEl = document.getElementById('filterEnd');
   const typeEl = document.getElementById('filterType');
   const stateEl = document.getElementById('filterState');
+  const searchEl = document.getElementById('alertSearch');
   const p = new URLSearchParams();
   const sv = startEl?.value?.trim();
   const ev = endEl?.value?.trim();
   const tv = typeEl?.value?.trim();
   const stv = stateEl?.value?.trim();
+  const qv = searchEl?.value?.trim();
   if (sv) p.set('startDate', sv);
   if (ev) p.set('endDate', ev);
   if (tv) p.set('typeId', tv);
   if (stv) p.set('stateId', stv);
+  if (qv) p.set('q', qv);
   const s = p.toString();
   return s ? `?${s}` : '';
 }
@@ -144,9 +147,25 @@ const hookPagingControls = () => {
 window.addEventListener('DOMContentLoaded', hookPagingControls);
 // Sur chaque reload/données SignalR -> refresh + pagination cohérente/rappel du hook
 // Sur chaque search/filtrage, on peut forcer reloadInbox (en plus du DOM filter)
+let __searchDebounce;
+const triggerReload = () => {
+  const hasInbox = !!document.getElementById('inboxList');
+  const hasSent = !!document.getElementById('sentList');
+  if (hasInbox) reloadInboxAndKpis();
+  if (hasSent) reloadSentAndKpis();
+};
 document.getElementById('alertSearch')?.addEventListener('input', () => {
-  dbg('Paging/Search: combo reload', {val: document.getElementById('alertSearch').value});
-  reloadInboxAndKpis(); // charge page filtrée en plus du filtrage DOM
+  if (__searchDebounce) clearTimeout(__searchDebounce);
+  __searchDebounce = setTimeout(()=>{
+    dbg('Search: debounce reload', { val: document.getElementById('alertSearch').value });
+    triggerReload();
+  }, 220);
+});
+
+['filterStart','filterEnd','filterType','filterState'].forEach(id => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener('change', ()=> { dbg('Filter change', {id, val: el.value}); triggerReload(); });
 });
 // (Nb : On laisse le DOM filterList mais : reload real data ici pour cohérence back)
 
