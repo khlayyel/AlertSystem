@@ -57,7 +57,6 @@ export function initializeSignalR() {
       dbg('SignalR: ReceiveNotification', {type, data});
       switch(type){
         case 'AlertCreated':
-        case 'AlertProcessed':
         case 'AlertReceived':
         case 'NewAlertReceived':
         case 'AlertStatusUpdated':

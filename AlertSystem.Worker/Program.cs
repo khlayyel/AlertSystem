@@ -8,7 +8,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using DotNetEnv;
-using Microsoft.AspNetCore.SignalR;
 
 // Load solution root .env (one level above the project directory)
 var rootEnvPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", ".env"));
@@ -93,8 +92,17 @@ try
     // Register IAlertSendService interface
     builder.Services.AddScoped<AlertSystem.Service.Interfaces.IAlertSendService>(sp => sp.GetRequiredService<AlertSendService>());
 
-    // Register SignalR (for IHubContext usage in worker)
-    builder.Services.AddSignalR();
+    // Register Watcher services (auto-alert creation)
+    builder.Services.AddScoped<AlertSystem.Worker.Services.ITimeProvider, AlertSystem.Worker.Services.SystemTimeProvider>();
+    builder.Services.AddScoped<AlertSystem.Worker.Services.IAppResolver, AlertSystem.Worker.Services.AppResolver>();
+    builder.Services.AddScoped<AlertSystem.Worker.Services.ICapabilityResolver, AlertSystem.Worker.Services.CapabilityResolver>();
+    builder.Services.AddScoped<AlertSystem.Worker.Services.IRecipientResolver, AlertSystem.Worker.Services.RecipientResolver>();
+    builder.Services.AddScoped<AlertSystem.Worker.Services.IAlertWriter, AlertSystem.Worker.Services.AlertWriter>();
+    builder.Services.AddScoped<AlertSystem.Worker.Watchers.EventsWatcher>();
+    builder.Services.AddScoped<AlertSystem.Worker.Watchers.HrWatcher>();
+    builder.Services.AddScoped<AlertSystem.Worker.Watchers.TpvBillingWatcher>();
+    builder.Services.AddScoped<AlertSystem.Worker.Watchers.TreasuryWatcher>();
+    builder.Services.AddScoped<AlertSystem.Worker.Watchers.ReservationsWatcher>();
 
     // Register Worker Service
     builder.Services.AddHostedService<ConsolidatedWorkerService>();

@@ -6,8 +6,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.AspNetCore.SignalR;
-using AlertSystem.Infrastructure.Hubs;
 
 namespace AlertSystem.Worker;
 
@@ -16,16 +14,13 @@ public class ConsolidatedWorkerService : BackgroundService
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<ConsolidatedWorkerService> _logger;
     private readonly TimeSpan _pollInterval = TimeSpan.FromSeconds(5);
-    private readonly IHubContext<NotificationHub> _hubContext;
 
     public ConsolidatedWorkerService(
         IServiceScopeFactory scopeFactory,
-        ILogger<ConsolidatedWorkerService> logger,
-        IHubContext<NotificationHub> hubContext)
+        ILogger<ConsolidatedWorkerService> logger)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
-        _hubContext = hubContext;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -118,40 +113,6 @@ public class ConsolidatedWorkerService : BackgroundService
                             }
 
                             await dbContext.SaveChangesAsync(stoppingToken);
-
-                            // Send SignalR notification for real-time updates
-                            try
-                            {
-                                if (alert.ExpediteurId.HasValue)
-                                {
-                                    await _hubContext.Clients.Group($"user_{alert.ExpediteurId.Value}")
-                                        .SendAsync("ReceiveNotification", "AlertProcessed", new { 
-                                            alertId = alert.AlertRecordId,
-                                            success = sendSuccess,
-                                            status = sendSuccess ? "Envoyé" : "Échoué",
-                                            timestamp = DateTime.UtcNow
-                                        });
-                                    await _hubContext.Clients.Group($"user_{alert.ExpediteurId.Value}")
-                                        .SendAsync("UpdateKpis");
-                                }
-                                
-                                if (alert.DestinataireUserId.HasValue)
-                                {
-                                    await _hubContext.Clients.Group($"user_{alert.DestinataireUserId.Value}")
-                                        .SendAsync("ReceiveNotification", "AlertReceived", new { 
-                                            alertId = alert.AlertRecordId,
-                                            title = alert.TitreAlerte,
-                                            message = alert.DescriptionAlerte,
-                                            timestamp = DateTime.UtcNow
-                                        });
-                                    await _hubContext.Clients.Group($"user_{alert.DestinataireUserId.Value}")
-                                        .SendAsync("UpdateKpis");
-                                }
-                            }
-                            catch (Exception signalREx)
-                            {
-                                _logger.LogWarning(signalREx, "Failed to send SignalR notification for alert {AlertId}", alert.AlertRecordId);
-                            }
                         }
                         catch (Exception ex)
                         {
@@ -164,6 +125,25 @@ public class ConsolidatedWorkerService : BackgroundService
                                 await dbContext.SaveChangesAsync(stoppingToken);
                             }
                         }
+                    }
+
+                    // After processing sends, run auto-alert watchers (single tick each)
+                    try
+                    {
+                        var eventsWatcher = scope.ServiceProvider.GetService<AlertSystem.Worker.Watchers.EventsWatcher>();
+                        if (eventsWatcher != null) await eventsWatcher.ExecuteTickAsync(stoppingToken);
+                        var hrWatcher = scope.ServiceProvider.GetService<AlertSystem.Worker.Watchers.HrWatcher>();
+                        if (hrWatcher != null) await hrWatcher.ExecuteTickAsync(stoppingToken);
+                        var tpvWatcher = scope.ServiceProvider.GetService<AlertSystem.Worker.Watchers.TpvBillingWatcher>();
+                        if (tpvWatcher != null) await tpvWatcher.ExecuteTickAsync(stoppingToken);
+                        var tresWatcher = scope.ServiceProvider.GetService<AlertSystem.Worker.Watchers.TreasuryWatcher>();
+                        if (tresWatcher != null) await tresWatcher.ExecuteTickAsync(stoppingToken);
+                        var resaWatcher = scope.ServiceProvider.GetService<AlertSystem.Worker.Watchers.ReservationsWatcher>();
+                        if (resaWatcher != null) await resaWatcher.ExecuteTickAsync(stoppingToken);
+                    }
+                    catch (Exception wex)
+                    {
+                        _logger.LogWarning(wex, "Watcher tick failed");
                     }
                 }
             }
