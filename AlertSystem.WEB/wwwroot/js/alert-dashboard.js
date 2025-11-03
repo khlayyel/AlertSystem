@@ -219,6 +219,24 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
   }
 
+  // NEW: Lightweight polling fallback to keep UI dynamic even without SignalR
+  try {
+    let __pollTimer = null;
+    const POLL_MS = 4000;
+    const pollOnce = async () => {
+      if (document.visibilityState !== 'visible') return;
+      try { if (document.getElementById('sentList')) await loadSent(); } catch {}
+      try { if (document.getElementById('inboxList')) await loadInbox(); } catch {}
+    };
+    const startPolling = () => { if (!__pollTimer) { __pollTimer = setInterval(pollOnce, POLL_MS); dbg('Polling started'); } };
+    const stopPolling = () => { if (__pollTimer) { clearInterval(__pollTimer); __pollTimer = null; dbg('Polling stopped'); } };
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') { startPolling(); pollOnce(); }
+      else { stopPolling(); }
+    });
+    startPolling();
+  } catch(e) { logError('Polling init error', e); }
+
   // Silent if some KPI/DOM elements are not present on this page (expected per view)
   // Rebind tab click glue always
   const sentTab = document.querySelector('[data-bs-target="#sent"]');

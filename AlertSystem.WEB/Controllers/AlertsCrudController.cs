@@ -223,6 +223,19 @@ namespace AlertSystem.WEB.Controllers
                         }
                     }
                     catch { }
+                    try
+                    {
+                        var conn2 = _db.Database.GetDbConnection();
+                        if (conn2.State != System.Data.ConnectionState.Open) await conn2.OpenAsync();
+                        using var cmd2 = conn2.CreateCommand();
+                        cmd2.CommandText = @"SELECT CAST(e.grh_emp_id AS decimal(18,2)), NULLIF(LTRIM(RTRIM(ISNULL(e.grh_emp_gsm,''))), '') FROM grh_employee e";
+                        using var reader2 = await cmd2.ExecuteReaderAsync();
+                        while (await reader2.ReadAsync())
+                        {
+                            if (!reader2.IsDBNull(1)) grhPhones[reader2.GetDecimal(0)] = reader2.GetString(1);
+                        }
+                    }
+                    catch { }
                     // Build phone index
                     var userPhoneIndex = new Dictionary<string, decimal>();
                     foreach (var u in usersWithEmp)
@@ -342,6 +355,22 @@ namespace AlertSystem.WEB.Controllers
                     {
                         await _hubContext.Clients.Group($"user_{currentUserId.Value}")
                             .SendAsync("ReceiveNotification", "AlertCreated", new { 
+                                alertGroupId = alertGroupId,
+                                title = dto.Title,
+                                message = dto.Message,
+                                timestamp = DateTime.UtcNow
+                            });
+                    }
+                    // Notify recipients (desktop-mapped and any record with DestinataireUserId)
+                    var recipientIds = alertRecords
+                        .Where(r => r.DestinataireUserId.HasValue)
+                        .Select(r => (int)r.DestinataireUserId.Value)
+                        .Distinct()
+                        .ToList();
+                    foreach (var rid in recipientIds)
+                    {
+                        await _hubContext.Clients.Group($"user_{rid}")
+                            .SendAsync("ReceiveNotification", "NewAlertReceived", new {
                                 alertGroupId = alertGroupId,
                                 title = dto.Title,
                                 message = dto.Message,

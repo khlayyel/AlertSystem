@@ -77,13 +77,13 @@ namespace AlertSystem.WEB.Controllers
                 var hub = HttpContext.RequestServices.GetService<IHubContext<AlertSystem.Infrastructure.Hubs.NotificationHub>>();
                 if (hub != null && alerte.DestinataireUserId.HasValue)
                 {
-                    await hub.Clients.Group($"user_{alerte.DestinataireUserId.Value}").SendAsync("UpdateKpis");
-                    await hub.Clients.Group($"user_{alerte.DestinataireUserId.Value}").SendAsync("AlertStatusUpdated", new { groupId = baseRow.AlertGroupId, userId = alerte.DestinataireUserId.Value, status = "Lu", readAt = DateTime.UtcNow });
+                    await hub.Clients.Group($"user_{alerte.DestinataireUserId.Value}").SendAsync("ReceiveNotification", "UpdateKpis", null);
+                    await hub.Clients.Group($"user_{alerte.DestinataireUserId.Value}").SendAsync("ReceiveNotification", "AlertStatusUpdated", new { groupId = baseRow.AlertGroupId, userId = alerte.DestinataireUserId.Value, status = "Lu", readAt = DateTime.UtcNow });
                 }
                 if (hub != null && alerte.ExpediteurId.HasValue)
                 {
-                    await hub.Clients.Group($"user_{alerte.ExpediteurId.Value}").SendAsync("UpdateKpis");
-                    await hub.Clients.Group($"user_{alerte.ExpediteurId.Value}").SendAsync("AlertStatusUpdated", new { groupId = baseRow.AlertGroupId, userId = alerte.DestinataireUserId, status = "Lu", readAt = DateTime.UtcNow });
+                    await hub.Clients.Group($"user_{alerte.ExpediteurId.Value}").SendAsync("ReceiveNotification", "UpdateKpis", null);
+                    await hub.Clients.Group($"user_{alerte.ExpediteurId.Value}").SendAsync("ReceiveNotification", "AlertStatusUpdated", new { groupId = baseRow.AlertGroupId, userId = alerte.DestinataireUserId, status = "Lu", readAt = DateTime.UtcNow });
                 }
             }
             catch { }

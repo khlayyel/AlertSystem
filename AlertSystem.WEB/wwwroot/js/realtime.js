@@ -64,6 +64,16 @@ export function initializeSignalR() {
           if(typeof window.refreshAllKpis==='function') window.refreshAllKpis();
           if(typeof window.loadInbox==='function') window.loadInbox();
           if(typeof window.loadSent==='function') window.loadSent();
+          // If outbox details modal is open, refresh its content to reflect new status/recipients
+          try {
+            const modal = document.getElementById('alertDetailsModal');
+            const isOpen = modal && modal.classList && modal.classList.contains('show');
+            if (isOpen && typeof window.loadOutboxDetails === 'function'){
+              const selectedRow = document.querySelector('#sentList .gmail-alert-row.selected');
+              const idStr = selectedRow?.getAttribute('data-id');
+              if (idStr) window.loadOutboxDetails(parseInt(idStr, 10));
+            }
+          } catch {}
           break;
         case 'UpdateKpis':
           if(typeof window.refreshAllKpis==='function') window.refreshAllKpis();

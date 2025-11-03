@@ -7,7 +7,7 @@ export function renderInboxList(containerId, items) {
     <div class="gmail-inbox-header-row d-flex align-items-center fw-bold bg-light border-bottom" style="min-height:44px;">
       <div style="min-width:210px;" class="ps-3 flex-shrink-0">Titre Alerte</div>
       <div class="flex-grow-1 ps-2 pe-2">Description</div>
-      <div style="width:130px;" class="text-center flex-shrink-0">Statut</div>
+      <div style=\"width:130px;\" class=\"text-center flex-shrink-0\">État</div>
       <div style="min-width:160px;" class="text-end pe-3 flex-shrink-0">Date</div>
     </div>`;
   c.innerHTML += (items || []).map(a => {

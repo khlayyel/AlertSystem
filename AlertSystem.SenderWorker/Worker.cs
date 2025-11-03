@@ -26,7 +26,7 @@ public class SenderService : BackgroundService
     {
         _logger.LogInformation("SenderService started at: {time}", DateTimeOffset.Now);
 
-        // Lazy init SignalR connection to WEB hub (best-effort)
+        // Initialize SignalR connection to WEB hub (best-effort)
         try
         {
             var baseUrl = _configuration.GetValue<string>("Web:BaseUrl") ?? "http://localhost:5185";
@@ -152,12 +152,13 @@ public class SenderService : BackgroundService
                 platformId = alert.PlateformeEnvoieId,
                 sentAt = DateTime.UtcNow
             };
-            // Targeted notifications (if clients joined groups)
+            // Notify sender (status change)
             if (alert.ExpediteurId.HasValue)
                 await _hubConnection.InvokeAsync("SendToUser", alert.ExpediteurId.Value.ToString(), type, payload);
+            // Notify recipient (new alert in inbox)
             if (alert.DestinataireUserId.HasValue)
-                await _hubConnection.InvokeAsync("SendToUser", Convert.ToInt32(alert.DestinataireUserId.Value).ToString(), type, payload);
-            // Broadcast as fallback to ensure realtime UI even if groups weren't joined yet
+                await _hubConnection.InvokeAsync("SendToUser", Convert.ToInt32(alert.DestinataireUserId.Value).ToString(), type == "AlertProcessed" ? "NewAlertReceived" : type, payload);
+            // Fallback broadcast
             await _hubConnection.InvokeAsync("SendToAll", type, payload);
         }
         catch (Exception ex)

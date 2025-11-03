@@ -50,10 +50,22 @@ try
     builder.Services.AddScoped<KpiUpdateService>();
     builder.Services.AddScoped<AlertSystem.DataLayer.Interfaces.IHotelUserRepository, AlertSystem.Repository.Implementations.HotelUserRepository>();
     
-    // Register missing dependencies
+    // Register interface dependencies
     builder.Services.AddScoped<AlertSystem.Service.IEmailSender, AlertSystem.Services.SmtpEmailSender>();
     builder.Services.AddScoped<AlertSystem.Service.IAlertReadService>(sp => sp.GetRequiredService<AlertReadService>());
     builder.Services.AddScoped<AlertSystem.Service.IAlertCrudService>(sp => sp.GetRequiredService<AlertCrudService>());
+    builder.Services.AddScoped<AlertSystem.Service.IKpiUpdateService, KpiUpdateService>();
+    
+    // Notification services used by AlertSendService
+    builder.Services.AddScoped<AlertSystem.Services.INotificationService, AlertSystem.Service.Services.NotificationService>();
+    builder.Services.AddScoped<AlertSystem.Service.Services.IEmailTemplateService, EmailTemplateService>();
+    builder.Services.AddScoped<AlertSystem.Service.Services.IWhatsAppTemplateService, WhatsAppTemplateService>();
+    builder.Services.AddScoped<AlertSystem.Services.IWhatsAppService, AlertSystem.Services.WhatsAppService>();
+    builder.Services.AddScoped<AlertSystem.Services.IWebPushService, AlertSystem.Services.WebPushService>();
+    
+    // Supporting services
+    builder.Services.AddHttpContextAccessor();
+    builder.Services.AddHttpClient();
     
     // Register configuration for ConfirmationTokenService
     builder.Services.AddSingleton(provider => "test-secret-key");

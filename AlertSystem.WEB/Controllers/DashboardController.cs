@@ -6,25 +6,28 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using AlertSystem.Data;
 using AlertSystem.WEB.Services;
+using Microsoft.AspNetCore.SignalR;
 
 namespace AlertSystem.WEB.Controllers
 {
     [Authorize]
     [Route("Dashboard")]
-    public sealed class DashboardController : Controller
+        public sealed class DashboardController : Controller
     {
         private readonly AlertReadService _read;
         private readonly ApplicationDbContext _db;
         private readonly ICurrentUserService _currentUserService;
+            private readonly IHubContext<AlertSystem.Infrastructure.Hubs.NotificationHub> _hub;
 
         // DTO for compose user list
         private sealed record UserListItem(decimal id, decimal userId, string? name, string? email, string? phoneNumber);
         
-        public DashboardController(AlertReadService read, ApplicationDbContext db, ICurrentUserService currentUserService) 
+        public DashboardController(AlertReadService read, ApplicationDbContext db, ICurrentUserService currentUserService, IHubContext<AlertSystem.Infrastructure.Hubs.NotificationHub> hub) 
         { 
             _read = read; 
             _db = db;
             _currentUserService = currentUserService;
+            _hub = hub;
         }
 
         [HttpGet]
@@ -165,7 +168,8 @@ namespace AlertSystem.WEB.Controllers
                     g.Select(a => a.DescriptionAlerte).FirstOrDefault(),
                     g.Select(a => (int?)a.AlertTypeId).FirstOrDefault(),
                     g.Max(a => a.StatutId),
-                    g.Any(a => a.EtatAlerteId == 1) ? 1 : 2,
+                    // Outbox read/confirm state for the group: show Confirmé/Lu if ANY recipient confirmed
+                    g.Any(a => a.EtatAlerteId == 2) ? 2 : 1,
                     g.Max(a => a.DateCreationAlerte),
                     _db.DefUtilisateurs
                         .Where(u => u.util_id == g.Select(a => a.ExpediteurId).FirstOrDefault())
@@ -538,19 +542,50 @@ namespace AlertSystem.WEB.Controllers
                     return Json(new { success = false, message = "User not authenticated" });
                 }
 
-                var alert = await _db.Alerte
+                // Resolve alert and group
+                var target = await _db.Alerte
+                    .AsNoTracking()
                     .FirstOrDefaultAsync(a => a.AlertRecordId == alertId && a.DestinataireUserId == currentUserId.Value);
 
-                if (alert == null)
+                if (target == null)
                 {
                     return Json(new { success = false, message = "Alert not found or not accessible" });
                 }
 
-                // Mark as read
-                alert.EtatAlerteId = 2; // Lu
-                alert.DateLecture = DateTime.UtcNow;
+                // Update ALL rows for this recipient within the same group
+                var rows = await _db.Alerte
+                    .Where(a => a.AlertGroupId == target.AlertGroupId && a.DestinataireUserId == target.DestinataireUserId)
+                    .ToListAsync();
 
+                foreach (var r in rows)
+                {
+                    if (r.EtatAlerteId != 2)
+                    {
+                        r.EtatAlerteId = 2; // Lu / Confirmé
+                        r.DateLecture = DateTime.UtcNow;
+                    }
+                }
                 await _db.SaveChangesAsync();
+
+                // Broadcast to recipient and sender via ReceiveNotification handler used by client
+                try
+                {
+                    if (target.DestinataireUserId.HasValue)
+                    {
+                        await _hub.Clients.Group($"user_{target.DestinataireUserId.Value}")
+                            .SendAsync("ReceiveNotification", "AlertStatusUpdated", new { groupId = target.AlertGroupId, userId = target.DestinataireUserId.Value, status = "Lu", readAt = DateTime.UtcNow });
+                        await _hub.Clients.Group($"user_{target.DestinataireUserId.Value}")
+                            .SendAsync("ReceiveNotification", "UpdateKpis", null);
+                    }
+                    if (target.ExpediteurId.HasValue)
+                    {
+                        await _hub.Clients.Group($"user_{target.ExpediteurId.Value}")
+                            .SendAsync("ReceiveNotification", "AlertStatusUpdated", new { groupId = target.AlertGroupId, userId = target.DestinataireUserId, status = "Lu", readAt = DateTime.UtcNow });
+                        await _hub.Clients.Group($"user_{target.ExpediteurId.Value}")
+                            .SendAsync("ReceiveNotification", "UpdateKpis", null);
+                    }
+                }
+                catch { }
 
                 return Json(new { success = true, message = "Alert confirmed successfully" });
             }
@@ -573,21 +608,39 @@ namespace AlertSystem.WEB.Controllers
                     return Json(new { recipients = new object[0] });
                 }
 
-                    var recipients = await _db.Alerte
+                // Fetch all rows then collapse by preferred key:
+                // 1) If any row has DestinataireUserId, group by that id
+                // 2) Else group by DestinataireEmail or DestinatairePhoneNumber
+                var rows = await _db.Alerte
                     .Include(a => a.DestinataireUser)
                     .Where(a => a.AlertGroupId == group)
-                    .GroupBy(a => new { a.DestinataireUserId, Name = a.DestinataireUser != null ? (a.DestinataireUser.util_prenom + " " + a.DestinataireUser.util_nom).Trim() : (string?)null })
-                    .Select(g => new
+                    .ToListAsync();
+
+                var recipients = rows
+                    .GroupBy(a => a.DestinataireUserId.HasValue && a.DestinataireUserId.Value > 0
+                        ? $"U:{a.DestinataireUserId.Value}"
+                        : (!string.IsNullOrWhiteSpace(a.DestinataireEmail) ? $"E:{a.DestinataireEmail!.Trim().ToLower()}"
+                           : (!string.IsNullOrWhiteSpace(a.DestinatairePhoneNumber) ? $"P:{new string(a.DestinatairePhoneNumber.Where(char.IsDigit).ToArray())}" : $"X:{Guid.NewGuid()}")))
+                    .Select(g =>
                     {
-                        recipientUserId = g.Key.DestinataireUserId,
-                        recipientName = g.Key.Name,
-                        recipientEmail = g.Where(x => x.DestinataireEmail != null && x.DestinataireEmail != "").Select(x => x.DestinataireEmail).FirstOrDefault(),
-                        recipientPhone = g.Where(x => x.DestinatairePhoneNumber != null && x.DestinatairePhoneNumber != "").Select(x => x.DestinatairePhoneNumber).FirstOrDefault(),
+                        var any = g.First();
+                        var hadUser = g.Any(x => x.DestinataireUserId.HasValue);
+                        var userId = hadUser ? g.Where(x => x.DestinataireUserId.HasValue).Select(x => x.DestinataireUserId).FirstOrDefault() : null;
+                        var userName = hadUser
+                            ? rows.Where(x => x.DestinataireUserId == userId).Select(x => x.DestinataireUser != null ? (x.DestinataireUser.util_prenom + " " + x.DestinataireUser.util_nom).Trim() : null).FirstOrDefault()
+                            : null;
+                        return new
+                        {
+                            recipientUserId = userId,
+                            recipientName = userName,
+                            recipientEmail = hadUser ? null : g.Where(x => !string.IsNullOrEmpty(x.DestinataireEmail)).Select(x => x.DestinataireEmail).FirstOrDefault(),
+                            recipientPhone = hadUser ? null : g.Where(x => !string.IsNullOrEmpty(x.DestinatairePhoneNumber)).Select(x => x.DestinatairePhoneNumber).FirstOrDefault(),
                             isRead = g.Any(x => x.EtatAlerteId == 2),
                             readDate = g.Where(x => x.EtatAlerteId == 2 && x.DateLecture != null).OrderBy(x => x.DateLecture).Select(x => x.DateLecture).FirstOrDefault(),
-                        status = g.Any(x => x.EtatAlerteId == 2) ? "Lu" : "Non Lu"
+                            status = g.Any(x => x.EtatAlerteId == 2) ? "Lu" : "Non Lu"
+                        };
                     })
-                    .ToListAsync();
+                    .ToList();
 
                 return Json(new { recipients });
             }
