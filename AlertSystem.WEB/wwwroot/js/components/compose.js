@@ -55,7 +55,6 @@ export async function loadUsers() {
       if (window.usersState) window.usersState.activeTab = tab;
       tabs.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
       (tab === 'def' ? tabDef : tabGrh)?.classList.add('active');
-      searchBox.value = '';
       renderRows();
     };
     tabDef?.addEventListener('click', ()=> setActive('def'));
@@ -69,7 +68,9 @@ export async function loadUsers() {
     const colWa = document.getElementById('colWa');
     if (colEmail) colEmail.style.display = emailOn ? '' : 'none';
     if (colWa) colWa.style.display = waOn ? '' : 'none';
-    const source = (usersActiveTab === 'def') ? usersDefList : usersGrhList;
+    // Always resolve active tab at call-time to avoid stale closures
+    const activeTab = (window.usersState && window.usersState.activeTab) ? window.usersState.activeTab : usersActiveTab;
+    const source = (activeTab === 'def') ? usersDefList : usersGrhList;
     const filtered = source.filter(u => {
       const name = (u.name||'').toLowerCase();
       const email = (u.email||'').toLowerCase();
@@ -80,7 +81,7 @@ export async function loadUsers() {
       const phoneMatch = phone.includes(q) || phones.some(p=>p.replace('+','').includes(q.replace('+','')));
       return name.includes(q) || email.includes(q) || phoneMatch;
     });
-    dbg('renderRows', { tab: usersActiveTab, total: source.length, filtered: filtered.length, emailOn, waOn });
+    dbg('renderRows', { tab: activeTab, total: source.length, filtered: filtered.length, emailOn, waOn });
     if (filtered.length === 0) {
       tableBody.innerHTML = '<tr><td colspan="4" class="text-muted text-center">Aucun résultat</td></tr>';
       return;
@@ -95,7 +96,8 @@ export async function loadUsers() {
     tableBody.querySelectorAll('.user-add').forEach(btn => {
       btn.addEventListener('click', () => {
         const id = btn.getAttribute('data-id');
-        const list = usersActiveTab === 'def' ? usersDefList : usersGrhList;
+        const currentTab = (window.usersState && window.usersState.activeTab) ? window.usersState.activeTab : usersActiveTab;
+        const list = currentTab === 'def' ? usersDefList : usersGrhList;
         const user = list.find(x => (x.id ?? x.userId).toString() === id);
         if (!user) return;
         // Always add to Users field with name; resolve util_id if possible

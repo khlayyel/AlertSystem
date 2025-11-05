@@ -115,9 +115,24 @@ namespace AlertSystem.Service.Services
                             Value = alert.DestinataireEmail
                         });
                         var req = _httpContextAccessor.HttpContext?.Request;
-                        var scheme = req?.Scheme ?? (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development" ? "http" : "https");
-                        var host = req != null ? req.Host.ToString() : (_cfg["App:PublicHost"] ?? "localhost:5185");
-                        var confirmationUrl = $"{scheme}://{host}/confirm?t={token}";
+                        // Prefer explicit public base URL when configured; fallback to request, then sane localhost default (http)
+                        var baseUrl = _cfg["App:PublicBaseUrl"];
+                        if (string.IsNullOrWhiteSpace(baseUrl))
+                        {
+                            var reqHost = req?.Host.ToString();
+                            var reqScheme = req?.Scheme;
+                            // Force http for localhost to avoid browser SSL errors when no dev cert is bound
+                            if (!string.IsNullOrWhiteSpace(reqHost))
+                            {
+                                var scheme = (reqHost.Contains("localhost", StringComparison.OrdinalIgnoreCase) || reqHost.Contains("127.0.0.1")) ? "http" : (reqScheme ?? "https");
+                                baseUrl = $"{scheme}://{reqHost}";
+                            }
+                            else
+                            {
+                                baseUrl = "http://localhost:5185";
+                            }
+                        }
+                        var confirmationUrl = $"{baseUrl.TrimEnd('/')}/confirm?t={token}";
 
                         var confirmLabel = (alert.AlertTypeId == 2) ? "✅ Confirmer la réception" : "👁️ Marquer comme lu";
                         var htmlContent = _emailTemplateService.CreateAlertEmailTemplate(
@@ -173,9 +188,22 @@ namespace AlertSystem.Service.Services
                             Value = alert.DestinatairePhoneNumber
                         });
                         var reqWa = _httpContextAccessor.HttpContext?.Request;
-                        var schemeWa = reqWa?.Scheme ?? (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development" ? "http" : "https");
-                        var hostWa = reqWa != null ? reqWa.Host.ToString() : (_cfg["App:PublicHost"] ?? "localhost:5185");
-                        var confirmationUrl = $"{schemeWa}://{hostWa}/confirm?t={tokenWa}";
+                        var waBaseUrl = _cfg["App:PublicBaseUrl"];
+                        if (string.IsNullOrWhiteSpace(waBaseUrl))
+                        {
+                            var reqHost = reqWa?.Host.ToString();
+                            var reqScheme = reqWa?.Scheme;
+                            if (!string.IsNullOrWhiteSpace(reqHost))
+                            {
+                                var scheme = (reqHost.Contains("localhost", StringComparison.OrdinalIgnoreCase) || reqHost.Contains("127.0.0.1")) ? "http" : (reqScheme ?? "https");
+                                waBaseUrl = $"{scheme}://{reqHost}";
+                            }
+                            else
+                            {
+                                waBaseUrl = "http://localhost:5185";
+                            }
+                        }
+                        var confirmationUrl = $"{waBaseUrl.TrimEnd('/')}/confirm?t={tokenWa}";
                         success = await _whatsAppTemplateService.SendAlertTemplateAsync(
                             alert.DestinatairePhoneNumber, 
                             alert.TitreAlerte, 

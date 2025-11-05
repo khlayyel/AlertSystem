@@ -39,6 +39,7 @@ namespace AlertSystem.WEB.Controllers
             }
 
             var endpoint = await _webPush.SubscribeUserAsync(userId, dto.Endpoint, dto.P256dh, dto.Auth);
+            Console.WriteLine($"[WebPush] Subscribe OK user={userId} endpoint={(endpoint?.Length>50?endpoint[..50]+"...":endpoint)}");
             return Ok(new { success = true, endpoint });
         }
 

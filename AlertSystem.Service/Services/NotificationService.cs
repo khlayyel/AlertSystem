@@ -93,7 +93,10 @@ namespace AlertSystem.Service.Services
         {
             if (_pushClient == null || _vapid == null)
             {
-                _logger.LogWarning("Push client not initialized - skipping push notification for user {UserId}", userId);
+                var hasPk = !string.IsNullOrWhiteSpace(_config["WebPush:PublicKey"]);
+                var hasSk = !string.IsNullOrWhiteSpace(_config["WebPush:PrivateKey"]);
+                var subject = _config["WebPush:Subject"] ?? "(null)";
+                _logger.LogWarning("Push client not initialized - skipping push notification for user {UserId}. Config: PublicKey={HasPk}, PrivateKey={HasSk}, Subject={Subject}", userId, hasPk, hasSk, subject);
                 return false;
             }
 
@@ -116,6 +119,7 @@ namespace AlertSystem.Service.Services
                 {
                     try
                     {
+                        _logger.LogDebug("Sending push to endpoint {Endpoint} (User {UserId})", subscription.Endpoint, userId);
                         var pushSubscription = new PushSubscription(
                             subscription.Endpoint,
                             subscription.P256dh,
@@ -123,10 +127,11 @@ namespace AlertSystem.Service.Services
 
                         await _pushClient.SendNotificationAsync(pushSubscription, payload, _vapid);
                         successCount++;
+                        _logger.LogInformation("Push sent OK to endpoint {Endpoint}", subscription.Endpoint);
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, "Failed to send push to subscription {SubscriptionId}", subscription.WebPushSubscriptionId);
+                        _logger.LogError(ex, "Failed to send push to subscription {SubscriptionId} (Endpoint {Endpoint})", subscription.WebPushSubscriptionId, subscription.Endpoint);
                     }
                 }
 

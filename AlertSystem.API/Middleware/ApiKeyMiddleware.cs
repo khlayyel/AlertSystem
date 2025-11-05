@@ -77,6 +77,9 @@ namespace AlertSystem.API.Middleware
                 "/api/v1/test/health",
                 "/api/v1/test/database",
                 
+                // Mock data endpoints used by local workers
+                "/api/v1/stock",
+                "/mock/stock",
                 // Initialisation de la base de données
                 "/api/v1/seed/database",
                 "/api/v1/seed/status",

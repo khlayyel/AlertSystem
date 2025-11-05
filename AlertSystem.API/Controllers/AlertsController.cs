@@ -1,368 +1,139 @@
 using Microsoft.AspNetCore.Mvc;
-using AlertSystem.Data;
-using Microsoft.EntityFrameworkCore;
-using AlertSystem.Services;
-using System.Text.RegularExpressions;
-using AlertSystem.Entities.Entities;
-using AlertSystem.Service.Interfaces;
-using AlertSystem.Service.Services;
+using Microsoft.Data.SqlClient;
+using System.Data;
 
 namespace AlertSystem.Controllers.Api.V1
 {
-    /// <summary>
-    /// Contrôleur refactorisé pour la gestion des alertes avec la nouvelle structure
-    /// </summary>
     [ApiController]
     [Route("api/v1/[controller]")]
     public sealed class AlertsController : ControllerBase
     {
-        private readonly ApplicationDbContext _db;
-        private readonly INotificationService _notificationService;
-        private readonly AlertSendService _alertSendService;
-        private readonly AlertReadService _alertReadService;
-        private readonly ILogger<AlertsController> _logger;
+        private readonly IConfiguration _cfg;
+        private string Conn => _cfg.GetConnectionString("DefaultConnection") ?? "";
 
-        public AlertsController(
-            ApplicationDbContext db, 
-            INotificationService notificationService, 
-            AlertSendService alertSendService,
-            AlertReadService alertReadService,
-            ILogger<AlertsController> logger)
-        { 
-            _db = db; 
-            _notificationService = notificationService;
-            _alertSendService = alertSendService;
-            _alertReadService = alertReadService;
-            _logger = logger;
-        }
+        public AlertsController(IConfiguration cfg){ _cfg = cfg; }
 
-        /// <summary>
-        /// Récupère une alerte par son ID
-        /// </summary>
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
-        {
-            try
-            {
-                var alert = await _db.Alerte
-                    .Include(a => a.AlertType)
-                    .Include(a => a.Statut)
-                    .Include(a => a.Etat)
-                    .Include(a => a.PlateformeEnvoie)
-                    .Include(a => a.DestinataireUser)
-                    .AsNoTracking()
-                    .Where(x => x.AlertRecordId == id)
-                    .Select(a => new
-                    {
-                        alertRecordId = a.AlertRecordId,
-                        alertGroupId = a.AlertGroupId,
-                        title = a.TitreAlerte,
-                        description = a.DescriptionAlerte,
-                        alertTypeId = a.AlertTypeId,
-                        statutId = a.StatutId,
-                        etatAlerteId = a.EtatAlerteId,
-                        dateCreation = a.DateCreationAlerte,
-                        appId = a.AppId,
-                        expediteurId = a.ExpediteurId,
-                        plateformeEnvoieId = a.PlateformeEnvoieId,
-                        destinataireutil_id = a.DestinataireUserId,
-                        destinataireEmail = a.DestinataireEmail,
-                        destinatairePhoneNumber = a.DestinatairePhoneNumber,
-                        destinataireDesktop = a.DestinataireDesktop,
-                        dateLecture = a.DateLecture,
-                        rappelSuivant = a.RappelSuivant,
-                        processedByWorker = a.ProcessedByWorker,
-                        alertType = a.AlertType != null ? new { id = a.AlertType.AlertTypeId, name = a.AlertType.AlertTypeName } : null,
-                        statut = a.Statut != null ? new { id = a.Statut.StatutId, name = a.Statut.StatutName } : null,
-                        etat = a.Etat != null ? new { id = a.Etat.EtatAlerteId, name = a.Etat.EtatAlerteName } : null,
-                        plateformeEnvoie = a.PlateformeEnvoie != null ? new { id = a.PlateformeEnvoie.PlateformeId, name = a.PlateformeEnvoie.Plateforme } : null,
-                        destinataireUser = a.DestinataireUser != null ? new { id = a.DestinataireUser.util_id, name = a.DestinataireUser.util_nom } : null
-                    })
-                    .FirstOrDefaultAsync();
-
-                if (alert == null)
-                    return NotFound($"Alert with ID {id} not found");
-
-                return Ok(alert);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error retrieving alert {AlertId}", id);
-                return StatusCode(500, "Internal server error");
-            }
-        }
-
-        /// <summary>
-        /// Récupère les alertes avec filtres et pagination
-        /// </summary>
         [HttpGet]
-        public async Task<IActionResult> Query(
-            [FromQuery] int? alertTypeId = null,
-            [FromQuery] int? statutId = null,
-            [FromQuery] int? plateformeEnvoieId = null,
-            [FromQuery] int? appId = null,
-            [FromQuery] DateTime? startDate = null,
-            [FromQuery] DateTime? endDate = null,
-            [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 20)
+        public async Task<IActionResult> GetList([FromQuery] int? domaineId, [FromQuery] int? statutId, [FromQuery] int? etatId,
+                                                 [FromQuery] int page = 1, [FromQuery] int pageSize = 50)
         {
-            try
+            await using var conn = new SqlConnection(Conn);
+            await conn.OpenAsync();
+
+            var where = new List<string>();
+            if (domaineId.HasValue) where.Add("DomaineId = @d");
+            if (statutId.HasValue) where.Add("StatutId = @s");
+            if (etatId.HasValue) where.Add("EtatId = @e");
+            var whereSql = where.Count > 0 ? (" WHERE " + string.Join(" AND ", where)) : "";
+
+            // total
+            await using (var cmdCount = conn.CreateCommand())
             {
-                var query = _db.Alerte
-                    .Include(a => a.AlertType)
-                    .Include(a => a.Statut)
-                    .Include(a => a.Etat)
-                    .Include(a => a.PlateformeEnvoie)
-                    .Include(a => a.DestinataireUser)
-                    .AsNoTracking();
+                cmdCount.CommandText = $"SELECT COUNT(1) FROM dbo.Alerte{whereSql}";
+                if (domaineId.HasValue) cmdCount.Parameters.Add(new SqlParameter("@d", SqlDbType.Int){ Value = domaineId.Value });
+                if (statutId.HasValue) cmdCount.Parameters.Add(new SqlParameter("@s", SqlDbType.Int){ Value = statutId.Value });
+                if (etatId.HasValue) cmdCount.Parameters.Add(new SqlParameter("@e", SqlDbType.Int){ Value = etatId.Value });
+                var total = (int) (await cmdCount.ExecuteScalarAsync() ?? 0);
 
-                // Apply filters
-                if (alertTypeId.HasValue)
-                    query = query.Where(a => a.AlertTypeId == alertTypeId.Value);
+                // page
+                await using var cmd = conn.CreateCommand();
+                cmd.CommandText = $@"SELECT AlertRecordId, AlertGroupId, DomaineId, TypeId, TitreAlerte, DescriptionAlerte,
+                                                DateCreationAlerte, StatutId, EtatId, PlateformeEnvoieId, Destinataire,
+                                                DateLecture, RappelSuivant, ProcessedByWorker, AttemptCount
+                                        FROM dbo.Alerte{whereSql}
+                                        ORDER BY DateCreationAlerte DESC
+                                        OFFSET @off ROWS FETCH NEXT @ps ROWS ONLY";
+                if (domaineId.HasValue) cmd.Parameters.Add(new SqlParameter("@d", SqlDbType.Int){ Value = domaineId.Value });
+                if (statutId.HasValue) cmd.Parameters.Add(new SqlParameter("@s", SqlDbType.Int){ Value = statutId.Value });
+                if (etatId.HasValue) cmd.Parameters.Add(new SqlParameter("@e", SqlDbType.Int){ Value = etatId.Value });
+                cmd.Parameters.Add(new SqlParameter("@off", SqlDbType.Int){ Value = Math.Max(0,(page-1)*pageSize) });
+                cmd.Parameters.Add(new SqlParameter("@ps", SqlDbType.Int){ Value = Math.Max(1,pageSize) });
 
-                if (statutId.HasValue)
-                    query = query.Where(a => a.StatutId == statutId.Value);
-
-                if (plateformeEnvoieId.HasValue)
-                    query = query.Where(a => a.PlateformeEnvoieId == plateformeEnvoieId.Value);
-                
-                if (appId.HasValue)
-                    query = query.Where(a => a.AppId == appId.Value);
-
-                if (startDate.HasValue)
-                    query = query.Where(a => a.DateCreationAlerte >= startDate.Value);
-
-                if (endDate.HasValue)
-                    query = query.Where(a => a.DateCreationAlerte <= endDate.Value);
-
-                var totalCount = await query.CountAsync();
-
-                var alerts = await query
-                    .OrderByDescending(a => a.DateCreationAlerte)
-                    .Skip((page - 1) * pageSize)
-                    .Take(pageSize)
-                    .Select(a => new
-                    {
-                        alertRecordId = a.AlertRecordId,
-                        alertGroupId = a.AlertGroupId,
-                        title = a.TitreAlerte,
-                        description = a.DescriptionAlerte,
-                        alertTypeId = a.AlertTypeId,
-                        statutId = a.StatutId,
-                        etatAlerteId = a.EtatAlerteId,
-                        dateCreation = a.DateCreationAlerte,
-                        appId = a.AppId,
-                        expediteurId = a.ExpediteurId,
-                        plateformeEnvoieId = a.PlateformeEnvoieId,
-                        destinataireutil_id = a.DestinataireUserId,
-                        destinataireEmail = a.DestinataireEmail,
-                        destinatairePhoneNumber = a.DestinatairePhoneNumber,
-                        destinataireDesktop = a.DestinataireDesktop,
-                        dateLecture = a.DateLecture,
-                        rappelSuivant = a.RappelSuivant,
-                        processedByWorker = a.ProcessedByWorker,
-                        alertType = a.AlertType != null ? new { id = a.AlertType.AlertTypeId, name = a.AlertType.AlertTypeName } : null,
-                        statut = a.Statut != null ? new { id = a.Statut.StatutId, name = a.Statut.StatutName } : null,
-                        etat = a.Etat != null ? new { id = a.Etat.EtatAlerteId, name = a.Etat.EtatAlerteName } : null,
-                        plateformeEnvoie = a.PlateformeEnvoie != null ? new { id = a.PlateformeEnvoie.PlateformeId, name = a.PlateformeEnvoie.Plateforme } : null,
-                        destinataireUser = a.DestinataireUser != null ? new { id = a.DestinataireUser.util_id, name = a.DestinataireUser.util_nom } : null
-                    })
-                    .ToListAsync();
-
-                return Ok(new
+                var rows = new List<object>();
+                await using var r = await cmd.ExecuteReaderAsync();
+                while (await r.ReadAsync())
                 {
-                    totalCount,
-                    page,
-                    pageSize,
-                    totalPages = (int)Math.Ceiling((double)totalCount / pageSize),
-                    data = alerts
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error querying alerts");
-                return StatusCode(500, "Internal server error");
-            }
-        }
-
-        /// <summary>
-        /// Crée une nouvelle alerte (refactorisé pour un seul destinataire/plateforme)
-        /// </summary>
-        [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CreateAlertDto dto)
-        {
-            try
-            {
-                if (!ModelState.IsValid)
-                    return BadRequest(ModelState);
-
-                // Validate recipient based on platform
-                if (!ValidateRecipientForPlatform(dto.Recipient, dto.PlateformeEnvoieId))
-                    return BadRequest($"Invalid recipient format for platform {dto.PlateformeEnvoieId}");
-
-                // Get API client info
-                var apiClientId = HttpContext.Items["ApiClientId"] as int?;
-                var apiClientName = HttpContext.Items["ApiClientName"] as string;
-
-                _logger.LogInformation("Creating alert: {Title} to {Recipient} via platform {PlatformId} from client {ClientId}", 
-                    dto.Title, dto.Recipient, dto.PlateformeEnvoieId, apiClientId);
-
-                // Create alert record for WatcherWorker to process
-                var alertGroupId = Guid.NewGuid();
-                var alertRecord = new AlertSystem.Entities.Entities.Alerte
-                {
-                    AlertGroupId = alertGroupId,
-                    TitreAlerte = dto.Title,
-                    DescriptionAlerte = dto.Message,
-                    DateCreationAlerte = DateTime.UtcNow,
-                    StatutId = 1, // En Cours (pending)
-                    AlertTypeId = dto.AlertTypeId,
-                    EtatAlerteId = 1, // Non Lu
-                    PlateformeEnvoieId = dto.PlateformeEnvoieId,
-                    DestinataireEmail = dto.PlateformeEnvoieId == 1 ? dto.Recipient : null,
-                    DestinatairePhoneNumber = dto.PlateformeEnvoieId == 2 ? dto.Recipient : null,
-                    DestinataireUserId = dto.PlateformeEnvoieId == 3 ? int.Parse(dto.Recipient) : null,
-                    ExpediteurId = dto.ExpediteurId,
-                    ProcessedByWorker = false // Let WatcherWorker process this
-                };
-
-                _db.Alerte.Add(alertRecord);
-                await _db.SaveChangesAsync();
-
-                var result = new { Success = true, AlertGroupId = alertGroupId, AlertRecordId = alertRecord.AlertRecordId };
-
-                return Ok(new
-                {
-                    success = true,
-                    alertGroupId = result.AlertGroupId,
-                    alertRecordId = result.AlertRecordId,
-                    message = "Alert queued for processing by WatcherWorker"
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error creating alert");
-                return StatusCode(500, "Internal server error");
-            }
-        }
-
-        /// <summary>
-        /// Marque une alerte comme lue
-        /// </summary>
-        [HttpPost("{id}/read")]
-        public async Task<IActionResult> MarkRead(int id, [FromBody] MarkReadDto dto)
-        {
-            try
-            {
-                if (!ModelState.IsValid)
-                    return BadRequest(ModelState);
-
-                var success = await _alertReadService.MarkAsReadAsync(id);
-                
-                if (success)
-                {
-                    return Ok(new { success = true, message = "Alert marked as read" });
+                    rows.Add(new {
+                        alertRecordId = r.GetInt64(0),
+                        alertGroupId = r.GetGuid(1),
+                        domaineId = r.GetInt32(2),
+                        typeId = r.GetInt32(3),
+                        titre = r.GetString(4),
+                        description = r.IsDBNull(5)?null:r.GetString(5),
+                        dateCreation = r.GetDateTime(6),
+                        statutId = r.GetInt32(7),
+                        etatId = r.GetInt32(8),
+                        plateformeEnvoieId = r.GetInt32(9),
+                        destinataire = r.GetString(10),
+                        dateLecture = r.IsDBNull(11)? (DateTime?)null : r.GetDateTime(11),
+                        rappelSuivant = r.IsDBNull(12)? (DateTime?)null : r.GetDateTime(12),
+                        processedByWorker = r.GetBoolean(13),
+                        attemptCount = r.GetInt32(14)
+                    });
                 }
-                else
-                {
-                    return NotFound($"Alert with ID {id} not found");
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error marking alert {AlertId} as read", id);
-                return StatusCode(500, "Internal server error");
+
+                return Ok(new { total, page, pageSize, data = rows });
             }
         }
 
-        /// <summary>
-        /// Récupère les statistiques d'alertes
-        /// </summary>
-        [HttpGet("statistics")]
-        public async Task<IActionResult> GetStatistics()
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(long id)
         {
-            try
-            {
-                var statistics = await _alertReadService.GetStatisticsAsync();
-                return Ok(statistics);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error retrieving alert statistics");
-                return StatusCode(500, "Internal server error");
-            }
-        }
-
-        #region Private Helper Methods
-
-        /// <summary>
-        /// Valide le format du destinataire selon la plateforme
-        /// </summary>
-        private bool ValidateRecipientForPlatform(string recipient, int plateformeEnvoieId)
-        {
-            return plateformeEnvoieId switch
-            {
-                1 => ValidateEmail(recipient), // Email
-                2 => ValidatePhone(recipient), // WhatsApp
-                3 => Validateutil_id(recipient), // Desktop
-                _ => false
+            await using var conn = new SqlConnection(Conn);
+            await conn.OpenAsync();
+            await using var cmd = conn.CreateCommand();
+            cmd.CommandText = @"SELECT AlertRecordId, AlertGroupId, DomaineId, TypeId, TitreAlerte, DescriptionAlerte,
+                                         DateCreationAlerte, StatutId, EtatId, PlateformeEnvoieId, Destinataire,
+                                         DateLecture, RappelSuivant, ProcessedByWorker, AttemptCount
+                                  FROM dbo.Alerte WHERE AlertRecordId=@id";
+            cmd.Parameters.Add(new SqlParameter("@id", SqlDbType.BigInt){ Value = id });
+            await using var r = await cmd.ExecuteReaderAsync();
+            if (!await r.ReadAsync()) return NotFound();
+            var row = new {
+                alertRecordId = r.GetInt64(0),
+                alertGroupId = r.GetGuid(1),
+                domaineId = r.GetInt32(2),
+                typeId = r.GetInt32(3),
+                titre = r.GetString(4),
+                description = r.IsDBNull(5)?null:r.GetString(5),
+                dateCreation = r.GetDateTime(6),
+                statutId = r.GetInt32(7),
+                etatId = r.GetInt32(8),
+                plateformeEnvoieId = r.GetInt32(9),
+                destinataire = r.GetString(10),
+                dateLecture = r.IsDBNull(11)? (DateTime?)null : r.GetDateTime(11),
+                rappelSuivant = r.IsDBNull(12)? (DateTime?)null : r.GetDateTime(12),
+                processedByWorker = r.GetBoolean(13),
+                attemptCount = r.GetInt32(14)
             };
+            return Ok(row);
         }
 
-        /// <summary>
-        /// Valide le format d'email
-        /// </summary>
-        private bool ValidateEmail(string email)
+        public sealed class UpdateStateDto { public int targetEtatId { get; set; } }
+
+        [HttpPost("{id}/update-state")]
+        public async Task<IActionResult> UpdateState(long id, [FromBody] UpdateStateDto dto)
         {
-            if (string.IsNullOrWhiteSpace(email)) return false;
-            var emailRegex = new Regex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$");
-            return emailRegex.IsMatch(email);
+            await using var conn = new SqlConnection(Conn);
+            await conn.OpenAsync();
+            await using var cmd = conn.CreateCommand();
+            cmd.CommandText = @"UPDATE dbo.Alerte SET EtatId=@e, DateLecture = CASE WHEN @e=2 THEN SYSUTCDATETIME() ELSE DateLecture END WHERE AlertRecordId=@id";
+            cmd.Parameters.Add(new SqlParameter("@e", SqlDbType.Int){ Value = dto.targetEtatId });
+            cmd.Parameters.Add(new SqlParameter("@id", SqlDbType.BigInt){ Value = id });
+            var n = await cmd.ExecuteNonQueryAsync();
+            return Ok(new { success = n>0 });
         }
 
-        /// <summary>
-        /// Valide le format de numéro de téléphone
-        /// </summary>
-        private bool ValidatePhone(string phone)
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Cancel(long id)
         {
-            if (string.IsNullOrWhiteSpace(phone)) return false;
-            var phoneRegex = new Regex(@"^\+?[1-9]\d{1,14}$");
-            return phoneRegex.IsMatch(phone);
+            await using var conn = new SqlConnection(Conn);
+            await conn.OpenAsync();
+            await using var cmd = conn.CreateCommand();
+            cmd.CommandText = @"UPDATE dbo.Alerte SET StatutId = 3 WHERE AlertRecordId=@id";
+            cmd.Parameters.Add(new SqlParameter("@id", SqlDbType.BigInt){ Value = id });
+            var n = await cmd.ExecuteNonQueryAsync();
+            return Ok(new { success = n>0 });
         }
-
-        /// <summary>
-        /// Valide le format d'ID utilisateur
-        /// </summary>
-        private bool Validateutil_id(string userId)
-        {
-            if (string.IsNullOrWhiteSpace(userId)) return false;
-            return int.TryParse(userId, out _);
-        }
-
-        #endregion
     }
-
-    #region DTOs
-
-    /// <summary>
-    /// DTO pour la création d'alerte (refactorisé pour un seul destinataire/plateforme)
-    /// </summary>
-    public class CreateAlertDto
-    {
-        public string Title { get; set; } = string.Empty;
-        public string Message { get; set; } = string.Empty;
-        public string Recipient { get; set; } = string.Empty;
-        public int PlateformeEnvoieId { get; set; }
-        public int AlertTypeId { get; set; }
-        public int? ExpediteurId { get; set; }
-    }
-
-    /// <summary>
-    /// DTO pour marquer une alerte comme lue
-    /// </summary>
-    public class MarkReadDto
-    {
-        public int DestinataireId { get; set; }
-    }
-
-    #endregion
 }

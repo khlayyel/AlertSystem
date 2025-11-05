@@ -27,10 +27,17 @@ builder.Services.AddSwaggerGen(c => AlertSystem.API.SwaggerConfiguration.Configu
 // Add AlertSystem services
 builder.Services.AddApiServices(builder.Configuration);
 
-// Add database services
+// Add database services (prefer appsettings over env to avoid unexpected overrides)
+// Read strictly from appsettings files to avoid .env overriding DB target
+var envName = builder.Environment.EnvironmentName ?? "Production";
+var fileConfig = new ConfigurationBuilder()
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .AddJsonFile($"appsettings.{envName}.json", optional: true, reloadOnChange: true)
+    .Build();
 var connectionString =
-    Environment.GetEnvironmentVariable("CONNECTIONSTRINGS__DEFAULTCONNECTION")
-    ?? throw new InvalidOperationException("Missing CONNECTIONSTRINGS__DEFAULTCONNECTION");
+    fileConfig.GetConnectionString("DefaultConnection")
+    ?? "Server=(localdb)\\mssqllocaldb;Database=AlertDB;Trusted_Connection=True;MultipleActiveResultSets=true";
 
 builder.Services.AddDbContext<AlertSystem.Data.ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
@@ -95,12 +102,7 @@ app.UseMiddleware<ApiKeyMiddleware>();
 
 app.MapControllers();
 
-// Auto-seed reference data on startup (idempotent)
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<AlertSystem.Data.ApplicationDbContext>();
-    await AlertSystem.DbSeeder.SeedAsync(db);
-}
+// Auto-seed disabled: schema is created via scripts/seed-core-data.sql
 
 app.Run();
 

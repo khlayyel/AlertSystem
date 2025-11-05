@@ -236,6 +236,32 @@ namespace AlertSystem.WEB.Controllers
                         }
                     }
                     catch { }
+                // Optional fallback: also try direct phone on def_utilisateur if present in schema (util_tel / util_gsm)
+                var directPhoneMap = new Dictionary<string, decimal>();
+                try
+                {
+                    var conn3 = _db.Database.GetDbConnection();
+                    if (conn3.State != System.Data.ConnectionState.Open) await conn3.OpenAsync();
+                    using var cmd3 = conn3.CreateCommand();
+                    cmd3.CommandText = @"SELECT u.util_id, TRY_CONVERT(varchar(50), NULLIF(LTRIM(RTRIM(ISNULL(u.util_tel, ''))), '')) AS tel,
+                                                 TRY_CONVERT(varchar(50), NULLIF(LTRIM(RTRIM(ISNULL(u.util_gsm, ''))), '')) AS gsm
+                                          FROM def_utilisateur u";
+                    using var r3 = await cmd3.ExecuteReaderAsync();
+                    while (await r3.ReadAsync())
+                    {
+                        if (!r3.IsDBNull(1))
+                        {
+                            var d = new string((r3.GetString(1) ?? string.Empty).Where(char.IsDigit).ToArray());
+                            if (!string.IsNullOrEmpty(d)) directPhoneMap[d] = Convert.ToDecimal(r3.GetValue(0));
+                        }
+                        if (!r3.IsDBNull(2))
+                        {
+                            var d = new string((r3.GetString(2) ?? string.Empty).Where(char.IsDigit).ToArray());
+                            if (!string.IsNullOrEmpty(d)) directPhoneMap[d] = Convert.ToDecimal(r3.GetValue(0));
+                        }
+                    }
+                }
+                catch { }
                     // Build phone index
                     var userPhoneIndex = new Dictionary<string, decimal>();
                     foreach (var u in usersWithEmp)
@@ -272,6 +298,18 @@ namespace AlertSystem.WEB.Controllers
                             if (userPhoneIndex.TryGetValue(key, out var uid))
                             {
                                 user = await _db.DefUtilisateurs.FirstOrDefaultAsync(u => u.util_id == uid);
+                            }
+                        }
+                        // Second fallback: direct phone columns on def_utilisateur
+                        if (user == null)
+                        {
+                            string Dig(string s){ var d=new string((s??string.Empty).Where(char.IsDigit).ToArray()); if (d.StartsWith("00")) d=d.Substring(2); return d; }
+                            var key = Dig(phone);
+                            // try full and suffix matches for common formatting differences
+                            var hit = directPhoneMap.Keys.FirstOrDefault(k => k == key || k.EndsWith(key) || key.EndsWith(k));
+                            if (!string.IsNullOrEmpty(hit) && directPhoneMap.TryGetValue(hit, out var uid2))
+                            {
+                                user = await _db.DefUtilisateurs.FirstOrDefaultAsync(u => u.util_id == uid2);
                             }
                         }
                         var alertRecord = new AlertSystem.Entities.Entities.Alerte
@@ -325,6 +363,92 @@ namespace AlertSystem.WEB.Controllers
 
                 if (alertRecords.Any())
                 {
+                    // Final normalization pass: ensure DestinataireUserId is filled for email/phone rows
+                    try
+                    {
+                        // Build email -> userId map (case-insensitive)
+                        static string NormEmail(string? e) => (e ?? string.Empty).Trim().ToLowerInvariant();
+                        var emailMap = await _db.DefUtilisateurs
+                            .Where(u => u.util_email != null && u.util_email != "")
+                            .Select(u => new { u.util_id, u.util_email })
+                            .ToListAsync();
+                        var emailToUser = emailMap
+                            .GroupBy(x => NormEmail(x.util_email))
+                            .ToDictionary(g => g.Key, g => g.Select(v => v.util_id).FirstOrDefault());
+
+                        // Build phone -> userId from GRH tables and optional direct phone fields
+                        string Dig(string s) { var d = new string((s ?? string.Empty).Where(char.IsDigit).ToArray()); if (d.StartsWith("00")) d = d.Substring(2); if (d.Length == 8) d = "216" + d; return d; }
+                        var grhPhones = new Dictionary<decimal, string>();
+                        try
+                        {
+                            var conn = _db.Database.GetDbConnection();
+                            if (conn.State != System.Data.ConnectionState.Open) await conn.OpenAsync();
+                            using var cmd = conn.CreateCommand();
+                            cmd.CommandText = @"SELECT CAST(e.grh_emp_id AS decimal(18,2)), NULLIF(LTRIM(RTRIM(ISNULL(e.grh_emp_gsm,''))), '') FROM grh_employe e";
+                            using var r = await cmd.ExecuteReaderAsync();
+                            while (await r.ReadAsync()) { if (!r.IsDBNull(1)) grhPhones[r.GetDecimal(0)] = r.GetString(1); }
+                        } catch { }
+                        try
+                        {
+                            var conn2 = _db.Database.GetDbConnection();
+                            if (conn2.State != System.Data.ConnectionState.Open) await conn2.OpenAsync();
+                            using var cmd2 = conn2.CreateCommand();
+                            cmd2.CommandText = @"SELECT CAST(e.grh_emp_id AS decimal(18,2)), NULLIF(LTRIM(RTRIM(ISNULL(e.grh_emp_gsm,''))), '') FROM grh_employee e";
+                            using var r2 = await cmd2.ExecuteReaderAsync();
+                            while (await r2.ReadAsync()) { if (!r2.IsDBNull(1)) grhPhones[r2.GetDecimal(0)] = r2.GetString(1); }
+                        } catch { }
+                        var defUsers = await _db.DefUtilisateurs.Select(u => new { u.util_id, u.grh_emp_id }).ToListAsync();
+                        var phoneToUser = new Dictionary<string, decimal>();
+                        foreach (var u in defUsers)
+                        {
+                            if (u.grh_emp_id.HasValue && grhPhones.TryGetValue(u.grh_emp_id.Value, out var ph))
+                            {
+                                var key = Dig(ph);
+                                if (!string.IsNullOrEmpty(key) && !phoneToUser.ContainsKey(key)) phoneToUser[key] = u.util_id;
+                            }
+                        }
+                        // Direct phone columns
+                        try
+                        {
+                            var conn3 = _db.Database.GetDbConnection();
+                            if (conn3.State != System.Data.ConnectionState.Open) await conn3.OpenAsync();
+                            using var cmd3 = conn3.CreateCommand();
+                            cmd3.CommandText = @"SELECT u.util_id, TRY_CONVERT(varchar(50), NULLIF(LTRIM(RTRIM(ISNULL(u.util_tel, ''))), '')) AS tel,
+                                                         TRY_CONVERT(varchar(50), NULLIF(LTRIM(RTRIM(ISNULL(u.util_gsm, ''))), '')) AS gsm
+                                                  FROM def_utilisateur u";
+                            using var r3 = await cmd3.ExecuteReaderAsync();
+                            while (await r3.ReadAsync())
+                            {
+                                if (!r3.IsDBNull(1)) { var d = Dig(r3.GetString(1) ?? string.Empty); if (!string.IsNullOrEmpty(d)) phoneToUser[d] = Convert.ToDecimal(r3.GetValue(0)); }
+                                if (!r3.IsDBNull(2)) { var d = Dig(r3.GetString(2) ?? string.Empty); if (!string.IsNullOrEmpty(d)) phoneToUser[d] = Convert.ToDecimal(r3.GetValue(0)); }
+                            }
+                        } catch { }
+
+                        foreach (var r in alertRecords)
+                        {
+                            if (!r.DestinataireUserId.HasValue)
+                            {
+                                if (!string.IsNullOrWhiteSpace(r.DestinataireEmail))
+                                {
+                                    var key = NormEmail(r.DestinataireEmail);
+                                    if (emailToUser.TryGetValue(key, out var uid) && uid > 0) r.DestinataireUserId = uid;
+                                }
+                                if (!r.DestinataireUserId.HasValue && !string.IsNullOrWhiteSpace(r.DestinatairePhoneNumber))
+                                {
+                                    var key = Dig(r.DestinatairePhoneNumber);
+                                    // exact or suffix match
+                                    if (phoneToUser.TryGetValue(key, out var puid)) r.DestinataireUserId = puid;
+                                    else
+                                    {
+                                        var hit = phoneToUser.Keys.FirstOrDefault(k => k == key || k.EndsWith(key) || key.EndsWith(k));
+                                        if (!string.IsNullOrEmpty(hit)) r.DestinataireUserId = phoneToUser[hit];
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    catch { }
+
                     _db.Alerte.AddRange(alertRecords);
                     await _db.SaveChangesAsync();
                 }

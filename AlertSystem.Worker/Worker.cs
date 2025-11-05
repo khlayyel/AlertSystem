@@ -1,3 +1,5 @@
+// ConsolidatedWorkerService is deprecated in favor of PollingOrchestratorWorker + AlertSenderWorker
+#if FALSE
 using AlertSystem.Data;
 using AlertSystem.Entities.Entities;
 using AlertSystem.Service;
@@ -158,4 +160,4 @@ public class ConsolidatedWorkerService : BackgroundService
         _logger.LogInformation("ConsolidatedWorkerService is stopping.");
     }
 }
-
+#endif

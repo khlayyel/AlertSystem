@@ -41,14 +41,19 @@ try
         options.ServiceName = "AlertSystem.Worker";
     });
 
-    // Configure Database (prefer .env root key CONNECTIONSTRINGS__DEFAULTCONNECTION)
+    // Configure Database (prefer appsettings over env to avoid unexpected overrides)
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
     {
-        var envConn = Environment.GetEnvironmentVariable("CONNECTIONSTRINGS__DEFAULTCONNECTION");
-        var connectionString = envConn
-            ?? builder.Configuration.GetConnectionString("DefaultConnection")
-            ?? Environment.GetEnvironmentVariable("CONNECTION_STRING")
-            ?? "Server=(localdb)\\MSSQLLocalDB;Database=BELVEDERE_17_10_2025;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=true";
+        // Read strictly from appsettings files to prevent .env or machine env from overriding
+        var envName = builder.Environment.EnvironmentName ?? "Production";
+        var fileConfig = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .AddJsonFile($"appsettings.{envName}.json", optional: true, reloadOnChange: true)
+            .Build();
+        var connectionString =
+            fileConfig.GetConnectionString("DefaultConnection")
+            ?? "Server=(localdb)\\mssqllocaldb;Database=AlertDB;Trusted_Connection=True;MultipleActiveResultSets=true";
 
         Log.Information("Worker using connection string: {ConnectionString}", connectionString);
         options.UseSqlServer(connectionString);
@@ -63,7 +68,11 @@ try
     builder.Services.AddScoped<AlertCrudService>();
     builder.Services.AddScoped<AlertSendService>();
     builder.Services.AddScoped<AlertAuditService>();
-    builder.Services.AddScoped<ConfirmationTokenService>();
+    // Token/confirm service with unified secret from env/config
+    var tokenSecret = Environment.GetEnvironmentVariable("TOKEN_SECRET")
+        ?? builder.Configuration["TOKEN_SECRET"]
+        ?? "dev-secret-change-me";
+    builder.Services.AddSingleton(new ConfirmationTokenService(tokenSecret));
     builder.Services.AddScoped<KpiUpdateService>();
     builder.Services.AddScoped<AlertSystem.DataLayer.Interfaces.IHotelUserRepository, AlertSystem.Repository.Implementations.HotelUserRepository>();
     
@@ -86,26 +95,24 @@ try
     // Register HttpClient
     builder.Services.AddHttpClient();
     
-    // Register configuration for ConfirmationTokenService
-    builder.Services.AddSingleton(provider => "test-secret-key");
+    // No ad-hoc secret registration; using unified TOKEN_SECRET above
     
     // Register IAlertSendService interface
     builder.Services.AddScoped<AlertSystem.Service.Interfaces.IAlertSendService>(sp => sp.GetRequiredService<AlertSendService>());
 
-    // Register Watcher services (auto-alert creation)
-    builder.Services.AddScoped<AlertSystem.Worker.Services.ITimeProvider, AlertSystem.Worker.Services.SystemTimeProvider>();
-    builder.Services.AddScoped<AlertSystem.Worker.Services.IAppResolver, AlertSystem.Worker.Services.AppResolver>();
-    builder.Services.AddScoped<AlertSystem.Worker.Services.ICapabilityResolver, AlertSystem.Worker.Services.CapabilityResolver>();
-    builder.Services.AddScoped<AlertSystem.Worker.Services.IRecipientResolver, AlertSystem.Worker.Services.RecipientResolver>();
-    builder.Services.AddScoped<AlertSystem.Worker.Services.IAlertWriter, AlertSystem.Worker.Services.AlertWriter>();
-    builder.Services.AddScoped<AlertSystem.Worker.Watchers.EventsWatcher>();
-    builder.Services.AddScoped<AlertSystem.Worker.Watchers.HrWatcher>();
-    builder.Services.AddScoped<AlertSystem.Worker.Watchers.TpvBillingWatcher>();
-    builder.Services.AddScoped<AlertSystem.Worker.Watchers.TreasuryWatcher>();
-    builder.Services.AddScoped<AlertSystem.Worker.Watchers.ReservationsWatcher>();
+    // Legacy watcher-related services removed; polling now handled by domain pollers (e.g., StockPoller)
 
-    // Register Worker Service
-    builder.Services.AddHostedService<ConsolidatedWorkerService>();
+    // Register shared polling services
+    builder.Services.AddSingleton<AlertSystem.Worker.Services.IHotelApiClient, AlertSystem.Worker.Services.HotelApiClient>();
+    builder.Services.AddScoped<AlertSystem.Worker.Services.IAlertInsertService, AlertSystem.Worker.Services.AlertInsertService>();
+    builder.Services.AddSingleton<AlertSystem.Worker.Services.IAlertTemplateService, AlertSystem.Worker.Services.AlertTemplateService>();
+
+    // Register domain pollers
+    builder.Services.AddSingleton<AlertSystem.Worker.Watchers.IHotelDomainPoller, AlertSystem.Worker.Watchers.StockPoller>();
+
+    // Register orchestrator and sender
+    builder.Services.AddHostedService<AlertSystem.Worker.Watchers.PollingOrchestratorWorker>();
+    builder.Services.AddHostedService<AlertSystem.Worker.Watchers.AlertSenderWorker>();
 
     var host = builder.Build();
     

@@ -41,6 +41,14 @@ body {
   box-shadow: 2px 0 4px rgba(0,0,0,0.1);
 }
 
+/* Keep sidebar fixed while scrolling (desktop) */
+.sidebar .position-sticky {
+  position: sticky;
+  top: 76px; /* height of navbar */
+  max-height: calc(100vh - 76px);
+  overflow-y: auto;
+}
+
 .sidebar .nav-link {
   color: #a7b1c2;
   padding: 0.75rem 1rem;
@@ -120,6 +128,15 @@ body {
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   margin-bottom: 2rem;
+}
+
+/* Sticky header for inbox (KPIs + search) */
+.inbox-sticky {
+  position: sticky;
+  top: 76px; /* navbar height */
+  z-index: 1010;
+  background: #f4f4f4;
+  padding-top: .25rem;
 }
 
 .gmail-tabs {

@@ -12,6 +12,7 @@ export async function initWebPushSubscriptionFlow() {
     dbg('WebPush: SW registered', reg.scope || '');
     // Ask for permission
     const permission = await Notification.requestPermission();
+    dbg('WebPush: Permission result', permission);
     if (permission !== 'granted'){
       dbg('WebPush: Permission not granted');
       return;
@@ -31,16 +32,17 @@ export async function initWebPushSubscriptionFlow() {
     })(vapidPublicKey);
     // Subscribe
     const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyUint8 });
+    dbg('WebPush: Subscribed endpoint', sub?.endpoint || '(none)');
     const endpoint = sub.endpoint;
     const p256dh = btoa(String.fromCharCode.apply(null, new Uint8Array(sub.getKey('p256dh'))));
     const auth = btoa(String.fromCharCode.apply(null, new Uint8Array(sub.getKey('auth'))));
     // Send to backend
-    await fetch('/Push/Subscribe', {
+    const resp = await fetch('/Push/Subscribe', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ endpoint: endpoint, p256dh: p256dh, auth: auth })
     });
-    dbg('WebPush: Subscription posted');
+    dbg('WebPush: Subscription posted status', resp.status);
   } catch(err){
     logError('WebPush: Subscription flow error', err);
   }

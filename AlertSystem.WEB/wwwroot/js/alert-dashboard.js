@@ -46,28 +46,34 @@ function buildFilterQuery(){
   return s ? `?${s}` : '';
 }
 
-async function loadInbox() {
+async function loadInbox(preserveScroll = false) {
   dbg('loadInbox: Loading page', inboxPage);
-  showLoading('inboxList');
+  const listEl = document.getElementById('inboxList');
+  const prevScroll = preserveScroll && listEl ? listEl.scrollTop : 0;
+  if (!preserveScroll) showLoading('inboxList');
   try {
     const qs = buildFilterQuery() + (buildFilterQuery().length ? '&' : '?') + `page=${inboxPage}&pageSize=${pageSize}`;
     const data = await fetchJson(`/Dashboard/GetInboxAlerts${qs}`);
     dbg('loadInbox: received', data);
     renderInboxList('inboxList', data.alerts || []);
+    if (preserveScroll && listEl) { try { listEl.scrollTop = prevScroll; } catch {} }
     inboxTotal = data.total ?? (data.alerts?.length ?? 0);
     updatePagination('inbox', inboxPage, inboxTotal);
   } catch(e) {
     logError('loadInbox', e);
   }
 }
-async function loadSent() {
+async function loadSent(preserveScroll = false) {
   dbg('loadSent: Loading page', sentPage);
-  showLoading('sentList');
+  const listEl = document.getElementById('sentList');
+  const prevScroll = preserveScroll && listEl ? listEl.scrollTop : 0;
+  if (!preserveScroll) showLoading('sentList');
   try {
     const qs = buildFilterQuery() + (buildFilterQuery().length ? '&' : '?') + `page=${sentPage}&pageSize=${pageSize}`;
     const data = await fetchJson(`/Dashboard/GetOutboxAlerts${qs}`);
     dbg('loadSent: received', data);
     renderOutboxList('sentList', data.alerts || []);
+    if (preserveScroll && listEl) { try { listEl.scrollTop = prevScroll; } catch {} }
     sentTotal = data.total ?? (data.alerts?.length ?? 0);
     updatePagination('sent', sentPage, sentTotal);
   } catch(e) {
@@ -191,8 +197,8 @@ document.addEventListener('DOMContentLoaded', async function() {
   // Rendu Inbox/Sent
   const inboxList = document.getElementById('inboxList');
   const sentList  = document.getElementById('sentList');
-  if (inboxList)  { dbg('DOMContentLoaded: Loading inbox'); loadInbox(); }
-  if (sentList)   { dbg('DOMContentLoaded: Loading sent items'); loadSent(); }
+  if (inboxList)  { dbg('DOMContentLoaded: Loading inbox'); loadInbox(false); }
+  if (sentList)   { dbg('DOMContentLoaded: Loading sent items'); loadSent(false); }
 
   // Listeners robustes Bootstrap modal
   document.querySelectorAll('[data-bs-toggle="modal"]').forEach(btn => {
@@ -222,11 +228,24 @@ document.addEventListener('DOMContentLoaded', async function() {
   // NEW: Lightweight polling fallback to keep UI dynamic even without SignalR
   try {
     let __pollTimer = null;
-    const POLL_MS = 4000;
+    const POLL_MS = 5000;
+    let __isUserScrolling = false;
+    const scrollWatch = (el) => {
+      if (!el) return;
+      let timer;
+      el.addEventListener('scroll', ()=>{
+        __isUserScrolling = true;
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(()=>{ __isUserScrolling = false; }, 800);
+      }, { passive: true });
+    };
+    scrollWatch(document.getElementById('sentList'));
+    scrollWatch(document.getElementById('inboxList'));
     const pollOnce = async () => {
       if (document.visibilityState !== 'visible') return;
-      try { if (document.getElementById('sentList')) await loadSent(); } catch {}
-      try { if (document.getElementById('inboxList')) await loadInbox(); } catch {}
+      if (__isUserScrolling) { dbg('Polling skip: user scrolling'); return; }
+      try { if (document.getElementById('sentList')) await loadSent(true); } catch {}
+      try { if (document.getElementById('inboxList')) await loadInbox(true); } catch {}
     };
     const startPolling = () => { if (!__pollTimer) { __pollTimer = setInterval(pollOnce, POLL_MS); dbg('Polling started'); } };
     const stopPolling = () => { if (__pollTimer) { clearInterval(__pollTimer); __pollTimer = null; dbg('Polling stopped'); } };

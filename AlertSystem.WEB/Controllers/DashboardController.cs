@@ -256,10 +256,11 @@ namespace AlertSystem.WEB.Controllers
                     .Distinct()
                     .CountAsync();
 
-                // Confirmées: alertes envoyées par l'utilisateur et lues par au moins un destinataire
+                // Confirmées: compter les groupes envoyés par l'utilisateur où AU MOINS un destinataire a confirmé (EtatAlerteId = 2)
                 var confirmedAlerts = await _db.Alerte
-                    .Where(a => a.ExpediteurId == currentUserId.Value && a.EtatAlerteId == 2)
-                    .CountAsync();
+                    .Where(a => a.ExpediteurId == currentUserId.Value)
+                    .GroupBy(a => a.AlertGroupId)
+                    .CountAsync(g => g.Any(x => x.EtatAlerteId == 2));
 
                 // En attente de confirmation: nombre d’alertes obligatoires envoyées PAR L’UTILISATEUR pour lesquelles il reste au moins un non-confirmé
                 var pendingConfirmation = await _db.Alerte
@@ -616,11 +617,88 @@ namespace AlertSystem.WEB.Controllers
                     .Where(a => a.AlertGroupId == group)
                     .ToListAsync();
 
+                // Build best-effort resolver so that email/phone rows without DestinataireUserId
+                // collapse under the same user if we can resolve a match.
+                static string NormalizeEmail(string? e) => (e ?? string.Empty).Trim().ToLowerInvariant();
+                static string NormalizePhone(string? p)
+                {
+                    if (string.IsNullOrWhiteSpace(p)) return string.Empty;
+                    var digits = new string(p.Where(char.IsDigit).ToArray());
+                    if (digits.StartsWith("00")) digits = digits.Substring(2);
+                    if (digits.Length == 8) digits = "216" + digits; // local TN fallback
+                    return digits;
+                }
+                var defUsers = await _db.DefUtilisateurs
+                    .Select(u => new { u.util_id, u.util_email, u.grh_emp_id })
+                    .ToListAsync();
+                var emailToUser = defUsers
+                    .Where(u => !string.IsNullOrWhiteSpace(u.util_email))
+                    .GroupBy(u => NormalizeEmail(u.util_email))
+                    .ToDictionary(g => g.Key, g => g.Select(x => x.util_id).FirstOrDefault());
+                // Try GRH phone mapping (best-effort)
+                var grhPhones = new Dictionary<decimal, string>();
+                try
+                {
+                    var conn = _db.Database.GetDbConnection();
+                    if (conn.State != System.Data.ConnectionState.Open) await conn.OpenAsync();
+                    using var cmd = conn.CreateCommand();
+                    cmd.CommandText = @"SELECT CAST(e.grh_emp_id AS decimal(18,2)), NULLIF(LTRIM(RTRIM(ISNULL(e.grh_emp_gsm,''))), '') FROM grh_employe e";
+                    using var reader = await cmd.ExecuteReaderAsync();
+                    while (await reader.ReadAsync())
+                    {
+                        if (!reader.IsDBNull(1)) grhPhones[reader.GetDecimal(0)] = reader.GetString(1);
+                    }
+                }
+                catch { }
+                try
+                {
+                    var conn2 = _db.Database.GetDbConnection();
+                    if (conn2.State != System.Data.ConnectionState.Open) await conn2.OpenAsync();
+                    using var cmd2 = conn2.CreateCommand();
+                    cmd2.CommandText = @"SELECT CAST(e.grh_emp_id AS decimal(18,2)), NULLIF(LTRIM(RTRIM(ISNULL(e.grh_emp_gsm,''))), '') FROM grh_employee e";
+                    using var reader2 = await cmd2.ExecuteReaderAsync();
+                    while (await reader2.ReadAsync())
+                    {
+                        if (!reader2.IsDBNull(1)) grhPhones[reader2.GetDecimal(0)] = reader2.GetString(1);
+                    }
+                }
+                catch { }
+                var phoneToUser = new Dictionary<string, decimal>();
+                foreach (var u in defUsers)
+                {
+                    if (u.grh_emp_id.HasValue && grhPhones.TryGetValue(u.grh_emp_id.Value, out var ph))
+                    {
+                        var key = NormalizePhone(ph);
+                        if (!string.IsNullOrEmpty(key) && !phoneToUser.ContainsKey(key)) phoneToUser[key] = u.util_id;
+                    }
+                }
+
                 var recipients = rows
-                    .GroupBy(a => a.DestinataireUserId.HasValue && a.DestinataireUserId.Value > 0
-                        ? $"U:{a.DestinataireUserId.Value}"
-                        : (!string.IsNullOrWhiteSpace(a.DestinataireEmail) ? $"E:{a.DestinataireEmail!.Trim().ToLower()}"
-                           : (!string.IsNullOrWhiteSpace(a.DestinatairePhoneNumber) ? $"P:{new string(a.DestinatairePhoneNumber.Where(char.IsDigit).ToArray())}" : $"X:{Guid.NewGuid()}")))
+                    .GroupBy(a =>
+                    {
+                        if (a.DestinataireUserId.HasValue && a.DestinataireUserId.Value > 0)
+                        {
+                            var uidInt = Convert.ToInt32(a.DestinataireUserId.Value);
+                            return $"U:{uidInt}";
+                        }
+                        // Try resolving to a known user via email/phone to collapse under the same recipient
+                        var em = NormalizeEmail(a.DestinataireEmail);
+                        if (!string.IsNullOrEmpty(em) && emailToUser.TryGetValue(em, out var emUid) && emUid > 0)
+                        {
+                            var uidInt = Convert.ToInt32(emUid);
+                            return $"U:{uidInt}";
+                        }
+                        var ph = NormalizePhone(a.DestinatairePhoneNumber);
+                        if (!string.IsNullOrEmpty(ph) && phoneToUser.TryGetValue(ph, out var phUid) && phUid > 0)
+                        {
+                            var uidInt = Convert.ToInt32(phUid);
+                            return $"U:{uidInt}";
+                        }
+                        // Fallback: keep as standalone external recipient (email or phone)
+                        if (!string.IsNullOrWhiteSpace(a.DestinataireEmail)) return $"E:{NormalizeEmail(a.DestinataireEmail)}";
+                        if (!string.IsNullOrWhiteSpace(a.DestinatairePhoneNumber)) return $"P:{NormalizePhone(a.DestinatairePhoneNumber)}";
+                        return $"X:{Guid.NewGuid()}";
+                    })
                     .Select(g =>
                     {
                         var any = g.First();
