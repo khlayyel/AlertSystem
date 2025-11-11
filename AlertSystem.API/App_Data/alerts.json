@@ -1,0 +1,16 @@
+{
+  "stock_alerts": [
+    {
+      "Nom produit": "boissons fanta",
+      "qte_min": 10,
+      "qte_max": 20,
+      "qte": 3
+    },
+    {
+      "Nom produit": "tomates",
+      "qte_min": 5,
+      "qte_max": 40,
+      "qte": 1
+    }
+  ]
+}

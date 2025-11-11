@@ -1,0 +1,48 @@
+@model AlertSystem.Entities.Entities.DefTypeAlerte
+@{
+    ViewData["Title"] = "Supprimer un type d'alerte";
+}
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="bi bi-trash me-2 text-danger"></i>Supprimer un type d'alerte
+    </h1>
+</div>
+
+@if (!string.IsNullOrEmpty(ViewBag.ErrorMessage))
+{
+    <div class="alert alert-warning" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>@ViewBag.ErrorMessage
+    </div>
+}
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h5 class="card-title">Êtes-vous sûr de vouloir supprimer ce type d'alerte ?</h5>
+        <dl class="row mt-3">
+            <dt class="col-sm-3">ID Type Alerte:</dt>
+            <dd class="col-sm-9">@Model.TypeAlertId</dd>
+            
+            <dt class="col-sm-3">Application:</dt>
+            <dd class="col-sm-9">@(Model.App?.Description ?? "N/A")</dd>
+            
+            <dt class="col-sm-3">Description:</dt>
+            <dd class="col-sm-9">@Model.Description</dd>
+        </dl>
+        
+        <form asp-action="Delete" method="post" class="mt-4">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="TypeAlertId" />
+            
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-danger">
+                    <i class="bi bi-trash me-1"></i>Supprimer
+                </button>
+                <a asp-action="Index" class="btn btn-secondary">
+                    <i class="bi bi-x-circle me-1"></i>Annuler
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+

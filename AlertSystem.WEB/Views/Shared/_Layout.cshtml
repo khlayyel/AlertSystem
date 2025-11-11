@@ -59,6 +59,30 @@
                                 <i class="bi bi-send me-2"></i>Boîte d'envoi
                             </a>
                         </li>
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <li class="nav-item mt-4 text-uppercase text-muted small fw-semibold px-3">Configuration</li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/DefApp">
+                                    <i class="bi bi-app-indicator me-2"></i>Applications
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/DefTypeAlerte">
+                                    <i class="bi bi-tags me-2"></i>Types d'alertes
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/DefAlerte">
+                                    <i class="bi bi-bell me-2"></i>Alertes définies
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/DefUtilisateur">
+                                    <i class="bi bi-people me-2"></i>Utilisateurs
+                                </a>
+                            </li>
+                        }
                     </ul>
                 </div>
             </div>

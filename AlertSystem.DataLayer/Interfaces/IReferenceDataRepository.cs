@@ -7,11 +7,11 @@ namespace AlertSystem.DataLayer.Interfaces
     /// </summary>
     public interface IReferenceDataRepository
     {
-        Task<IEnumerable<AlertType>> GetAllAlertTypesAsync();
+        Task<IEnumerable<DefTypeEnvoie>> GetAllAlertTypesAsync();
         Task<IEnumerable<Statut>> GetAllStatutsAsync();
         Task<IEnumerable<Etat>> GetAllEtatsAsync();
         Task<IEnumerable<PlateformeEnvoie>> GetAllPlateformeEnvoiesAsync();
-        Task<AlertType?> GetAlertTypeByIdAsync(int id);
+        Task<DefTypeEnvoie?> GetAlertTypeByIdAsync(int id);
         Task<Statut?> GetStatutByIdAsync(int id);
         Task<Etat?> GetEtatByIdAsync(int id);
         Task<PlateformeEnvoie?> GetPlateformeEnvoieByIdAsync(int id);

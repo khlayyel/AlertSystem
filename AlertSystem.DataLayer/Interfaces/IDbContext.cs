@@ -10,13 +10,13 @@ namespace AlertSystem.DataLayer.Interfaces
     public interface IDbContext : IDisposable
     {
         DbSet<Alerte> Alerte { get; }
-        DbSet<AlertType> AlertType { get; }
+        DbSet<DefTypeEnvoie> DefTypeEnvoie { get; }
         DbSet<Etat> Etat { get; }
         DbSet<Statut> Statut { get; }
         DbSet<RappelSuivant> RappelSuivant { get; }
         DbSet<WebPushSubscription> WebPushSubscriptions { get; }
         DbSet<ApiClient> ApiClients { get; }
-        DbSet<DefUtilisateur> DefUtilisateurs { get; }
+        DbSet<DefUtilisateur> DefUtilisateur { get; }
         DbSet<PlateformeEnvoie> PlateformeEnvoie { get; }
         DbSet<AlertProcessingQueue> AlertProcessingQueue { get; }
         

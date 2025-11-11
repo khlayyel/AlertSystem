@@ -1,0 +1,67 @@
+@model AlertSystem.Entities.Entities.DefUtilisateur
+@{
+    ViewData["Title"] = "Modifier un utilisateur";
+}
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="bi bi-pencil me-2 text-primary"></i>Modifier un utilisateur
+    </h1>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <form asp-action="Edit" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="UtilisateurId" />
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="mb-3">
+                <label asp-for="Username" class="form-label">Nom d'utilisateur</label>
+                <input asp-for="Username" class="form-control" />
+                <span asp-validation-for="Username" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label">Email</label>
+                <input asp-for="Email" class="form-control" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Password" class="form-label">Mot de passe</label>
+                <input asp-for="Password" class="form-control" type="password" />
+                <span asp-validation-for="Password" class="text-danger"></span>
+                <div class="form-text">Saisir un nouveau mot de passe si vous souhaitez le modifier.</div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="WhatsAppNumber" class="form-label">Numéro WhatsApp</label>
+                <input asp-for="WhatsAppNumber" class="form-control" placeholder="+216XXXXXXXX" />
+                <span asp-validation-for="WhatsAppNumber" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="AppId" class="form-label">Application</label>
+                <select asp-for="AppId" class="form-select" asp-items="ViewBag.Apps">
+                    <option value="">-- Sélectionner une application --</option>
+                </select>
+                <span asp-validation-for="AppId" class="text-danger"></span>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle me-1"></i>Enregistrer
+                </button>
+                <a asp-action="Index" class="btn btn-secondary">
+                    <i class="bi bi-x-circle me-1"></i>Annuler
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+

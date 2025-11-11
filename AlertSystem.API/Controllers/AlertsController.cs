@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using System.Data;
+using Microsoft.EntityFrameworkCore;
+using AlertSystem.Data;
 
 namespace AlertSystem.Controllers.Api.V1
 {
@@ -8,20 +10,20 @@ namespace AlertSystem.Controllers.Api.V1
     [Route("api/v1/[controller]")]
     public sealed class AlertsController : ControllerBase
     {
-        private readonly IConfiguration _cfg;
-        private string Conn => _cfg.GetConnectionString("DefaultConnection") ?? "";
+        private readonly ApplicationDbContext _db;
+        private string Conn => _db.Database.GetConnectionString() ?? "";
 
-        public AlertsController(IConfiguration cfg){ _cfg = cfg; }
+        public AlertsController(ApplicationDbContext db){ _db = db; }
 
         [HttpGet]
-        public async Task<IActionResult> GetList([FromQuery] int? domaineId, [FromQuery] int? statutId, [FromQuery] int? etatId,
+        public async Task<IActionResult> GetList([FromQuery] int? appId, [FromQuery] int? statutId, [FromQuery] int? etatId,
                                                  [FromQuery] int page = 1, [FromQuery] int pageSize = 50)
         {
             await using var conn = new SqlConnection(Conn);
             await conn.OpenAsync();
 
             var where = new List<string>();
-            if (domaineId.HasValue) where.Add("DomaineId = @d");
+            if (appId.HasValue) where.Add("AppId = @app");
             if (statutId.HasValue) where.Add("StatutId = @s");
             if (etatId.HasValue) where.Add("EtatId = @e");
             var whereSql = where.Count > 0 ? (" WHERE " + string.Join(" AND ", where)) : "";
@@ -30,20 +32,20 @@ namespace AlertSystem.Controllers.Api.V1
             await using (var cmdCount = conn.CreateCommand())
             {
                 cmdCount.CommandText = $"SELECT COUNT(1) FROM dbo.Alerte{whereSql}";
-                if (domaineId.HasValue) cmdCount.Parameters.Add(new SqlParameter("@d", SqlDbType.Int){ Value = domaineId.Value });
+                if (appId.HasValue) cmdCount.Parameters.Add(new SqlParameter("@app", SqlDbType.Int){ Value = appId.Value });
                 if (statutId.HasValue) cmdCount.Parameters.Add(new SqlParameter("@s", SqlDbType.Int){ Value = statutId.Value });
                 if (etatId.HasValue) cmdCount.Parameters.Add(new SqlParameter("@e", SqlDbType.Int){ Value = etatId.Value });
                 var total = (int) (await cmdCount.ExecuteScalarAsync() ?? 0);
 
                 // page
                 await using var cmd = conn.CreateCommand();
-                cmd.CommandText = $@"SELECT AlertRecordId, AlertGroupId, DomaineId, TypeId, TitreAlerte, DescriptionAlerte,
+                cmd.CommandText = @"SELECT AlertRecordId, AlertGroupId, AppId, TypeEnvoieId, TitreAlerte, DescriptionAlerte,
                                                 DateCreationAlerte, StatutId, EtatId, PlateformeEnvoieId, Destinataire,
                                                 DateLecture, RappelSuivant, ProcessedByWorker, AttemptCount
-                                        FROM dbo.Alerte{whereSql}
+                                        FROM dbo.Alerte" + whereSql + @"
                                         ORDER BY DateCreationAlerte DESC
                                         OFFSET @off ROWS FETCH NEXT @ps ROWS ONLY";
-                if (domaineId.HasValue) cmd.Parameters.Add(new SqlParameter("@d", SqlDbType.Int){ Value = domaineId.Value });
+                if (appId.HasValue) cmd.Parameters.Add(new SqlParameter("@app", SqlDbType.Int){ Value = appId.Value });
                 if (statutId.HasValue) cmd.Parameters.Add(new SqlParameter("@s", SqlDbType.Int){ Value = statutId.Value });
                 if (etatId.HasValue) cmd.Parameters.Add(new SqlParameter("@e", SqlDbType.Int){ Value = etatId.Value });
                 cmd.Parameters.Add(new SqlParameter("@off", SqlDbType.Int){ Value = Math.Max(0,(page-1)*pageSize) });
@@ -56,8 +58,8 @@ namespace AlertSystem.Controllers.Api.V1
                     rows.Add(new {
                         alertRecordId = r.GetInt64(0),
                         alertGroupId = r.GetGuid(1),
-                        domaineId = r.GetInt32(2),
-                        typeId = r.GetInt32(3),
+                        appId = r.GetInt32(2),
+                        typeEnvoieId = r.GetInt32(3),
                         titre = r.GetString(4),
                         description = r.IsDBNull(5)?null:r.GetString(5),
                         dateCreation = r.GetDateTime(6),
@@ -82,7 +84,7 @@ namespace AlertSystem.Controllers.Api.V1
             await using var conn = new SqlConnection(Conn);
             await conn.OpenAsync();
             await using var cmd = conn.CreateCommand();
-            cmd.CommandText = @"SELECT AlertRecordId, AlertGroupId, DomaineId, TypeId, TitreAlerte, DescriptionAlerte,
+            cmd.CommandText = @"SELECT AlertRecordId, AlertGroupId, AppId, TypeEnvoieId, TitreAlerte, DescriptionAlerte,
                                          DateCreationAlerte, StatutId, EtatId, PlateformeEnvoieId, Destinataire,
                                          DateLecture, RappelSuivant, ProcessedByWorker, AttemptCount
                                   FROM dbo.Alerte WHERE AlertRecordId=@id";
@@ -92,8 +94,8 @@ namespace AlertSystem.Controllers.Api.V1
             var row = new {
                 alertRecordId = r.GetInt64(0),
                 alertGroupId = r.GetGuid(1),
-                domaineId = r.GetInt32(2),
-                typeId = r.GetInt32(3),
+                appId = r.GetInt32(2),
+                typeEnvoieId = r.GetInt32(3),
                 titre = r.GetString(4),
                 description = r.IsDBNull(5)?null:r.GetString(5),
                 dateCreation = r.GetDateTime(6),
@@ -130,7 +132,7 @@ namespace AlertSystem.Controllers.Api.V1
             await using var conn = new SqlConnection(Conn);
             await conn.OpenAsync();
             await using var cmd = conn.CreateCommand();
-            cmd.CommandText = @"UPDATE dbo.Alerte SET StatutId = 3 WHERE AlertRecordId=@id";
+            cmd.CommandText = @"DELETE FROM dbo.Alerte WHERE AlertRecordId=@id";
             cmd.Parameters.Add(new SqlParameter("@id", SqlDbType.BigInt){ Value = id });
             var n = await cmd.ExecuteNonQueryAsync();
             return Ok(new { success = n>0 });

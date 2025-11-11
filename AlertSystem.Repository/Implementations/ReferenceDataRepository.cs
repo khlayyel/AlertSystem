@@ -16,11 +16,10 @@ namespace AlertSystem.Repository.Implementations
             _context = context;
         }
 
-        public async Task<IEnumerable<AlertType>> GetAllAlertTypesAsync()
+        public async Task<IEnumerable<DefTypeEnvoie>> GetAllAlertTypesAsync()
         {
-            return await _context.AlertType.ToListAsync();
+            return await _context.DefTypeEnvoie.ToListAsync();
         }
-
 
         public async Task<IEnumerable<Statut>> GetAllStatutsAsync()
         {
@@ -37,11 +36,10 @@ namespace AlertSystem.Repository.Implementations
             return await _context.PlateformeEnvoie.ToListAsync();
         }
 
-        public async Task<AlertType?> GetAlertTypeByIdAsync(int id)
+        public async Task<DefTypeEnvoie?> GetAlertTypeByIdAsync(int id)
         {
-            return await _context.AlertType.FindAsync(id);
+            return await _context.DefTypeEnvoie.FindAsync(id);
         }
-
 
         public async Task<Statut?> GetStatutByIdAsync(int id)
         {

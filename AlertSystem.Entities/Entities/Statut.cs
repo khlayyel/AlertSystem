@@ -1,8 +1,11 @@
 namespace AlertSystem.Entities.Entities
 {
+    /// <summary>
+    /// Entité pour la table def_Statut
+    /// </summary>
     public sealed class Statut
     {
         public int StatutId { get; set; }
-        public string StatutName { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
     }
 }

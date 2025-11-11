@@ -10,23 +10,31 @@ namespace AlertSystem.Data
         {
         }
 
-        // Nouveau modèle refactorisé
+        // Main tables
         public DbSet<Alerte> Alerte => Set<Alerte>();
-        public DbSet<AlertType> AlertType => Set<AlertType>();
-        public DbSet<Etat> Etat => Set<Etat>();
-        public DbSet<Statut> Statut => Set<Statut>();
         public DbSet<RappelSuivant> RappelSuivant => Set<RappelSuivant>();
         public DbSet<WebPushSubscription> WebPushSubscriptions => Set<WebPushSubscription>();
         public DbSet<ApiClient> ApiClients => Set<ApiClient>();
-        // Hotel user table (read-only)
-        public DbSet<DefUtilisateur> DefUtilisateurs => Set<DefUtilisateur>();
-        public DbSet<PlateformeEnvoie> PlateformeEnvoie => Set<PlateformeEnvoie>();
         public DbSet<AlertProcessingQueue> AlertProcessingQueue => Set<AlertProcessingQueue>();
+
+        // Reference tables
+        public DbSet<DefApp> DefApp => Set<DefApp>();
+        public DbSet<DefTypeEnvoie> DefTypeEnvoie => Set<DefTypeEnvoie>();
+        public DbSet<DefTypeAlerte> DefTypeAlerte => Set<DefTypeAlerte>();
+        public DbSet<DefUtilisateur> DefUtilisateur => Set<DefUtilisateur>();
+        public DbSet<DefAlerte> DefAlerte => Set<DefAlerte>();
+        public DbSet<Statut> Statut => Set<Statut>();
+        public DbSet<Etat> Etat => Set<Etat>();
+        public DbSet<PlateformeEnvoie> PlateformeEnvoie => Set<PlateformeEnvoie>();
+
+        // Hotel user table (read-only) - renamed to avoid conflict
+        public DbSet<HotelDefUtilisateur> HotelDefUtilisateurs => Set<HotelDefUtilisateur>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
+            // WebPushSubscription
             modelBuilder.Entity<WebPushSubscription>(b =>
             {
                 b.ToTable("WebPushSubscriptions");
@@ -37,56 +45,120 @@ namespace AlertSystem.Data
                 b.Property(x => x.Auth).IsRequired();
             });
 
-            // Configuration de la nouvelle entité Alerte refactorisée
+            // DefApp
+            modelBuilder.Entity<DefApp>(b =>
+            {
+                b.ToTable("def_App");
+                b.HasKey(x => x.AppId);
+                b.Property(x => x.AppId).ValueGeneratedNever(); // Manual ID
+                b.Property(x => x.Description).IsRequired().HasMaxLength(100);
+            });
+
+            // DefTypeEnvoie
+            modelBuilder.Entity<DefTypeEnvoie>(b =>
+            {
+                b.ToTable("def_TypeEnvoie");
+                b.HasKey(x => x.TypeEnvoieId);
+                b.Property(x => x.TypeEnvoieId).ValueGeneratedNever(); // Manual ID
+                b.Property(x => x.Description).IsRequired().HasMaxLength(100);
+            });
+
+            // DefTypeAlerte
+            modelBuilder.Entity<DefTypeAlerte>(b =>
+            {
+                b.ToTable("def_TypeAlerte");
+                b.HasKey(x => x.TypeAlertId);
+                b.Property(x => x.TypeAlertId).ValueGeneratedNever(); // Manual ID
+                b.Property(x => x.Description).IsRequired().HasMaxLength(100);
+                b.HasOne(x => x.App).WithMany(a => a.TypeAlertes).HasForeignKey(x => x.AppId).OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // DefUtilisateur (new table for alert system users)
+            modelBuilder.Entity<DefUtilisateur>(b =>
+            {
+                b.ToTable("def_Utilisateur");
+                b.HasKey(x => x.UtilisateurId);
+                b.Property(x => x.UtilisateurId).ValueGeneratedOnAdd();
+                b.Property(x => x.Username).IsRequired().HasMaxLength(100);
+                b.Property(x => x.Password).IsRequired().HasMaxLength(255);
+                b.Property(x => x.Email).IsRequired().HasMaxLength(255);
+                b.Property(x => x.WhatsAppNumber).HasMaxLength(20);
+                b.HasIndex(x => x.Email).IsUnique();
+                b.HasIndex(x => x.WhatsAppNumber);
+                b.HasOne(x => x.App).WithMany(a => a.Utilisateurs).HasForeignKey(x => x.AppId).OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // DefAlerte
+            modelBuilder.Entity<DefAlerte>(b =>
+            {
+                b.ToTable("def_Alerte");
+                b.HasKey(x => x.DefAlerteId);
+                b.Property(x => x.DefAlerteId).ValueGeneratedOnAdd();
+                b.Property(x => x.ListDestinatairesId).IsRequired();
+                b.Property(x => x.URL).IsRequired().HasMaxLength(500);
+                b.Property(x => x.IsActive).HasDefaultValue(true);
+                b.Property(x => x.CreatedAt).HasDefaultValueSql("SYSUTCDATETIME()");
+                b.HasIndex(x => x.IsActive);
+                b.HasIndex(x => x.DefTypeAlerte);
+                b.HasOne(x => x.TypeAlerte).WithMany(t => t.Alertes).HasForeignKey(x => x.DefTypeAlerte).OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // Statut
+            modelBuilder.Entity<Statut>(b =>
+            {
+                b.ToTable("def_Statut");
+                b.HasKey(x => x.StatutId);
+                b.Property(x => x.StatutId).ValueGeneratedNever(); // Manual ID
+                b.Property(x => x.Description).IsRequired().HasMaxLength(100);
+            });
+
+            // Etat
+            modelBuilder.Entity<Etat>(b =>
+            {
+                b.ToTable("def_Etat");
+                b.HasKey(x => x.EtatId);
+                b.Property(x => x.EtatId).ValueGeneratedNever(); // Manual ID
+                b.Property(x => x.Description).IsRequired().HasMaxLength(100);
+            });
+
+            // PlateformeEnvoie
+            modelBuilder.Entity<PlateformeEnvoie>(b =>
+            {
+                b.ToTable("def_PlateformeEnvoi");
+                b.HasKey(x => x.PlateformeId);
+                b.Property(x => x.PlateformeId).ValueGeneratedNever(); // Manual ID
+                b.Property(x => x.Description).IsRequired().HasMaxLength(100);
+            });
+
+            // Alerte
             modelBuilder.Entity<Alerte>(b =>
             {
                 b.ToTable("Alerte");
                 b.HasKey(x => x.AlertRecordId);
                 b.Property(x => x.AlertRecordId).HasColumnName("AlertRecordId").ValueGeneratedOnAdd();
                 b.Property(x => x.AlertGroupId).IsRequired();
-                b.Property(x => x.TitreAlerte).IsRequired();
+                b.Property(x => x.AppId).IsRequired();
+                b.Property(x => x.TypeEnvoieId).IsRequired();
+                b.Property(x => x.TitreAlerte).IsRequired().HasMaxLength(255);
+                b.Property(x => x.Destinataire).IsRequired().HasMaxLength(255);
                 b.Property(x => x.PlateformeEnvoieId).IsRequired();
                 b.Property(x => x.ProcessedByWorker).HasDefaultValue(false);
                 b.Property(x => x.AttemptCount).HasDefaultValue(0);
                 
-                // Index pour les performances
+                // Indexes
                 b.HasIndex(x => x.AlertGroupId);
                 b.HasIndex(x => new { x.StatutId, x.ProcessedByWorker, x.DateCreationAlerte });
+                b.HasIndex(x => new { x.AppId, x.DateCreationAlerte });
                 
-                // Relations
-                b.HasOne(x => x.AlertType).WithMany().HasForeignKey(x => x.AlertTypeId).OnDelete(DeleteBehavior.NoAction);
-                b.HasOne(x => x.Statut).WithMany().HasForeignKey(x => x.StatutId).OnDelete(DeleteBehavior.NoAction);
-                b.HasOne(x => x.Etat).WithMany().HasForeignKey(x => x.EtatAlerteId).OnDelete(DeleteBehavior.NoAction);
-                b.HasOne(x => x.Expediteur).WithMany().HasForeignKey(x => x.ExpediteurId).OnDelete(DeleteBehavior.SetNull);
-                b.HasOne(x => x.PlateformeEnvoie).WithMany().HasForeignKey(x => x.PlateformeEnvoieId).OnDelete(DeleteBehavior.NoAction);
-                b.HasOne(x => x.DestinataireUser).WithMany().HasForeignKey(x => x.DestinataireUserId).OnDelete(DeleteBehavior.SetNull);
+                // Foreign keys
+                b.HasOne(x => x.App).WithMany().HasForeignKey(x => x.AppId).OnDelete(DeleteBehavior.Restrict);
+                b.HasOne(x => x.TypeEnvoie).WithMany().HasForeignKey(x => x.TypeEnvoieId).OnDelete(DeleteBehavior.Restrict);
+                b.HasOne(x => x.Statut).WithMany().HasForeignKey(x => x.StatutId).OnDelete(DeleteBehavior.Restrict);
+                b.HasOne(x => x.Etat).WithMany().HasForeignKey(x => x.EtatId).OnDelete(DeleteBehavior.Restrict);
+                b.HasOne(x => x.PlateformeEnvoie).WithMany(p => p.Alertes).HasForeignKey(x => x.PlateformeEnvoieId).OnDelete(DeleteBehavior.Restrict);
             });
 
-            modelBuilder.Entity<AlertType>(b =>
-            {
-                b.ToTable("AlertType");
-                b.HasKey(x => x.AlertTypeId);
-                b.Property(x => x.AlertTypeName)
-                    .HasColumnName("AlertType")
-                    .IsRequired();
-            });
-
-
-            modelBuilder.Entity<Statut>(b =>
-            {
-                b.ToTable("Statut");
-                b.HasKey(x => x.StatutId);
-                b.Property(x => x.StatutName).HasColumnName("Statut");
-            });
-
-            modelBuilder.Entity<Etat>(b =>
-            {
-                b.ToTable("Etat");
-                b.HasKey(x => x.EtatAlerteId);
-                b.Property(x => x.EtatAlerteName).HasColumnName("EtatAlerte");
-            });
-
-
+            // RappelSuivant
             modelBuilder.Entity<RappelSuivant>(b =>
             {
                 b.ToTable("RappelSuivant");
@@ -96,8 +168,8 @@ namespace AlertSystem.Data
                 b.HasOne(x => x.Alerte).WithMany(a => a.Rappels).HasForeignKey(x => x.AlerteId).OnDelete(DeleteBehavior.Cascade);
             });
 
-            // Hotel user table mapping (read-only)
-            modelBuilder.Entity<DefUtilisateur>(b =>
+            // Hotel user table mapping (read-only) - renamed to avoid conflict
+            modelBuilder.Entity<HotelDefUtilisateur>(b =>
             {
                 b.ToTable("def_utilisateur");
                 b.HasKey(x => x.util_id);
@@ -119,14 +191,7 @@ namespace AlertSystem.Data
                 b.Property(x => x.util_signature).HasColumnName("util_signature");
             });
 
-            modelBuilder.Entity<PlateformeEnvoie>(b =>
-            {
-                b.ToTable("PlateformeEnvoie");
-                b.HasKey(x => x.PlateformeId);
-                b.Property(x => x.Plateforme).IsRequired().HasMaxLength(50);
-            });
-
-            // Configuration de la table de queue
+            // AlertProcessingQueue
             modelBuilder.Entity<AlertProcessingQueue>(b =>
             {
                 b.ToTable("AlertProcessingQueue");
@@ -136,11 +201,10 @@ namespace AlertSystem.Data
                 b.Property(x => x.Priority).HasDefaultValue(0);
                 b.Property(x => x.RetryCount).HasDefaultValue(0);
                 
-                // Index pour les performances
+                // Indexes
                 b.HasIndex(x => new { x.Priority, x.QueuedAt });
                 b.HasIndex(x => x.AlertRecordId);
             });
         }
     }
 }
-

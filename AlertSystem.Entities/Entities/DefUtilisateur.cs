@@ -1,29 +1,16 @@
 namespace AlertSystem.Entities.Entities
 {
     /// <summary>
-    /// Entité pour la table hotel def_utilisateur (read-only)
+    /// Entité pour la table def_Utilisateur (nouvelle table pour les utilisateurs du système d'alertes)
     /// </summary>
     public sealed class DefUtilisateur
     {
-        public decimal util_id { get; set; }
-        public short profile_id { get; set; }
-        public decimal? tpv_plan_touche_id { get; set; }
-        public short? hotel_id { get; set; }
-        public decimal? grh_emp_id { get; set; }
-        public string util_nom { get; set; } = string.Empty;
-        public string util_prenom { get; set; } = string.Empty;
-        public string util_login { get; set; } = string.Empty;
-        public string util_password { get; set; } = string.Empty;
-        public string util_fonction { get; set; } = string.Empty;
-        public string? util_email { get; set; }
-        public DateTime? util_date_expiration_mdp { get; set; }
-        public bool util_compte_active { get; set; } = true;
-        public bool util_get_fond_caisse { get; set; } = false;
-        public string? util_code_operateur { get; set; }
-        public string? util_work_station { get; set; }
-        public string? util_user_login { get; set; }
-        public int langue_id { get; set; } = 2;
-        public string? util_signature_name { get; set; }
-        public string? util_signature { get; set; }
+        public int UtilisateurId { get; set; }
+        public string Username { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public int AppId { get; set; }
+        public string Email { get; set; } = string.Empty;
+        public string? WhatsAppNumber { get; set; }
+        public DefApp? App { get; set; }
     }
 }

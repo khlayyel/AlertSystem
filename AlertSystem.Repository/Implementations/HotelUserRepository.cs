@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 namespace AlertSystem.Repository.Implementations
 {
     /// <summary>
-    /// Implémentation du repository pour les utilisateurs hotel (read-only)
+    /// Repository des utilisateurs (basé sur def_Utilisateur)
     /// </summary>
     public sealed class HotelUserRepository : IHotelUserRepository
     {
@@ -18,22 +18,25 @@ namespace AlertSystem.Repository.Implementations
 
         public async Task<DefUtilisateur?> GetUserByIdAsync(int userId)
         {
-            return await _context.DefUtilisateurs
-                .FirstOrDefaultAsync(u => u.util_id == userId && u.util_compte_active);
+            return await _context.DefUtilisateur
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.UtilisateurId == userId);
         }
 
         public async Task<IEnumerable<DefUtilisateur>> GetActiveUsersAsync()
         {
-            return await _context.DefUtilisateurs
-                .Where(u => u.util_compte_active)
-                .OrderBy(u => u.util_nom)
+            // Pas de colonne 'active' pour le moment: retourner tous les utilisateurs
+            return await _context.DefUtilisateur
+                .AsNoTracking()
+                .OrderBy(u => u.Username)
                 .ToListAsync();
         }
 
         public async Task<DefUtilisateur?> GetUserByEmailAsync(string email)
         {
-            return await _context.DefUtilisateurs
-                .FirstOrDefaultAsync(u => u.util_email == email && u.util_compte_active);
+            return await _context.DefUtilisateur
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Email == email);
         }
     }
 }

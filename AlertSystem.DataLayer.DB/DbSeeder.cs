@@ -12,46 +12,98 @@ namespace AlertSystem
             // Ensure database is created
             await context.Database.EnsureCreatedAsync();
 
-            // Seed AlertType - NO ACCENTS
-            if (!await context.AlertType.AnyAsync())
+            // Ensure auxiliary tables that are not in SQL script exist (e.g., ApiClients)
+            // This protects when the DB was created from scripts that didn't include these tables.
+            await context.Database.ExecuteSqlRawAsync(@"
+IF OBJECT_ID(N'dbo.ApiClients', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.ApiClients (
+        ApiClientId int IDENTITY(1,1) NOT NULL PRIMARY KEY,
+        [Name] nvarchar(max) NOT NULL,
+        ApiKeyHash nvarchar(max) NOT NULL,
+        IsActive bit NOT NULL,
+        CreatedAt datetime2 NOT NULL,
+        RateLimitPerMinute int NULL
+    );
+END
+");
+
+            // Ensure ExpediteurId column exists on Alerte (legacy dashboards filter by sender)
+            await context.Database.ExecuteSqlRawAsync(@"
+IF COL_LENGTH('dbo.Alerte', 'ExpediteurId') IS NULL
+BEGIN
+    ALTER TABLE dbo.Alerte ADD ExpediteurId decimal(18,2) NULL;
+END
+");
+
+            // Ensure def_App has required rows referenced by users
+            if (!await context.DefApp.AnyAsync())
             {
-                context.AlertType.AddRange(
-                    new AlertType { AlertTypeName = "acquittementNecessaire" },
-                    new AlertType { AlertTypeName = "acquittementNonNecessaire" }
+                // Create a default App row if table is empty
+                context.DefApp.Add(new DefApp { AppId = 1, Description = "Default App" });
+            }
+            var userAppIds = await context.DefUtilisateur.Select(u => u.AppId).Distinct().ToListAsync();
+            var existingAppIds = await context.DefApp.Select(a => a.AppId).ToListAsync();
+            foreach (var missing in userAppIds.Except(existingAppIds))
+            {
+                context.DefApp.Add(new DefApp { AppId = missing, Description = $"Application {missing}" });
+            }
+
+            // Ensure WebPushSubscriptions table exists (used by Web Push feature)
+            await context.Database.ExecuteSqlRawAsync(@"
+IF OBJECT_ID(N'dbo.WebPushSubscriptions', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.WebPushSubscriptions (
+        WebPushSubscriptionId int IDENTITY(1,1) NOT NULL PRIMARY KEY,
+        [UserId] int NOT NULL,
+        [Endpoint] nvarchar(450) NOT NULL,
+        [P256dh] nvarchar(max) NOT NULL,
+        [Auth] nvarchar(max) NOT NULL,
+        [CreatedAt] datetime2 NOT NULL CONSTRAINT DF_WebPushSubscriptions_CreatedAt DEFAULT (SYSUTCDATETIME())
+    );
+    CREATE UNIQUE INDEX UX_WebPush_User_Endpoint ON dbo.WebPushSubscriptions(UserId, Endpoint);
+END
+");
+
+            // Seed DefTypeEnvoie
+            if (!await context.DefTypeEnvoie.AnyAsync())
+            {
+                context.DefTypeEnvoie.AddRange(
+                    new DefTypeEnvoie { TypeEnvoieId = 1, Description = "Information" },
+                    new DefTypeEnvoie { TypeEnvoieId = 2, Description = "Obligatoire" }
                 );
             }
 
-            // Seed Statut - NO ACCENTS
+            // Seed Statut (1..4)
             if (!await context.Statut.AnyAsync())
             {
                 context.Statut.AddRange(
-                    new Statut { StatutName = "EnCours" },        // ID 1
-                    new Statut { StatutName = "Envoye" },         // ID 2
-                    new Statut { StatutName = "Annule" },         // ID 3
-                    new Statut { StatutName = "Echoue" }          // ID 4
+                    new Statut { StatutId = 1, Description = "EnCours" },
+                    new Statut { StatutId = 2, Description = "Envoye" },
+                    new Statut { StatutId = 3, Description = "Annule" },
+                    new Statut { StatutId = 4, Description = "Echoue" }
                 );
             }
 
-            // Seed Etat - NO ACCENTS (1=NonLu, 2=Lu to match code expectations)
+            // Seed Etat (1..2)
             if (!await context.Etat.AnyAsync())
             {
                 context.Etat.AddRange(
-                    new Etat { EtatAlerteName = "NonLu" },      // ID 1
-                    new Etat { EtatAlerteName = "Lu" }          // ID 2
+                    new Etat { EtatId = 1, Description = "NonLu" },
+                    new Etat { EtatId = 2, Description = "Lu" }
                 );
             }
 
-            // Seed PlateformeEnvoie required by Alerte FK (1=Email, 2=WhatsApp, 3=Desktop)
+            // Seed PlateformeEnvoie (1 Email, 2 WhatsApp)
             if (!await context.PlateformeEnvoie.AnyAsync())
             {
                 context.PlateformeEnvoie.AddRange(
-                    new PlateformeEnvoie { PlateformeId = 1, Plateforme = "Email" },
-                    new PlateformeEnvoie { PlateformeId = 2, Plateforme = "WhatsApp" },
-                    new PlateformeEnvoie { PlateformeId = 3, Plateforme = "Desktop" }
+                    new PlateformeEnvoie { PlateformeId = 1, Description = "Email" },
+                    new PlateformeEnvoie { PlateformeId = 2, Description = "WhatsApp" }
                 );
             }
 
-            // Seed ApiClients with multiple test clients
+            // Seed ApiClients examples
             if (!await context.ApiClients.AnyAsync())
             {
                 context.ApiClients.AddRange(
@@ -62,49 +114,11 @@ namespace AlertSystem
                         IsActive = true,
                         RateLimitPerMinute = 1000,
                         CreatedAt = DateTime.UtcNow
-                    },
-                    new ApiClient 
-                    { 
-                        Name = "Hotel Paradise - Staging", 
-                        ApiKeyHash = CryptoUtils.ComputeSha256("hotel-paradise-staging-key-2024-xyz789uvw012"),
-                        IsActive = true,
-                        RateLimitPerMinute = 500,
-                        CreatedAt = DateTime.UtcNow
-                    },
-                    new ApiClient 
-                    { 
-                        Name = "Hotel Oasis - Development", 
-                        ApiKeyHash = CryptoUtils.ComputeSha256("hotel-oasis-dev-key-2024-mno345pqr678"),
-                        IsActive = true,
-                        RateLimitPerMinute = 200,
-                        CreatedAt = DateTime.UtcNow
-                    },
-                    new ApiClient 
-                    { 
-                        Name = "Hotel Sunset - Testing", 
-                        ApiKeyHash = CryptoUtils.ComputeSha256("hotel-sunset-test-key-2024-stu901vwx234"),
-                        IsActive = false, // Inactive for testing
-                        RateLimitPerMinute = 100,
-                        CreatedAt = DateTime.UtcNow
                     }
                 );
             }
 
             await context.SaveChangesAsync();
-
-            // Normalize lookup values to remove accents if they slipped in
-            try
-            {
-                await context.Database.ExecuteSqlRawAsync(@"UPDATE dbo.Statut SET StatutName = 'EnCours' WHERE StatutId = 1;
-UPDATE dbo.Statut SET StatutName = 'Envoye' WHERE StatutId = 2;
-UPDATE dbo.Statut SET StatutName = 'Annule' WHERE StatutId = 3;
-UPDATE dbo.Statut SET StatutName = 'Echoue' WHERE StatutId = 4;
-UPDATE dbo.Etat SET EtatAlerteName = 'NonLu' WHERE EtatAlerteId = 1;
-UPDATE dbo.Etat SET EtatAlerteName = 'Lu' WHERE EtatAlerteId = 2;
-UPDATE dbo.AlertType SET AlertTypeName = 'acquittementNecessaire' WHERE AlertTypeId = 1;
-UPDATE dbo.AlertType SET AlertTypeName = 'acquittementNonNecessaire' WHERE AlertTypeId = 2;");
-            }
-            catch { }
         }
 
     }

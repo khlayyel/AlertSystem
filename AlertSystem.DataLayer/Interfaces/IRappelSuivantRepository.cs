@@ -7,14 +7,14 @@ namespace AlertSystem.DataLayer.Interfaces
     /// </summary>
     public interface IRappelSuivantRepository
     {
-        Task<IEnumerable<RappelSuivant>> GetByAlerteIdAsync(int alerteId);
+        Task<IEnumerable<RappelSuivant>> GetByAlerteIdAsync(long alerteId);
         Task<IEnumerable<RappelSuivant>> GetPendingRemindersAsync();
         Task<RappelSuivant?> GetByIdAsync(int rappelId);
         Task<RappelSuivant> CreateAsync(RappelSuivant rappel);
         Task<RappelSuivant> UpdateAsync(RappelSuivant rappel);
         Task<bool> DeleteAsync(int rappelId);
         Task<bool> ExistsAsync(int rappelId);
-        Task<int> CountPendingByAlerteIdAsync(int alerteId);
+        Task<int> CountPendingByAlerteIdAsync(long alerteId);
         Task<IEnumerable<RappelSuivant>> GetOverdueRemindersAsync();
     }
 }

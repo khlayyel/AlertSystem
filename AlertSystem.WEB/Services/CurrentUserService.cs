@@ -1,6 +1,7 @@
 using System.Security.Claims;
-using AlertSystem.DataLayer.Interfaces;
+using AlertSystem.Data;
 using AlertSystem.Entities.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace AlertSystem.WEB.Services
 {
@@ -14,22 +15,18 @@ namespace AlertSystem.WEB.Services
     public class CurrentUserService : ICurrentUserService
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly IHotelUserRepository _userRepository;
+        private readonly ApplicationDbContext _db;
 
-        public CurrentUserService(IHttpContextAccessor httpContextAccessor, IHotelUserRepository userRepository)
+        public CurrentUserService(IHttpContextAccessor httpContextAccessor, ApplicationDbContext db)
         {
             _httpContextAccessor = httpContextAccessor;
-            _userRepository = userRepository;
+            _db = db;
         }
 
         public int? GetCurrentUserId()
         {
             var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (int.TryParse(userIdClaim, out int userId))
-            {
-                return userId;
-            }
-            return null;
+            return int.TryParse(userIdClaim, out var userId) ? userId : null;
         }
 
         public string? GetCurrentUserEmail()
@@ -42,7 +39,12 @@ namespace AlertSystem.WEB.Services
             var userId = GetCurrentUserId();
             if (userId.HasValue)
             {
-                return await _userRepository.GetUserByIdAsync(userId.Value);
+                return await _db.DefUtilisateur.AsNoTracking().FirstOrDefaultAsync(u => u.UtilisateurId == userId.Value);
+            }
+            var email = GetCurrentUserEmail();
+            if (!string.IsNullOrWhiteSpace(email))
+            {
+                return await _db.DefUtilisateur.AsNoTracking().FirstOrDefaultAsync(u => u.Email == email);
             }
             return null;
         }

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace AlertSystem.Entities.Entities
 {
     /// <summary>
-    /// Entité Alerte refactorisée - Fusion d'Alerte et HistoriqueAlerte
+    /// Entité Alerte refactorisée
     /// Chaque ligne représente une tentative d'envoi d'alerte à un destinataire spécifique via une plateforme spécifique
     /// </summary>
     public sealed class Alerte
@@ -12,7 +12,7 @@ namespace AlertSystem.Entities.Entities
         /// <summary>
         /// ID unique de l'enregistrement d'alerte (nouvelle clé primaire)
         /// </summary>
-        public int AlertRecordId { get; set; }
+        public long AlertRecordId { get; set; }
         
         /// <summary>
         /// ID de groupe pour regrouper les alertes liées (même alerte envoyée à plusieurs destinataires/plateformes)
@@ -20,14 +20,14 @@ namespace AlertSystem.Entities.Entities
         public Guid AlertGroupId { get; set; }
         
         /// <summary>
-        /// Type d'alerte (1=acquittementNécessaire, 2=acquittementNonNécessaire)
+        /// ID de l'application (renommé depuis DomaineId)
         /// </summary>
-        public int AlertTypeId { get; set; }
+        public int AppId { get; set; }
         
         /// <summary>
-        /// ID de l'application (optionnel)
+        /// Type d'envoi (1=Information, 2=Obligatoire) (renommé depuis TypeId)
         /// </summary>
-        public int? AppId { get; set; }
+        public int TypeEnvoieId { get; set; }
         
         /// <summary>
         /// ID de l'expéditeur (optionnel)
@@ -50,39 +50,24 @@ namespace AlertSystem.Entities.Entities
         public DateTime DateCreationAlerte { get; set; }
         
         /// <summary>
-        /// Statut de l'envoi (1=En Cours, 2=Envoyé, 3=Annulé, 4=Échoué)
+        /// Statut de l'envoi (1=En Cours, 2=Envoyée, 3=Annulée, 4=Échouée)
         /// </summary>
         public int StatutId { get; set; }
         
         /// <summary>
-        /// État de lecture (1=Non lu, 2=Lu)
+        /// État de lecture (1=Non lue, 2=Lue, 3=Non Confirmée, 4=Confirmée) (renommé depuis EtatAlerteId)
         /// </summary>
-        public int EtatAlerteId { get; set; }
+        public int EtatId { get; set; }
         
         /// <summary>
-        /// Plateforme d'envoi (1=Email, 2=WhatsApp, 3=Desktop)
+        /// Plateforme d'envoi (1=Email, 2=WhatsApp)
         /// </summary>
         public int PlateformeEnvoieId { get; set; }
         
         /// <summary>
-        /// ID du destinataire utilisateur (pour Desktop)
+        /// Destinataire (email ou numéro WhatsApp selon la plateforme)
         /// </summary>
-        public decimal? DestinataireUserId { get; set; }
-        
-        /// <summary>
-        /// Email du destinataire (pour Email)
-        /// </summary>
-        public string? DestinataireEmail { get; set; }
-        
-        /// <summary>
-        /// Numéro de téléphone du destinataire (pour WhatsApp)
-        /// </summary>
-        public string? DestinatairePhoneNumber { get; set; }
-        
-        /// <summary>
-        /// ID desktop du destinataire (pour Desktop)
-        /// </summary>
-        public string? DestinataireDesktop { get; set; }
+        public string Destinataire { get; set; } = string.Empty;
         
         /// <summary>
         /// Date de lecture de l'alerte
@@ -105,14 +90,11 @@ namespace AlertSystem.Entities.Entities
         public int AttemptCount { get; set; }
 
         // Navigation properties
-        public AlertType? AlertType { get; set; }
+        public DefApp? App { get; set; }
+        public DefTypeEnvoie? TypeEnvoie { get; set; }
         public Statut? Statut { get; set; }
         public Etat? Etat { get; set; }
-        public DefUtilisateur? Expediteur { get; set; }
         public PlateformeEnvoie? PlateformeEnvoie { get; set; }
-        public DefUtilisateur? DestinataireUser { get; set; }
         public ICollection<RappelSuivant> Rappels { get; set; } = new List<RappelSuivant>();
     }
 }
-
-

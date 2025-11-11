@@ -29,7 +29,7 @@ namespace AlertSystem.Service.Services
         public async Task<int> GetUnreadCountAsync()
         {
             return await _db.Alerte
-                .Where(a => a.EtatAlerteId == 1 || a.DateLecture == null)
+                .Where(a => a.EtatId == 1 || a.DateLecture == null)
                 .CountAsync();
         }
 
@@ -50,11 +50,9 @@ namespace AlertSystem.Service.Services
         /// </summary>
         public async Task<int> GetConfirmedMandatoryCountAsync()
         {
-            // Count distinct alert groups that are mandatory and have been confirmed
             return await _db.Alerte
-                .Join(_db.AlertType, a => a.AlertTypeId, at => at.AlertTypeId, (a, at) => new { a, at })
-                .Where(x => x.at.AlertTypeName == "acquittementNécessaire" && (x.a.EtatAlerteId == 2 || x.a.DateLecture != null))
-                .Select(x => x.a.AlertGroupId)
+                .Where(a => a.TypeEnvoieId == 2 && (a.EtatId == 2 || a.DateLecture != null))
+                .Select(a => a.AlertGroupId)
                 .Distinct()
                 .CountAsync();
         }
@@ -64,11 +62,9 @@ namespace AlertSystem.Service.Services
         /// </summary>
         public async Task<int> GetUnconfirmedMandatoryCountAsync()
         {
-            // Count distinct alert groups that are mandatory and have not been confirmed
             return await _db.Alerte
-                .Join(_db.AlertType, a => a.AlertTypeId, at => at.AlertTypeId, (a, at) => new { a, at })
-                .Where(x => x.at.AlertTypeName == "acquittementNécessaire" && x.a.EtatAlerteId == 1 && x.a.DateLecture == null)
-                .Select(x => x.a.AlertGroupId)
+                .Where(a => a.TypeEnvoieId == 2 && a.EtatId == 1 && a.DateLecture == null)
+                .Select(a => a.AlertGroupId)
                 .Distinct()
                 .CountAsync();
         }
@@ -84,12 +80,12 @@ namespace AlertSystem.Service.Services
         }
 
         /// <summary>
-        /// Compte le nombre d'alertes par type
+        /// Compte le nombre d'alertes par type d'envoi
         /// </summary>
-        public async Task<int> GetCountByTypeAsync(int alertTypeId)
+        public async Task<int> GetCountByTypeAsync(int typeEnvoieId)
         {
             return await _db.Alerte
-                .Where(a => a.AlertTypeId == alertTypeId)
+                .Where(a => a.TypeEnvoieId == typeEnvoieId)
                 .CountAsync();
         }
 
@@ -109,12 +105,11 @@ namespace AlertSystem.Service.Services
         public async Task<IEnumerable<Alerte>> GetUnreadAlertsAsync(int page = 1, int pageSize = 20)
         {
             return await _db.Alerte
-                .Include(a => a.AlertType)
+                .Include(a => a.TypeEnvoie)
                 .Include(a => a.Statut)
                 .Include(a => a.Etat)
                 .Include(a => a.PlateformeEnvoie)
-                .Include(a => a.DestinataireUser)
-                .Where(a => a.EtatAlerteId == 1 || a.DateLecture == null)
+                .Where(a => a.EtatId == 1 || a.DateLecture == null)
                 .OrderByDescending(a => a.DateCreationAlerte)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -127,11 +122,10 @@ namespace AlertSystem.Service.Services
         public async Task<IEnumerable<Alerte>> GetAlertsByGroupAsync(Guid groupId)
         {
             return await _db.Alerte
-                .Include(a => a.AlertType)
+                .Include(a => a.TypeEnvoie)
                 .Include(a => a.Statut)
                 .Include(a => a.Etat)
                 .Include(a => a.PlateformeEnvoie)
-                .Include(a => a.DestinataireUser)
                 .Where(a => a.AlertGroupId == groupId)
                 .OrderBy(a => a.DateCreationAlerte)
                 .ToListAsync();
@@ -143,20 +137,13 @@ namespace AlertSystem.Service.Services
         public async Task<IEnumerable<Alerte>> GetAlertsByRecipientAsync(string recipient, int platformId)
         {
             var query = _db.Alerte
-                .Include(a => a.AlertType)
+                .Include(a => a.TypeEnvoie)
                 .Include(a => a.Statut)
                 .Include(a => a.Etat)
                 .Include(a => a.PlateformeEnvoie)
-                .Include(a => a.DestinataireUser)
                 .Where(a => a.PlateformeEnvoieId == platformId);
 
-            return platformId switch
-            {
-                1 => await query.Where(a => a.DestinataireEmail == recipient).ToListAsync(), // Email
-                2 => await query.Where(a => a.DestinatairePhoneNumber == recipient).ToListAsync(), // WhatsApp
-                3 => await query.Where(a => a.DestinataireUserId.ToString() == recipient || a.DestinataireDesktop == recipient).ToListAsync(), // Desktop
-                _ => new List<Alerte>()
-            };
+            return await query.Where(a => a.Destinataire == recipient).ToListAsync();
         }
 
         /// <summary>
@@ -165,11 +152,10 @@ namespace AlertSystem.Service.Services
         public async Task<IEnumerable<Alerte>> GetAlertsByDateRangeAsync(DateTime startDate, DateTime endDate)
         {
             return await _db.Alerte
-                .Include(a => a.AlertType)
+                .Include(a => a.TypeEnvoie)
                 .Include(a => a.Statut)
                 .Include(a => a.Etat)
                 .Include(a => a.PlateformeEnvoie)
-                .Include(a => a.DestinataireUser)
                 .Where(a => a.DateCreationAlerte >= startDate && a.DateCreationAlerte <= endDate)
                 .OrderByDescending(a => a.DateCreationAlerte)
                 .ToListAsync();
@@ -181,28 +167,26 @@ namespace AlertSystem.Service.Services
         public async Task<IEnumerable<Alerte>> GetPendingAlertsAsync()
         {
             return await _db.Alerte
-                .Include(a => a.AlertType)
+                .Include(a => a.TypeEnvoie)
                 .Include(a => a.Statut)
                 .Include(a => a.Etat)
                 .Include(a => a.PlateformeEnvoie)
-                .Include(a => a.DestinataireUser)
                 .Where(a => (a.StatutId == 1 || a.StatutId == 4) && !a.ProcessedByWorker)
                 .OrderBy(a => a.DateCreationAlerte)
                 .ToListAsync();
         }
 
         /// <summary>
-        /// Récupère les alertes par utilisateur
+        /// Récupère les alertes par utilisateur (si Destinataire représente un user id pour la plateforme dédiée)
         /// </summary>
         public async Task<IEnumerable<Alerte>> GetAlertsByUserAsync(int userId)
         {
             return await _db.Alerte
-                .Include(a => a.AlertType)
+                .Include(a => a.TypeEnvoie)
                 .Include(a => a.Statut)
                 .Include(a => a.Etat)
                 .Include(a => a.PlateformeEnvoie)
-                .Include(a => a.DestinataireUser)
-                .Where(a => a.DestinataireUserId == userId)
+                .Where(a => a.Destinataire == userId.ToString())
                 .OrderByDescending(a => a.DateCreationAlerte)
                 .ToListAsync();
         }
@@ -217,7 +201,7 @@ namespace AlertSystem.Service.Services
                 var alert = await _db.Alerte.FindAsync(alertRecordId);
                 if (alert == null) return false;
 
-                alert.EtatAlerteId = 2; // Lu
+                alert.EtatId = 2; // Lu
                 alert.DateLecture = DateTime.UtcNow;
                 
                 await _db.SaveChangesAsync();
@@ -243,7 +227,7 @@ namespace AlertSystem.Service.Services
 
                 foreach (var alert in alerts)
                 {
-                    alert.EtatAlerteId = 2; // Lu
+                    alert.EtatId = 2; // Lu
                     alert.DateLecture = DateTime.UtcNow;
                 }
                 
@@ -270,7 +254,7 @@ namespace AlertSystem.Service.Services
                 .Where(a => a.DateCreationAlerte >= today && a.DateCreationAlerte < tomorrow)
                 .CountAsync();
             var unreadAlerts = await _db.Alerte
-                .Where(a => a.EtatAlerteId == 1 || a.DateLecture == null)
+                .Where(a => a.EtatId == 1 || a.DateLecture == null)
                 .CountAsync();
             var sentAlerts = await _db.Alerte
                 .Where(a => a.StatutId == 2)

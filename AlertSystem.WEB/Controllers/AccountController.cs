@@ -1,25 +1,23 @@
 using AlertSystem.Models;
-using AlertSystem.DataLayer.Interfaces;
+using AlertSystem.Data;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
-using AlertSystem.WEB.Services;
 
 namespace AlertSystem.WEB.Controllers
 {
     [AllowAnonymous]
     public class AccountController : Controller
     {
-        private readonly IHotelUserRepository _userRepository;
-        private readonly IPasswordService _passwordService;
+        private readonly ApplicationDbContext _db;
         private readonly ILogger<AccountController> _logger;
 
-        public AccountController(IHotelUserRepository userRepository, IPasswordService passwordService, ILogger<AccountController> logger)
+        public AccountController(ApplicationDbContext db, ILogger<AccountController> logger)
         {
-            _userRepository = userRepository;
-            _passwordService = passwordService;
+            _db = db;
             _logger = logger;
         }
 
@@ -38,36 +36,38 @@ namespace AlertSystem.WEB.Controllers
                 return View(model);
             }
 
-            // Get user from hotel database def_utilisateur table
-            var user = await _userRepository.GetUserByEmailAsync(model.Email);
+            // Get user from def_Utilisateur table
+            var user = await _db.DefUtilisateur
+                .Where(u => u.Email == model.Email)
+                .FirstOrDefaultAsync();
             
-            if (user == null || !user.util_compte_active)
+            if (user == null)
             {
                 ModelState.AddModelError("", "Invalid login attempt.");
                 return View(model);
             }
 
-            // Verify password using 3DES (with fallbacks)
-            var ok = _passwordService.VerifyPassword(model.Password, user.util_password);
-            if (!ok)
+            // Verify password (simple comparison for now - in production, use BCrypt or similar)
+            if (user.Password != model.Password)
             {
-                try
-                {
-                    var decrypted = _passwordService.DecryptPassword(user.util_password);
-                    _logger.LogWarning("Login failed for {Email}. Provided='{Provided}', StoredLen={Len}, Decrypted='{Decrypted}'",
-                        model.Email, model.Password, user.util_password?.Length ?? 0, string.IsNullOrEmpty(decrypted) ? "<fail>" : decrypted);
-                }
-                catch { }
+                _logger.LogWarning("Login failed for {Email}: invalid password", model.Email);
                 ModelState.AddModelError("", "Invalid login attempt.");
                 return View(model);
             }
             
+            // Determine role: Admin for khalilouerghemmi@gmail.com and zied.soltani11@gmail.com
+            var isAdmin = model.Email.Equals("khalilouerghemmi@gmail.com", StringComparison.OrdinalIgnoreCase) ||
+                         model.Email.Equals("zied.soltani11@gmail.com", StringComparison.OrdinalIgnoreCase);
+            var role = isAdmin ? "Admin" : "User";
+            
             // Create claims
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.NameIdentifier, user.util_id.ToString()),
-                new Claim(ClaimTypes.Name, user.util_nom),
-                new Claim(ClaimTypes.Email, user.util_email ?? "")
+                new Claim(ClaimTypes.NameIdentifier, user.UtilisateurId.ToString()),
+                new Claim(ClaimTypes.Name, user.Username),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Role, role),
+                new Claim("AppId", user.AppId.ToString())
             };
 
             // Create identity
@@ -82,45 +82,7 @@ namespace AlertSystem.WEB.Controllers
                     IsPersistent = model.RememberMe
                 });
 
-            // Ensure user has a desktop token: create one if missing and store in DefUtilisateur if needed
-            try
-            {
-                var deviceTokenCookie = Request.Cookies["as_desktop_token"];
-                if (string.IsNullOrWhiteSpace(deviceTokenCookie))
-                {
-                    deviceTokenCookie = Guid.NewGuid().ToString("N");
-                    Response.Cookies.Append("as_desktop_token", deviceTokenCookie, new CookieOptions
-                    {
-                        Expires = DateTimeOffset.UtcNow.AddYears(1),
-                        HttpOnly = false,
-                        IsEssential = true
-                    });
-                }
-
-                // Upsert into WebPushSubscriptions for this user
-                if (int.TryParse(user.util_id.ToString(), out var uid))
-                {
-                    // Use PushController endpoints internally would require HTTP; we write direct via DbContext
-                    // Minimal upsert: if token not exists for user, create a placeholder subscription row
-                    // This is safe: real push subscription will overwrite endpoint/keys later
-                    var db = HttpContext.RequestServices.GetRequiredService<AlertSystem.Data.ApplicationDbContext>();
-                    var exists = db.WebPushSubscriptions
-                        .Any(s => s.UserId == uid && s.Endpoint == deviceTokenCookie);
-                    if (!exists)
-                    {
-                        db.WebPushSubscriptions.Add(new AlertSystem.Entities.Entities.WebPushSubscription
-                        {
-                            UserId = uid,
-                            Endpoint = deviceTokenCookie,
-                            P256dh = string.Empty,
-                            Auth = string.Empty,
-                            CreatedAt = DateTime.UtcNow
-                        });
-                        await db.SaveChangesAsync();
-                    }
-                }
-            }
-            catch { }
+            _logger.LogInformation("User {Email} logged in with role {Role}", model.Email, role);
 
             return RedirectToAction("Index", "Dashboard");
         }
@@ -134,4 +96,3 @@ namespace AlertSystem.WEB.Controllers
         }
     }
 }
-

@@ -30,30 +30,53 @@ namespace AlertSystem.API.Middleware
             if (!context.Request.Headers.TryGetValue("X-Api-Key", out var key))
             {
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                await context.Response.WriteAsync("Missing API Key");
+                await context.Response.WriteAsync("Missing API key");
                 return;
             }
 
             if (string.IsNullOrEmpty(key))
             {
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                await context.Response.WriteAsync("Missing API Key");
+                await context.Response.WriteAsync("Missing API key");
                 return;
             }
 
             // Hash the incoming API key using SHA256 (consistent with CryptoUtils)
             var hashedApiKey = AlertSystem.Utils.Crypto.CryptoUtils.ComputeSha256(key!);
 
-            // Look up the API client by hashed key
+            // Look up the API client by hashed key (project only needed fields)
             var apiClient = await db.ApiClients
                 .AsNoTracking()
-                .FirstOrDefaultAsync(c => c.IsActive && c.ApiKeyHash == hashedApiKey);
+                .Where(c => c.ApiKeyHash == hashedApiKey)
+                .Select(c => new {
+                    c.ApiClientId,
+                    c.Name,
+                    c.IsActive,
+                    ExpiresAt = EF.Property<DateTime?>(c, "ExpiresAt")
+                })
+                .FirstOrDefaultAsync();
 
             if (apiClient == null)
             {
                 _logger.LogWarning("Invalid API key from {RemoteIp}", context.Connection.RemoteIpAddress);
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                await context.Response.WriteAsync("Invalid API key");
+                return;
+            }
+
+            if (!apiClient.IsActive)
+            {
+                _logger.LogWarning("Inactive API key used by {RemoteIp}", context.Connection.RemoteIpAddress);
                 context.Response.StatusCode = StatusCodes.Status403Forbidden;
-                await context.Response.WriteAsync("Invalid API Key");
+                await context.Response.WriteAsync("API key inactive");
+                return;
+            }
+
+            if (apiClient.ExpiresAt.HasValue && apiClient.ExpiresAt.Value < DateTime.UtcNow)
+            {
+                _logger.LogWarning("Expired API key used by {RemoteIp}", context.Connection.RemoteIpAddress);
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                await context.Response.WriteAsync("API key expired");
                 return;
             }
 
@@ -76,7 +99,11 @@ namespace AlertSystem.API.Middleware
                 "/api/v1/test/ping",
                 "/api/v1/test/health",
                 "/api/v1/test/database",
-                
+                // Stock alerts JSON feed for local worker polling
+                "/api/v1/stock-alerts",
+
+                // Public confirmation page (email/WhatsApp links)
+                "/confirm",
                 // Mock data endpoints used by local workers
                 "/api/v1/stock",
                 "/mock/stock",

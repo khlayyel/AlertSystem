@@ -53,7 +53,12 @@ try
             .Build();
         var connectionString =
             fileConfig.GetConnectionString("DefaultConnection")
-            ?? "Server=(localdb)\\mssqllocaldb;Database=AlertDB;Trusted_Connection=True;MultipleActiveResultSets=true";
+            ?? "Server=(localdb)\\MSSQLLocalDB;Database=AlerteDB;Trusted_Connection=True;MultipleActiveResultSets=true";
+        // Force old default 'AlertDB' to new 'AlerteDB' to avoid schema mismatch
+        if (!string.IsNullOrWhiteSpace(connectionString) && connectionString.Contains("Database=AlertDB", StringComparison.OrdinalIgnoreCase))
+        {
+            connectionString = connectionString.Replace("Database=AlertDB", "Database=AlerteDB", StringComparison.OrdinalIgnoreCase);
+        }
 
         Log.Information("Worker using connection string: {ConnectionString}", connectionString);
         options.UseSqlServer(connectionString);
@@ -95,20 +100,20 @@ try
     // Register HttpClient
     builder.Services.AddHttpClient();
     
-    // No ad-hoc secret registration; using unified TOKEN_SECRET above
-    
     // Register IAlertSendService interface
     builder.Services.AddScoped<AlertSystem.Service.Interfaces.IAlertSendService>(sp => sp.GetRequiredService<AlertSendService>());
-
-    // Legacy watcher-related services removed; polling now handled by domain pollers (e.g., StockPoller)
 
     // Register shared polling services
     builder.Services.AddSingleton<AlertSystem.Worker.Services.IHotelApiClient, AlertSystem.Worker.Services.HotelApiClient>();
     builder.Services.AddScoped<AlertSystem.Worker.Services.IAlertInsertService, AlertSystem.Worker.Services.AlertInsertService>();
-    builder.Services.AddSingleton<AlertSystem.Worker.Services.IAlertTemplateService, AlertSystem.Worker.Services.AlertTemplateService>();
+    
+    // Register new services for def_alerte based polling
+    builder.Services.AddScoped<AlertSystem.Worker.Services.IDefAlerteService, AlertSystem.Worker.Services.DefAlerteService>();
+    builder.Services.AddScoped<AlertSystem.Worker.Services.IUserRecipientService, AlertSystem.Worker.Services.UserRecipientService>();
+    builder.Services.AddSingleton<AlertSystem.Worker.Services.IAlertTypeTemplateService, AlertSystem.Worker.Services.AlertTypeTemplateService>();
 
-    // Register domain pollers
-    builder.Services.AddSingleton<AlertSystem.Worker.Watchers.IHotelDomainPoller, AlertSystem.Worker.Watchers.StockPoller>();
+    // Register domain pollers (AlertPoller now reads from def_Alerte table)
+    builder.Services.AddSingleton<AlertSystem.Worker.Watchers.IHotelDomainPoller, AlertSystem.Worker.Watchers.AlertPoller>();
 
     // Register orchestrator and sender
     builder.Services.AddHostedService<AlertSystem.Worker.Watchers.PollingOrchestratorWorker>();
@@ -127,5 +132,3 @@ finally
 {
     Log.CloseAndFlush();
 }
-
-

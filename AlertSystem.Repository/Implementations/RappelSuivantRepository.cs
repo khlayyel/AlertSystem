@@ -16,7 +16,7 @@ namespace AlertSystem.Repository.Implementations
             _context = context;
         }
 
-        public async Task<IEnumerable<RappelSuivant>> GetByAlerteIdAsync(int alerteId)
+        public async Task<IEnumerable<RappelSuivant>> GetByAlerteIdAsync(long alerteId)
         {
             return await _context.RappelSuivant
                 .Include(r => r.Alerte)
@@ -68,7 +68,7 @@ namespace AlertSystem.Repository.Implementations
             return await _context.RappelSuivant.AnyAsync(r => r.RappelId == rappelId);
         }
 
-        public async Task<int> CountPendingByAlerteIdAsync(int alerteId)
+        public async Task<int> CountPendingByAlerteIdAsync(long alerteId)
         {
             return await _context.RappelSuivant
                 .CountAsync(r => r.AlerteId == alerteId && r.StatutRappel == "En Attente");

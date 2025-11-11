@@ -53,12 +53,12 @@ namespace AlertSystem.Worker.Watchers
                     await using (var cmd = conn.CreateCommand())
                     {
                         cmd.CommandText = @"SELECT TOP (25) AlertRecordId, PlateformeEnvoieId,
-                                                     Destinataire, TitreAlerte, DescriptionAlerte, AttemptCount, TypeId
+                                                     Destinataire, TitreAlerte, DescriptionAlerte, AttemptCount, TypeEnvoieId
                                            FROM dbo.Alerte
                                            WHERE ProcessedByWorker = 0 AND AttemptCount < 3 AND StatutId = 1
                                            ORDER BY DateCreationAlerte";
                         await using var reader = await cmd.ExecuteReaderAsync(stoppingToken);
-                        var items = new List<(long id,int platform,string dest,string title,string? body,int attempts,int typeId)>();
+                        var items = new List<(long id, int platform, string dest, string title, string? body, int attempts, int typeEnvoieId)>();
                         while (await reader.ReadAsync(stoppingToken))
                         {
                             items.Add((reader.GetInt64(0),
@@ -77,13 +77,13 @@ namespace AlertSystem.Worker.Watchers
                             {
                                 switch (a.platform)
                                 {
-                                    case 1:
+                                    case 1: // Email
                                         if (!string.IsNullOrWhiteSpace(a.dest))
                                         {
                                             var baseUrl = _configuration["App:PublicBaseUrl"] ?? "http://localhost:5002";
-                                            var token = _confirmationTokenService.Generate(new ConfirmPayload{ AlerteId = (int)a.id, Kind = "email", Value = a.dest });
-                                            var confirmUrl = baseUrl.TrimEnd('/') + "/confirm?t=" + token;
-                                            var confirmLabel = a.typeId == 2 ? "✅ Confirmer la réception" : "👁️ Marquer comme lu";
+                                            var token = _confirmationTokenService.Generate(new ConfirmPayload { AlerteId = (int)a.id, Kind = "email", Value = a.dest });
+                                            var confirmUrl = baseUrl.TrimEnd('/') + "/confirm?t=" + token + "&id=" + a.id;
+                                            var confirmLabel = a.typeEnvoieId == 2 ? "✅ Confirmer la réception" : "👁️ Marquer comme lu";
                                             var html = _emailTemplateService.CreateAlertEmailTemplate(
                                                 a.title,
                                                 a.body ?? a.title,
@@ -92,44 +92,33 @@ namespace AlertSystem.Worker.Watchers
                                                 confirmUrl,
                                                 confirmLabel);
                                             ok = await _notificationService.SendHtmlEmailAsync(a.dest, a.title, html);
+                                            if (ok)
+                                            {
+                                                _logger.LogInformation("Email sent successfully to {Dest} for AlertRecordId={Id}", a.dest, a.id);
+                                            }
                                         }
                                         break;
-                                    case 2:
+                                    case 2: // WhatsApp
                                         if (!string.IsNullOrWhiteSpace(a.dest))
                                         {
                                             var baseUrl = _configuration["App:PublicBaseUrl"] ?? "http://localhost:5002";
-                                            var token = _confirmationTokenService.Generate(new ConfirmPayload{ AlerteId = (int)a.id, Kind = "wa", Value = a.dest });
-                                            var confirmUrl = baseUrl.TrimEnd('/') + "/confirm?t=" + token;
+                                            var token = _confirmationTokenService.Generate(new ConfirmPayload { AlerteId = (int)a.id, Kind = "wa", Value = a.dest });
+                                            var confirmUrl = baseUrl.TrimEnd('/') + "/confirm?t=" + token + "&id=" + a.id;
                                             ok = await _whatsAppTemplateService.SendAlertTemplateAsync(
                                                 a.dest,
                                                 a.title,
                                                 a.body ?? a.title,
                                                 "AlertSystem",
                                                 confirmUrl,
-                                                a.typeId == 2);
-                                        }
-                                        break;
-                                    case 3:
-                                        // Try desktop push if Destinataire is a numeric user id
-                                        if (int.TryParse(a.dest, out var uid))
-                                        {
-                                            try
+                                                a.typeEnvoieId == 2); // requiresConfirmation = true if TypeEnvoieId == 2 (Obligatoire)
+                                            if (ok)
                                             {
-                                                var pushOk = await _notificationService.SendPushNotificationAsync(uid, a.title, a.body ?? a.title, "/Dashboard");
-                                                ok = pushOk;
+                                                _logger.LogInformation("WhatsApp message sent successfully to {Dest} for AlertRecordId={Id}", a.dest, a.id);
                                             }
-                                            catch
-                                            {
-                                                ok = true; // consider dashboard delivery as sent even if push fails
-                                            }
-                                        }
-                                        else
-                                        {
-                                            ok = true;
                                         }
                                         break;
                                     default:
-                                        _logger.LogWarning("Unknown platform {Platform} for AlertRecordId={Id}", a.platform, a.id);
+                                        _logger.LogWarning("Unknown platform {Platform} for AlertRecordId={Id}. Only Email (1) and WhatsApp (2) are supported.", a.platform, a.id);
                                         ok = false;
                                         break;
                                 }

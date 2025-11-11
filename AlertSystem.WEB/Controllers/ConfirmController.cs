@@ -35,7 +35,7 @@ namespace AlertSystem.WEB.Controllers
             }
 
             var alerte = await _db.Alerte
-                .Include(a => a.AlertType)
+                .Include(a => a.TypeEnvoie)
                 .FirstOrDefaultAsync(a => a.AlertRecordId == payload.AlerteId);
                 
             if (alerte == null) 
@@ -43,10 +43,10 @@ namespace AlertSystem.WEB.Controllers
                 return View("Error", new { Message = "Alerte introuvable", Title = "Erreur de confirmation" });
             }
 
-            // Resolve the alert group and destinatary user, then mark ALL rows for this user+group as read
+            // Résoudre le groupe et marquer toutes les lignes de ce groupe comme lues
             var baseRow = await _db.Alerte
                 .Where(a => a.AlertRecordId == payload.AlerteId)
-                .Select(a => new { a.AlertGroupId, a.DestinataireUserId, a.ExpediteurId })
+                .Select(a => new { a.AlertGroupId })
                 .FirstOrDefaultAsync();
 
             if (baseRow == null)
@@ -55,15 +55,17 @@ namespace AlertSystem.WEB.Controllers
             }
 
             var rows = await _db.Alerte
-                .Where(a => a.AlertGroupId == baseRow.AlertGroupId && a.DestinataireUserId == baseRow.DestinataireUserId)
+                .Where(a => a.AlertGroupId == baseRow.AlertGroupId)
                 .ToListAsync();
 
             var confirmedCount = 0;
             foreach (var h in rows)
             {
-                if (h.EtatAlerteId != 2) // Only update if not already confirmed
+                if (h.EtatId != 2 && h.EtatId != 4) // Only update if not already confirmed
                 {
-                    h.EtatAlerteId = 2; // Lu
+                    // Map: 3 (Obligatoire Non Confirmée) -> 4 (Obligatoire Confirmée)
+                    // Otherwise: 1 (Non Lu) -> 2 (Lu)
+                    h.EtatId = (h.EtatId == 3) ? 4 : 2;
                     h.DateLecture = DateTime.UtcNow;
                     confirmedCount++;
                 }
@@ -71,19 +73,14 @@ namespace AlertSystem.WEB.Controllers
 
             await _db.SaveChangesAsync();
 
-            // Broadcast real-time update (both recipient and sender)
+            // Broadcast real-time update
             try
             {
                 var hub = HttpContext.RequestServices.GetService<IHubContext<AlertSystem.Infrastructure.Hubs.NotificationHub>>();
-                if (hub != null && alerte.DestinataireUserId.HasValue)
+                if (hub != null)
                 {
-                    await hub.Clients.Group($"user_{alerte.DestinataireUserId.Value}").SendAsync("ReceiveNotification", "UpdateKpis", null);
-                    await hub.Clients.Group($"user_{alerte.DestinataireUserId.Value}").SendAsync("ReceiveNotification", "AlertStatusUpdated", new { groupId = baseRow.AlertGroupId, userId = alerte.DestinataireUserId.Value, status = "Lu", readAt = DateTime.UtcNow });
-                }
-                if (hub != null && alerte.ExpediteurId.HasValue)
-                {
-                    await hub.Clients.Group($"user_{alerte.ExpediteurId.Value}").SendAsync("ReceiveNotification", "UpdateKpis", null);
-                    await hub.Clients.Group($"user_{alerte.ExpediteurId.Value}").SendAsync("ReceiveNotification", "AlertStatusUpdated", new { groupId = baseRow.AlertGroupId, userId = alerte.DestinataireUserId, status = "Lu", readAt = DateTime.UtcNow });
+                    await hub.Clients.All.SendAsync("ReceiveNotification", "UpdateKpis", null);
+                    await hub.Clients.All.SendAsync("ReceiveNotification", "AlertStatusUpdated", new { groupId = baseRow.AlertGroupId, status = "Lu", readAt = DateTime.UtcNow });
                 }
             }
             catch { }

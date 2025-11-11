@@ -1,0 +1,51 @@
+@model IEnumerable<AlertSystem.Entities.Entities.DefUtilisateur>
+@{
+    ViewData["Title"] = "Utilisateurs";
+}
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="bi bi-people me-2 text-primary"></i>Utilisateurs
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i>Créer un utilisateur
+        </a>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Email</th>
+                    <th>WhatsApp</th>
+                    <th>Application</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.Username</td>
+                        <td>@item.Email</td>
+                        <td>@item.WhatsAppNumber</td>
+                        <td>@(item.App?.Description ?? "N/A")</td>
+                        <td class="text-end">
+                            <a asp-action="Edit" asp-route-id="@item.UtilisateurId" class="btn btn-sm btn-outline-primary me-1">
+                                <i class="bi bi-pencil"></i> Modifier
+                            </a>
+                            <a asp-action="Delete" asp-route-id="@item.UtilisateurId" class="btn btn-sm btn-outline-danger">
+                                <i class="bi bi-trash"></i> Supprimer
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+

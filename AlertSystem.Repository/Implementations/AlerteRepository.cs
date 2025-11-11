@@ -19,49 +19,47 @@ namespace AlertSystem.Repository.Implementations
         public async Task<Alerte?> GetByIdAsync(int id)
         {
             return await _context.Alerte
-                .Include(a => a.AlertType)
+                .Include(a => a.TypeEnvoie)
                 .Include(a => a.Statut)
                 .Include(a => a.Etat)
                 .Include(a => a.PlateformeEnvoie)
-                .Include(a => a.DestinataireUser)
                 .FirstOrDefaultAsync(a => a.AlertRecordId == id);
         }
 
         public async Task<IEnumerable<Alerte>> GetAllAsync()
         {
             return await _context.Alerte
-                .Include(a => a.AlertType)
+                .Include(a => a.TypeEnvoie)
                 .Include(a => a.Statut)
                 .Include(a => a.Etat)
                 .Include(a => a.PlateformeEnvoie)
-                .Include(a => a.DestinataireUser)
                 .ToListAsync();
         }
 
         public async Task<IEnumerable<Alerte>> GetByStatusAsync(int statusId)
         {
             return await _context.Alerte
-                .Include(a => a.AlertType)
+                .Include(a => a.TypeEnvoie)
                 .Include(a => a.Statut)
                 .Include(a => a.Etat)
                 .Where(a => a.StatutId == statusId)
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<Alerte>> GetByTypeAsync(int alertTypeId)
+        public async Task<IEnumerable<Alerte>> GetByTypeAsync(int typeEnvoieId)
         {
             return await _context.Alerte
-                .Include(a => a.AlertType)
+                .Include(a => a.TypeEnvoie)
                 .Include(a => a.Statut)
                 .Include(a => a.Etat)
-                .Where(a => a.AlertTypeId == alertTypeId)
+                .Where(a => a.TypeEnvoieId == typeEnvoieId)
                 .ToListAsync();
         }
 
         public async Task<IEnumerable<Alerte>> GetByDateRangeAsync(DateTime startDate, DateTime endDate)
         {
             return await _context.Alerte
-                .Include(a => a.AlertType)
+                .Include(a => a.TypeEnvoie)
                 .Include(a => a.Statut)
                 .Include(a => a.Etat)
                 .Where(a => a.DateCreationAlerte >= startDate && a.DateCreationAlerte <= endDate)
@@ -105,11 +103,10 @@ namespace AlertSystem.Repository.Implementations
         public async Task<IEnumerable<Alerte>> GetPaginatedAsync(int page, int pageSize)
         {
             return await _context.Alerte
-                .Include(a => a.AlertType)
+                .Include(a => a.TypeEnvoie)
                 .Include(a => a.Statut)
                 .Include(a => a.Etat)
                 .Include(a => a.PlateformeEnvoie)
-                .Include(a => a.DestinataireUser)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
@@ -121,11 +118,10 @@ namespace AlertSystem.Repository.Implementations
         public async Task<IEnumerable<Alerte>> GetByGroupIdAsync(Guid groupId)
         {
             return await _context.Alerte
-                .Include(a => a.AlertType)
+                .Include(a => a.TypeEnvoie)
                 .Include(a => a.Statut)
                 .Include(a => a.Etat)
                 .Include(a => a.PlateformeEnvoie)
-                .Include(a => a.DestinataireUser)
                 .Where(a => a.AlertGroupId == groupId)
                 .ToListAsync();
         }
@@ -136,11 +132,10 @@ namespace AlertSystem.Repository.Implementations
         public async Task<IEnumerable<Alerte>> GetPendingForWorkerAsync()
         {
             return await _context.Alerte
-                .Include(a => a.AlertType)
+                .Include(a => a.TypeEnvoie)
                 .Include(a => a.Statut)
                 .Include(a => a.Etat)
                 .Include(a => a.PlateformeEnvoie)
-                .Include(a => a.DestinataireUser)
                 .Where(a => (a.StatutId == 1 || a.StatutId == 4) && !a.ProcessedByWorker)
                 .OrderBy(a => a.DateCreationAlerte)
                 .ToListAsync();

@@ -76,13 +76,12 @@ namespace AlertSystem.WEB.Controllers
                 _logger.LogInformation("Send: entered with content-type {CT}, content-length {CL}", Request.ContentType, Request.ContentLength);
                 SendDto? dto = null;
                 {
-                    // Fallback: manually read and deserialize the JSON body to avoid model binding issues
                     try
                     {
-                        Request.EnableBuffering(); // allow reading body twice
+                        Request.EnableBuffering();
                         using var reader = new StreamReader(Request.Body, System.Text.Encoding.UTF8, detectEncodingFromByteOrderMarks: false, leaveOpen: true);
                         var body = await reader.ReadToEndAsync();
-                        Request.Body.Position = 0; // reset for later middleware
+                        Request.Body.Position = 0;
                         _logger.LogWarning("Send: dto was null, attempting manual parse. Body length={Len} body={Body}", body?.Length ?? 0, body);
                         if (!string.IsNullOrWhiteSpace(body))
                         {
@@ -104,12 +103,9 @@ namespace AlertSystem.WEB.Controllers
                 dto.Platforms ??= new PlatformsDto();
                 dto.Emails = dto.Emails ?? Array.Empty<string>();
                 dto.Phones = dto.Phones ?? Array.Empty<string>();
-                dto.UserIds = dto.UserIds ?? Array.Empty<int>();
-                dto.EmailUserMap = dto.EmailUserMap ?? new Dictionary<string, int>();
-                dto.PhoneUserMap = dto.PhoneUserMap ?? new Dictionary<string, int>();
 
-                _logger.LogInformation("Send: payload normalized. title='{Title}', msgLen={MsgLen}, emails={Emails}, phones={Phones}, desktop={Desktop}, typeId={TypeId}",
-                    dto.Title, (dto.Message?.Length ?? 0), dto.Emails.Length, dto.Phones.Length, dto.Platforms.Desktop, dto.AlertTypeId);
+                _logger.LogInformation("Send: payload normalized. title='{Title}', msgLen={MsgLen}, emails={Emails}, phones={Phones}, typeId={TypeId}",
+                    dto.Title, (dto.Message?.Length ?? 0), dto.Emails.Length, dto.Phones.Length, dto.AlertTypeId);
 
                 if (!ModelState.IsValid)
                 {
@@ -119,243 +115,79 @@ namespace AlertSystem.WEB.Controllers
                 if (string.IsNullOrWhiteSpace(dto.Title)) return BadRequest("title required");
                 if (string.IsNullOrWhiteSpace(dto.Message)) dto.Message = string.Empty;
 
-                // Desktop fallback: if Desktop selected and no userIds provided, use current logged-in user
-                int[]? userIds = dto.UserIds;
-                if ((dto.Platforms?.Desktop ?? false) && (userIds == null || userIds.Length == 0))
-                {
-                    var uid = _currentUser.GetUserId();
-                    if (uid.HasValue && uid.Value > 0)
-                    {
-                        userIds = new[] { uid.Value };
-                    }
-                }
-
-                // Get current user ID for ExpediteurId
                 var currentUserId = _currentUserService.GetCurrentUserId();
                 if (!currentUserId.HasValue)
                 {
                     return Unauthorized("User not authenticated");
                 }
+                // Load current user to resolve AppId for FK integrity
+                var currentUser = await _currentUserService.GetCurrentUserAsync();
+                if (currentUser == null)
+                {
+                    return Unauthorized("User not authenticated");
+                }
+                var currentAppId = currentUser.AppId;
 
-                // Helper local functions
                 static string NormalizeEmail(string? e) => (e ?? string.Empty).Trim().ToLowerInvariant();
                 static string NormalizePhone(string? p)
                 {
                     if (string.IsNullOrWhiteSpace(p)) return string.Empty;
                     var digits = new string(p.Where(char.IsDigit).ToArray());
                     if (digits.StartsWith("00")) digits = digits.Substring(2);
-                    if (digits.Length == 8) digits = "216" + digits; // assume TN local fallback
-                    return digits; // compare as digits only
+                    if (digits.Length == 8) digits = "216" + digits;
+                    return digits;
                 }
 
-                // Create alert in database first (with pending status)
-                // Generate a new AlertGroupId for this alert group
                 var alertGroupId = Guid.NewGuid();
                 var alertRecords = new List<AlertSystem.Entities.Entities.Alerte>();
 
-                // Create Alerte entries for each recipient/platform combination
-
-                // Add email recipients
+                // Emails
                 if (dto.Platforms?.Email == true && dto.Emails != null)
                 {
-                    // preload users for case-insensitive compare
-                    var allUsers = await _db.DefUtilisateurs
-                        .Select(u => new { u.util_id, email = u.util_email })
-                        .ToListAsync();
                     foreach (var email in dto.Emails)
                     {
                         var norm = NormalizeEmail(email);
-                        // 1) Prefer explicit mapping provided by UI when selecting with "+"
-                        AlertSystem.Entities.Entities.DefUtilisateur? resolvedUser = null;
-                        // exact key
-                        if (dto.EmailUserMap.TryGetValue(email, out var mappedUserId))
-                        {
-                            resolvedUser = await _db.DefUtilisateurs.FirstOrDefaultAsync(u => u.util_id == mappedUserId);
-                        }
-                        // case-insensitive key search
-                        if (resolvedUser == null && dto.EmailUserMap.Count > 0)
-                        {
-                            var kv = dto.EmailUserMap.FirstOrDefault(k => string.Equals(k.Key?.Trim(), email?.Trim(), StringComparison.OrdinalIgnoreCase));
-                            if (!string.IsNullOrEmpty(kv.Key) && kv.Value > 0)
-                            {
-                                resolvedUser = await _db.DefUtilisateurs.FirstOrDefaultAsync(u => u.util_id == kv.Value);
-                            }
-                        }
-                        // 2) Fallback to DB email match (case-insensitive)
-                        var userEntry = allUsers.FirstOrDefault(u => NormalizeEmail(u.email) == norm);
+                        if (string.IsNullOrWhiteSpace(norm)) continue;
                         var alertRecord = new AlertSystem.Entities.Entities.Alerte
                         {
                             AlertGroupId = alertGroupId,
+                            AppId = currentAppId,
                             TitreAlerte = dto.Title,
                             DescriptionAlerte = dto.Message,
                             DateCreationAlerte = DateTime.UtcNow,
-                            StatutId = 1, // En Cours (pending)
-                            AlertTypeId = dto.AlertTypeId ?? 1,
-                            EtatAlerteId = 1, // Non Lu
+                            StatutId = 1,
+                            TypeEnvoieId = dto.AlertTypeId ?? 1,
+                            EtatId = 1,
                             PlateformeEnvoieId = 1, // Email
-                            ExpediteurId = currentUserId.Value, // Set sender ID
-                            DestinataireEmail = email,
-                            DestinataireUserId = resolvedUser?.util_id ?? userEntry?.util_id,
-                            ProcessedByWorker = false // Let WatcherWorker process this
+                            ExpediteurId = currentUserId.Value,
+                            Destinataire = norm,
+                            ProcessedByWorker = false
                         };
                         alertRecords.Add(alertRecord);
                     }
                 }
 
-                // Add WhatsApp recipients
+                // WhatsApp
                 if (dto.Platforms?.WhatsApp == true && dto.Phones != null)
                 {
-                    // Preload users with possible GRH phone by joining on grh_emp_id best-effort
-                    var usersWithEmp = await _db.DefUtilisateurs
-                        .Select(u => new { u.util_id, u.grh_emp_id })
-                        .ToListAsync();
-                    var grhPhones = new Dictionary<decimal, string>();
-                    try
-                    {
-                        var conn = _db.Database.GetDbConnection();
-                        if (conn.State != System.Data.ConnectionState.Open) await conn.OpenAsync();
-                        using var cmd = conn.CreateCommand();
-                        cmd.CommandText = @"SELECT CAST(e.grh_emp_id AS decimal(18,2)), NULLIF(LTRIM(RTRIM(ISNULL(e.grh_emp_gsm,''))), '') FROM grh_employe e";
-                        using var reader = await cmd.ExecuteReaderAsync();
-                        while (await reader.ReadAsync())
-                        {
-                            if (!reader.IsDBNull(1)) grhPhones[reader.GetDecimal(0)] = reader.GetString(1);
-                        }
-                    }
-                    catch { }
-                    try
-                    {
-                        var conn2 = _db.Database.GetDbConnection();
-                        if (conn2.State != System.Data.ConnectionState.Open) await conn2.OpenAsync();
-                        using var cmd2 = conn2.CreateCommand();
-                        cmd2.CommandText = @"SELECT CAST(e.grh_emp_id AS decimal(18,2)), NULLIF(LTRIM(RTRIM(ISNULL(e.grh_emp_gsm,''))), '') FROM grh_employee e";
-                        using var reader2 = await cmd2.ExecuteReaderAsync();
-                        while (await reader2.ReadAsync())
-                        {
-                            if (!reader2.IsDBNull(1)) grhPhones[reader2.GetDecimal(0)] = reader2.GetString(1);
-                        }
-                    }
-                    catch { }
-                // Optional fallback: also try direct phone on def_utilisateur if present in schema (util_tel / util_gsm)
-                var directPhoneMap = new Dictionary<string, decimal>();
-                try
-                {
-                    var conn3 = _db.Database.GetDbConnection();
-                    if (conn3.State != System.Data.ConnectionState.Open) await conn3.OpenAsync();
-                    using var cmd3 = conn3.CreateCommand();
-                    cmd3.CommandText = @"SELECT u.util_id, TRY_CONVERT(varchar(50), NULLIF(LTRIM(RTRIM(ISNULL(u.util_tel, ''))), '')) AS tel,
-                                                 TRY_CONVERT(varchar(50), NULLIF(LTRIM(RTRIM(ISNULL(u.util_gsm, ''))), '')) AS gsm
-                                          FROM def_utilisateur u";
-                    using var r3 = await cmd3.ExecuteReaderAsync();
-                    while (await r3.ReadAsync())
-                    {
-                        if (!r3.IsDBNull(1))
-                        {
-                            var d = new string((r3.GetString(1) ?? string.Empty).Where(char.IsDigit).ToArray());
-                            if (!string.IsNullOrEmpty(d)) directPhoneMap[d] = Convert.ToDecimal(r3.GetValue(0));
-                        }
-                        if (!r3.IsDBNull(2))
-                        {
-                            var d = new string((r3.GetString(2) ?? string.Empty).Where(char.IsDigit).ToArray());
-                            if (!string.IsNullOrEmpty(d)) directPhoneMap[d] = Convert.ToDecimal(r3.GetValue(0));
-                        }
-                    }
-                }
-                catch { }
-                    // Build phone index
-                    var userPhoneIndex = new Dictionary<string, decimal>();
-                    foreach (var u in usersWithEmp)
-                    {
-                        if (u.grh_emp_id.HasValue && grhPhones.TryGetValue(u.grh_emp_id.Value, out var ph))
-                        {
-                            var key = NormalizePhone(ph);
-                            if (!string.IsNullOrEmpty(key) && !userPhoneIndex.ContainsKey(key))
-                                userPhoneIndex[key] = u.util_id;
-                        }
-                    }
                     foreach (var phone in dto.Phones)
                     {
-                        // Try map phone to a userId provided by UI, validate existence
-                        AlertSystem.Entities.Entities.DefUtilisateur? user = null;
-                        if (dto.PhoneUserMap.TryGetValue(phone, out var phoneUserId))
-                        {
-                            user = await _db.DefUtilisateurs.FirstOrDefaultAsync(u => u.util_id == phoneUserId);
-                        }
-                        // case-insensitive / normalized match
-                        if (user == null && dto.PhoneUserMap.Count > 0)
-                        {
-                            string NormDigits(string s){ var d=new string((s??string.Empty).Where(char.IsDigit).ToArray()); if (d.StartsWith("00")) d=d.Substring(2); return d; }
-                            var target = NormDigits(phone);
-                            var kv = dto.PhoneUserMap.FirstOrDefault(k => NormDigits(k.Key) == target);
-                            if (!string.IsNullOrEmpty(kv.Key) && kv.Value > 0)
-                            {
-                                user = await _db.DefUtilisateurs.FirstOrDefaultAsync(u => u.util_id == kv.Value);
-                            }
-                        }
-                        if (user == null)
-                        {
-                            var key = NormalizePhone(phone);
-                            if (userPhoneIndex.TryGetValue(key, out var uid))
-                            {
-                                user = await _db.DefUtilisateurs.FirstOrDefaultAsync(u => u.util_id == uid);
-                            }
-                        }
-                        // Second fallback: direct phone columns on def_utilisateur
-                        if (user == null)
-                        {
-                            string Dig(string s){ var d=new string((s??string.Empty).Where(char.IsDigit).ToArray()); if (d.StartsWith("00")) d=d.Substring(2); return d; }
-                            var key = Dig(phone);
-                            // try full and suffix matches for common formatting differences
-                            var hit = directPhoneMap.Keys.FirstOrDefault(k => k == key || k.EndsWith(key) || key.EndsWith(k));
-                            if (!string.IsNullOrEmpty(hit) && directPhoneMap.TryGetValue(hit, out var uid2))
-                            {
-                                user = await _db.DefUtilisateurs.FirstOrDefaultAsync(u => u.util_id == uid2);
-                            }
-                        }
+                        var norm = NormalizePhone(phone);
+                        if (string.IsNullOrWhiteSpace(norm)) continue;
                         var alertRecord = new AlertSystem.Entities.Entities.Alerte
                         {
                             AlertGroupId = alertGroupId,
+                            AppId = currentAppId,
                             TitreAlerte = dto.Title,
                             DescriptionAlerte = dto.Message,
                             DateCreationAlerte = DateTime.UtcNow,
-                            StatutId = 1, // En Cours (pending)
-                            AlertTypeId = dto.AlertTypeId ?? 1,
-                            EtatAlerteId = 1, // Non Lu
+                            StatutId = 1,
+                            TypeEnvoieId = dto.AlertTypeId ?? 1,
+                            EtatId = 1,
                             PlateformeEnvoieId = 2, // WhatsApp
-                            ExpediteurId = currentUserId.Value, // Set sender ID
-                            DestinatairePhoneNumber = phone,
-                            DestinataireUserId = user?.util_id,
-                            ProcessedByWorker = false // Let WatcherWorker process this
-                        };
-                        alertRecords.Add(alertRecord);
-                    }
-                }
-
-                // Add desktop recipients
-                if (dto.Platforms?.Desktop == true && userIds != null)
-                {
-                    // validate user ids exist to avoid FK errors
-                    // Use in-memory intersection to avoid SQL syntax edge-cases observed on some servers
-                    var allIds = await _db.DefUtilisateurs
-                        .Select(u => (int)u.util_id)
-                        .ToListAsync();
-                    var existingIds = userIds.Intersect(allIds).ToList();
-                    foreach (var userId in existingIds)
-                    {
-                        var alertRecord = new AlertSystem.Entities.Entities.Alerte
-                        {
-                            AlertGroupId = alertGroupId,
-                            TitreAlerte = dto.Title,
-                            DescriptionAlerte = dto.Message,
-                            DateCreationAlerte = DateTime.UtcNow,
-                            StatutId = 1, // En Cours (pending)
-                            AlertTypeId = dto.AlertTypeId ?? 1,
-                            EtatAlerteId = 1, // Non Lu
-                            PlateformeEnvoieId = 3, // Desktop
-                            ExpediteurId = currentUserId.Value, // Set sender ID
-                            DestinataireUserId = (decimal)userId,
-                            DestinataireDesktop = null, // DesktopDeviceToken not available in DefUtilisateur
-                            ProcessedByWorker = false // Let WatcherWorker process this
+                            ExpediteurId = currentUserId.Value,
+                            Destinataire = norm,
+                            ProcessedByWorker = false
                         };
                         alertRecords.Add(alertRecord);
                     }
@@ -363,106 +195,16 @@ namespace AlertSystem.WEB.Controllers
 
                 if (alertRecords.Any())
                 {
-                    // Final normalization pass: ensure DestinataireUserId is filled for email/phone rows
-                    try
-                    {
-                        // Build email -> userId map (case-insensitive)
-                        static string NormEmail(string? e) => (e ?? string.Empty).Trim().ToLowerInvariant();
-                        var emailMap = await _db.DefUtilisateurs
-                            .Where(u => u.util_email != null && u.util_email != "")
-                            .Select(u => new { u.util_id, u.util_email })
-                            .ToListAsync();
-                        var emailToUser = emailMap
-                            .GroupBy(x => NormEmail(x.util_email))
-                            .ToDictionary(g => g.Key, g => g.Select(v => v.util_id).FirstOrDefault());
-
-                        // Build phone -> userId from GRH tables and optional direct phone fields
-                        string Dig(string s) { var d = new string((s ?? string.Empty).Where(char.IsDigit).ToArray()); if (d.StartsWith("00")) d = d.Substring(2); if (d.Length == 8) d = "216" + d; return d; }
-                        var grhPhones = new Dictionary<decimal, string>();
-                        try
-                        {
-                            var conn = _db.Database.GetDbConnection();
-                            if (conn.State != System.Data.ConnectionState.Open) await conn.OpenAsync();
-                            using var cmd = conn.CreateCommand();
-                            cmd.CommandText = @"SELECT CAST(e.grh_emp_id AS decimal(18,2)), NULLIF(LTRIM(RTRIM(ISNULL(e.grh_emp_gsm,''))), '') FROM grh_employe e";
-                            using var r = await cmd.ExecuteReaderAsync();
-                            while (await r.ReadAsync()) { if (!r.IsDBNull(1)) grhPhones[r.GetDecimal(0)] = r.GetString(1); }
-                        } catch { }
-                        try
-                        {
-                            var conn2 = _db.Database.GetDbConnection();
-                            if (conn2.State != System.Data.ConnectionState.Open) await conn2.OpenAsync();
-                            using var cmd2 = conn2.CreateCommand();
-                            cmd2.CommandText = @"SELECT CAST(e.grh_emp_id AS decimal(18,2)), NULLIF(LTRIM(RTRIM(ISNULL(e.grh_emp_gsm,''))), '') FROM grh_employee e";
-                            using var r2 = await cmd2.ExecuteReaderAsync();
-                            while (await r2.ReadAsync()) { if (!r2.IsDBNull(1)) grhPhones[r2.GetDecimal(0)] = r2.GetString(1); }
-                        } catch { }
-                        var defUsers = await _db.DefUtilisateurs.Select(u => new { u.util_id, u.grh_emp_id }).ToListAsync();
-                        var phoneToUser = new Dictionary<string, decimal>();
-                        foreach (var u in defUsers)
-                        {
-                            if (u.grh_emp_id.HasValue && grhPhones.TryGetValue(u.grh_emp_id.Value, out var ph))
-                            {
-                                var key = Dig(ph);
-                                if (!string.IsNullOrEmpty(key) && !phoneToUser.ContainsKey(key)) phoneToUser[key] = u.util_id;
-                            }
-                        }
-                        // Direct phone columns
-                        try
-                        {
-                            var conn3 = _db.Database.GetDbConnection();
-                            if (conn3.State != System.Data.ConnectionState.Open) await conn3.OpenAsync();
-                            using var cmd3 = conn3.CreateCommand();
-                            cmd3.CommandText = @"SELECT u.util_id, TRY_CONVERT(varchar(50), NULLIF(LTRIM(RTRIM(ISNULL(u.util_tel, ''))), '')) AS tel,
-                                                         TRY_CONVERT(varchar(50), NULLIF(LTRIM(RTRIM(ISNULL(u.util_gsm, ''))), '')) AS gsm
-                                                  FROM def_utilisateur u";
-                            using var r3 = await cmd3.ExecuteReaderAsync();
-                            while (await r3.ReadAsync())
-                            {
-                                if (!r3.IsDBNull(1)) { var d = Dig(r3.GetString(1) ?? string.Empty); if (!string.IsNullOrEmpty(d)) phoneToUser[d] = Convert.ToDecimal(r3.GetValue(0)); }
-                                if (!r3.IsDBNull(2)) { var d = Dig(r3.GetString(2) ?? string.Empty); if (!string.IsNullOrEmpty(d)) phoneToUser[d] = Convert.ToDecimal(r3.GetValue(0)); }
-                            }
-                        } catch { }
-
-                        foreach (var r in alertRecords)
-                        {
-                            if (!r.DestinataireUserId.HasValue)
-                            {
-                                if (!string.IsNullOrWhiteSpace(r.DestinataireEmail))
-                                {
-                                    var key = NormEmail(r.DestinataireEmail);
-                                    if (emailToUser.TryGetValue(key, out var uid) && uid > 0) r.DestinataireUserId = uid;
-                                }
-                                if (!r.DestinataireUserId.HasValue && !string.IsNullOrWhiteSpace(r.DestinatairePhoneNumber))
-                                {
-                                    var key = Dig(r.DestinatairePhoneNumber);
-                                    // exact or suffix match
-                                    if (phoneToUser.TryGetValue(key, out var puid)) r.DestinataireUserId = puid;
-                                    else
-                                    {
-                                        var hit = phoneToUser.Keys.FirstOrDefault(k => k == key || k.EndsWith(key) || key.EndsWith(k));
-                                        if (!string.IsNullOrEmpty(hit)) r.DestinataireUserId = phoneToUser[hit];
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    catch { }
-
                     _db.Alerte.AddRange(alertRecords);
                     await _db.SaveChangesAsync();
                 }
 
-                // Alert records are now ready for WatcherWorker to process
-
-                // Send real-time KPI update
                 try
                 {
                     var currentUserIdForKpi = _currentUser.GetUserId();
                     if (currentUserIdForKpi.HasValue)
                     {
                         await _KpiUpdateService.SendOutboxKpiUpdateAsync(currentUserIdForKpi.Value);
-                        // Broadcast KPI refresh to sender
                         await _hubContext.Clients.Group($"user_{currentUserIdForKpi.Value}")
                             .SendAsync("UpdateKpis");
                     }
@@ -472,29 +214,12 @@ namespace AlertSystem.WEB.Controllers
                     _logger.LogWarning(ex, "Failed to send outbox KPI update after alert creation");
                 }
 
-                // Send SignalR notification for real-time updates
                 try
                 {
                     if (currentUserId.HasValue)
                     {
                         await _hubContext.Clients.Group($"user_{currentUserId.Value}")
                             .SendAsync("ReceiveNotification", "AlertCreated", new { 
-                                alertGroupId = alertGroupId,
-                                title = dto.Title,
-                                message = dto.Message,
-                                timestamp = DateTime.UtcNow
-                            });
-                    }
-                    // Notify recipients (desktop-mapped and any record with DestinataireUserId)
-                    var recipientIds = alertRecords
-                        .Where(r => r.DestinataireUserId.HasValue)
-                        .Select(r => (int)r.DestinataireUserId.Value)
-                        .Distinct()
-                        .ToList();
-                    foreach (var rid in recipientIds)
-                    {
-                        await _hubContext.Clients.Group($"user_{rid}")
-                            .SendAsync("ReceiveNotification", "NewAlertReceived", new {
                                 alertGroupId = alertGroupId,
                                 title = dto.Title,
                                 message = dto.Message,
@@ -531,7 +256,6 @@ namespace AlertSystem.WEB.Controllers
                     return NotFound("Alert not found");
                 }
 
-                // Update alert status to cancelled for all records in the group
                 var alertRecords = await _db.Alerte
                     .Where(a => a.AlertGroupId == alert.AlertGroupId)
                     .ToListAsync();
@@ -566,9 +290,6 @@ namespace AlertSystem.WEB.Controllers
             public string Message { get; set; } = string.Empty;
             public string[]? Emails { get; set; }
             public string[]? Phones { get; set; }
-            public int[]? UserIds { get; set; }
-            public Dictionary<string,int>? EmailUserMap { get; set; }
-            public Dictionary<string,int>? PhoneUserMap { get; set; }
             public PlatformsDto? Platforms { get; set; }
             public int? AlertTypeId { get; set; }
         }

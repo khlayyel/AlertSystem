@@ -97,14 +97,11 @@ namespace AlertSystem.Service.Services
         /// </summary>
         public async Task<IEnumerable<AlertAuditEntry>> GetAlertAuditHistoryAsync(int alertRecordId)
         {
-            // Pour l'instant, on retourne les logs de l'application
-            // Dans une implémentation complète, on pourrait avoir une table d'audit dédiée
             var alert = await _db.Alerte
-                .Include(a => a.AlertType)
+                .Include(a => a.TypeEnvoie)
                 .Include(a => a.Statut)
                 .Include(a => a.Etat)
                 .Include(a => a.PlateformeEnvoie)
-                .Include(a => a.DestinataireUser)
                 .FirstOrDefaultAsync(a => a.AlertRecordId == alertRecordId);
 
             if (alert == null)
@@ -118,7 +115,7 @@ namespace AlertSystem.Service.Services
                     Action = "CREATED",
                     Details = $"Alert created: {alert.TitreAlerte}",
                     UserId = (int?)alert.ExpediteurId,
-                    Platform = alert.PlateformeEnvoie?.Plateforme ?? "Unknown"
+                    Platform = alert.PlateformeEnvoie?.Description ?? "Unknown"
                 }
             };
 
@@ -128,9 +125,9 @@ namespace AlertSystem.Service.Services
                 {
                     Timestamp = alert.DateLecture.Value,
                     Action = "READ",
-                    Details = $"Alert read by {alert.DestinataireUser?.util_nom ?? "Unknown"}",
-                    UserId = (int?)alert.DestinataireUserId,
-                    Platform = alert.PlateformeEnvoie?.Plateforme ?? "Unknown"
+                    Details = $"Alert read by recipient {alert.Destinataire}",
+                    UserId = null,
+                    Platform = alert.PlateformeEnvoie?.Description ?? "Unknown"
                 });
             }
 
@@ -143,11 +140,10 @@ namespace AlertSystem.Service.Services
         public async Task<IEnumerable<AlertAuditEntry>> GetGroupAuditHistoryAsync(Guid groupId)
         {
             var alerts = await _db.Alerte
-                .Include(a => a.AlertType)
+                .Include(a => a.TypeEnvoie)
                 .Include(a => a.Statut)
                 .Include(a => a.Etat)
                 .Include(a => a.PlateformeEnvoie)
-                .Include(a => a.DestinataireUser)
                 .Where(a => a.AlertGroupId == groupId)
                 .OrderBy(a => a.DateCreationAlerte)
                 .ToListAsync();
@@ -162,7 +158,7 @@ namespace AlertSystem.Service.Services
                     Action = "CREATED",
                     Details = $"Alert created: {alert.TitreAlerte}",
                     UserId = (int?)alert.ExpediteurId,
-                    Platform = alert.PlateformeEnvoie?.Plateforme ?? "Unknown"
+                    Platform = alert.PlateformeEnvoie?.Description ?? "Unknown"
                 });
 
                 if (alert.DateLecture.HasValue)
@@ -171,9 +167,9 @@ namespace AlertSystem.Service.Services
                     {
                         Timestamp = alert.DateLecture.Value,
                         Action = "READ",
-                        Details = $"Alert read by {alert.DestinataireUser?.util_nom ?? "Unknown"}",
-                        UserId = (int?)alert.DestinataireUserId,
-                        Platform = alert.PlateformeEnvoie?.Plateforme ?? "Unknown"
+                        Details = $"Alert read by recipient {alert.Destinataire}",
+                        UserId = null,
+                        Platform = alert.PlateformeEnvoie?.Description ?? "Unknown"
                     });
                 }
             }

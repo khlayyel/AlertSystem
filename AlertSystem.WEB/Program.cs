@@ -24,7 +24,7 @@ builder.Host.AddSerilogConfiguration("AlertSystem.WEB");
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-// Add authentication
+// Add authentication and authorization
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
@@ -33,6 +33,11 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.ExpireTimeSpan = TimeSpan.FromDays(30);
         options.SlidingExpiration = true;
     });
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+});
 
 // Add AlertSystem services
 builder.Services.AddWebServices(builder.Configuration);
@@ -81,11 +86,17 @@ builder.Services.AddScoped<IPasswordService, PasswordService>();
 // Add SignalR for KpiUpdateService
 builder.Services.AddSignalR();
 
-// Add database services
-var connectionString = Environment.GetEnvironmentVariable("CONNECTIONSTRINGS__DEFAULTCONNECTION");
+// Add database services (read strictly from appsettings to avoid .env overrides)
+var envName = builder.Environment.EnvironmentName ?? "Production";
+var fileConfig = new ConfigurationBuilder()
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .AddJsonFile($"appsettings.{envName}.json", optional: true, reloadOnChange: true)
+    .Build();
+var connectionString = fileConfig.GetConnectionString("DefaultConnection");
 if (string.IsNullOrWhiteSpace(connectionString))
 {
-    throw new InvalidOperationException("Missing CONNECTIONSTRINGS__DEFAULTCONNECTION");
+    throw new InvalidOperationException("Connection string 'DefaultConnection' is missing from appsettings.");
 }
 
 builder.Services.AddDbContext<AlertSystem.Data.ApplicationDbContext>(options =>

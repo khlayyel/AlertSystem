@@ -18,14 +18,9 @@ namespace AlertSystem.Service.Services
             _db = db; 
         }
 
-        /// <summary>
-        /// Récupère la liste rapide des alertes (templates)
-        /// </summary>
         public async Task<object[]> GetQuickListAsync()
         {
-            // Utiliser les alertes existantes comme "templates rapides" (les plus récentes)
             var items = await _db.Alerte
-                .Include(a => a.AlertType)
                 .OrderByDescending(a => a.DateCreationAlerte)
                 .Take(20)
                 .Select(a => new
@@ -33,33 +28,22 @@ namespace AlertSystem.Service.Services
                     id = a.AlertRecordId,
                     title = a.TitreAlerte,
                     message = a.DescriptionAlerte,
-                    type = a.AlertType != null ? a.AlertType.AlertTypeName : "acquittementNonNécessaire"
+                    type = a.TypeEnvoieId == 2 ? "acquittementNecessaire" : "acquittementNonNecessaire"
                 })
                 .ToArrayAsync();
 
             return items;
         }
 
-        /// <summary>
-        /// Crée une alerte à partir d'un template
-        /// </summary>
         public async Task<(bool Success, int AlertId, string? Error)> CreateFromTemplateAsync(string title, string message, string type)
         {
             if (string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(message))
                 return (false, 0, "Title and message are required");
 
-            var alertTypeId = await _db.AlertType
-                .Where(t => t.AlertTypeName == type)
-                .Select(t => t.AlertTypeId)
-                .FirstOrDefaultAsync();
-
-            if (alertTypeId == 0)
-            {
-                alertTypeId = await _db.AlertType.Select(t => t.AlertTypeId).FirstAsync();
-            }
+            var typeEnvoieId = type == "acquittementNecessaire" ? 2 : 1;
 
             var statutId = await _db.Statut
-                .Where(s => s.StatutName == "En Cours")
+                .Where(s => s.Description == "EnCours")
                 .Select(s => s.StatutId)
                 .FirstOrDefaultAsync();
 
@@ -73,24 +57,25 @@ namespace AlertSystem.Service.Services
                 var alertGroupId = Guid.NewGuid();
                 var now = DateTime.UtcNow;
 
-                // Créer une alerte de base (sans destinataire spécifique)
                 var alerte = new Alerte
                 {
                     AlertGroupId = alertGroupId,
                     TitreAlerte = title,
                     DescriptionAlerte = message,
                     DateCreationAlerte = now,
-                    AlertTypeId = alertTypeId,
+                    TypeEnvoieId = typeEnvoieId,
                     StatutId = statutId,
-                    EtatAlerteId = 1, // Non Lu
+                    EtatId = 1, // Non Lu
                     PlateformeEnvoieId = 1, // Email par défaut
-                    ProcessedByWorker = false
+                    ProcessedByWorker = false,
+                    Destinataire = string.Empty,
+                    AppId = 1
                 };
 
                 _db.Alerte.Add(alerte);
                 await _db.SaveChangesAsync();
 
-                return (true, alerte.AlertRecordId, null);
+                return (true, (int)alerte.AlertRecordId, null);
             }
             catch (Exception ex)
             {
@@ -98,39 +83,28 @@ namespace AlertSystem.Service.Services
             }
         }
 
-        /// <summary>
-        /// Récupère une alerte par son ID
-        /// </summary>
         public async Task<Alerte?> GetByIdAsync(int alertRecordId)
         {
             return await _db.Alerte
-                .Include(a => a.AlertType)
+                .Include(a => a.TypeEnvoie)
                 .Include(a => a.Statut)
                 .Include(a => a.Etat)
                 .Include(a => a.PlateformeEnvoie)
-                .Include(a => a.DestinataireUser)
                 .FirstOrDefaultAsync(a => a.AlertRecordId == alertRecordId);
         }
 
-        /// <summary>
-        /// Récupère toutes les alertes d'un groupe
-        /// </summary>
         public async Task<IEnumerable<Alerte>> GetByGroupIdAsync(Guid groupId)
         {
             return await _db.Alerte
-                .Include(a => a.AlertType)
+                .Include(a => a.TypeEnvoie)
                 .Include(a => a.Statut)
                 .Include(a => a.Etat)
                 .Include(a => a.PlateformeEnvoie)
-                .Include(a => a.DestinataireUser)
                 .Where(a => a.AlertGroupId == groupId)
                 .OrderBy(a => a.DateCreationAlerte)
                 .ToListAsync();
         }
 
-        /// <summary>
-        /// Met à jour une alerte
-        /// </summary>
         public async Task<bool> UpdateAsync(Alerte alerte)
         {
             try
@@ -145,9 +119,6 @@ namespace AlertSystem.Service.Services
             }
         }
 
-        /// <summary>
-        /// Supprime une alerte
-        /// </summary>
         public async Task<bool> DeleteAsync(int alertRecordId)
         {
             try
@@ -165,9 +136,6 @@ namespace AlertSystem.Service.Services
             }
         }
 
-        /// <summary>
-        /// Supprime toutes les alertes d'un groupe
-        /// </summary>
         public async Task<bool> DeleteGroupAsync(Guid groupId)
         {
             try
@@ -188,98 +156,70 @@ namespace AlertSystem.Service.Services
             }
         }
 
-        /// <summary>
-        /// Récupère les alertes avec pagination
-        /// </summary>
         public async Task<IEnumerable<Alerte>> GetPaginatedAsync(int page = 1, int pageSize = 20)
         {
             return await _db.Alerte
-                .Include(a => a.AlertType)
+                .Include(a => a.TypeEnvoie)
                 .Include(a => a.Statut)
                 .Include(a => a.Etat)
                 .Include(a => a.PlateformeEnvoie)
-                .Include(a => a.DestinataireUser)
                 .OrderByDescending(a => a.DateCreationAlerte)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
         }
 
-        /// <summary>
-        /// Récupère les alertes par statut
-        /// </summary>
         public async Task<IEnumerable<Alerte>> GetByStatusAsync(int statusId)
         {
             return await _db.Alerte
-                .Include(a => a.AlertType)
+                .Include(a => a.TypeEnvoie)
                 .Include(a => a.Statut)
                 .Include(a => a.Etat)
                 .Include(a => a.PlateformeEnvoie)
-                .Include(a => a.DestinataireUser)
                 .Where(a => a.StatutId == statusId)
                 .OrderByDescending(a => a.DateCreationAlerte)
                 .ToListAsync();
         }
 
-        /// <summary>
-        /// Récupère les alertes par type
-        /// </summary>
-        public async Task<IEnumerable<Alerte>> GetByTypeAsync(int alertTypeId)
+        public async Task<IEnumerable<Alerte>> GetByTypeAsync(int typeEnvoieId)
         {
             return await _db.Alerte
-                .Include(a => a.AlertType)
+                .Include(a => a.TypeEnvoie)
                 .Include(a => a.Statut)
                 .Include(a => a.Etat)
                 .Include(a => a.PlateformeEnvoie)
-                .Include(a => a.DestinataireUser)
-                .Where(a => a.AlertTypeId == alertTypeId)
+                .Where(a => a.TypeEnvoieId == typeEnvoieId)
                 .OrderByDescending(a => a.DateCreationAlerte)
                 .ToListAsync();
         }
 
-        /// <summary>
-        /// Récupère les alertes par plateforme
-        /// </summary>
         public async Task<IEnumerable<Alerte>> GetByPlatformAsync(int platformId)
         {
             return await _db.Alerte
-                .Include(a => a.AlertType)
+                .Include(a => a.TypeEnvoie)
                 .Include(a => a.Statut)
                 .Include(a => a.Etat)
                 .Include(a => a.PlateformeEnvoie)
-                .Include(a => a.DestinataireUser)
                 .Where(a => a.PlateformeEnvoieId == platformId)
                 .OrderByDescending(a => a.DateCreationAlerte)
                 .ToListAsync();
         }
 
-        /// <summary>
-        /// Compte le nombre total d'alertes
-        /// </summary>
         public async Task<int> GetTotalCountAsync()
         {
             return await _db.Alerte.CountAsync();
         }
 
-        /// <summary>
-        /// Compte le nombre d'alertes par statut
-        /// </summary>
         public async Task<int> GetCountByStatusAsync(int statusId)
         {
             return await _db.Alerte.CountAsync(a => a.StatutId == statusId);
         }
 
-        /// <summary>
-        /// Compte le nombre d'alertes par type
-        /// </summary>
-        public async Task<int> GetCountByTypeAsync(int alertTypeId)
+        public async Task<int> GetCountByTypeAsync(int typeEnvoieId)
         {
-            return await _db.Alerte.CountAsync(a => a.AlertTypeId == alertTypeId);
+            return await _db.Alerte.CountAsync(a => a.TypeEnvoieId == typeEnvoieId);
         }
 
-        /// <summary>
-        /// Compte le nombre d'alertes par plateforme
-        /// </summary>
         public async Task<int> GetCountByPlatformAsync(int platformId)
         {
             return await _db.Alerte.CountAsync(a => a.PlateformeEnvoieId == platformId);

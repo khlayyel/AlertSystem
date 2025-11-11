@@ -85,25 +85,25 @@ namespace AlertSystem.WEB.Controllers
             }
 
             var a = await _db.Alerte
-                .Include(x => x.AlertType)
+                .Include(x => x.TypeEnvoie)
                 .Include(x => x.Statut)
                 .Include(x => x.Etat)
                 .Include(x => x.PlateformeEnvoie)
                 .AsNoTracking()
-                .Where(x => x.AlertRecordId == id && (x.ExpediteurId == currentUserId.Value || x.DestinataireUserId == currentUserId.Value))
+                .Where(x => x.AlertRecordId == id)
                 .Select(x => new {
                     id = x.AlertRecordId,
                     groupId = x.AlertGroupId,
                     title = x.TitreAlerte,
                     message = x.DescriptionAlerte,
-                    type = x.AlertType != null ? x.AlertType.AlertTypeName : null,
-                    alertTypeId = x.AlertTypeId,
-                    status = x.Statut != null ? x.Statut.StatutName : null,
+                    type = x.TypeEnvoie != null ? x.TypeEnvoie.Description : null,
+                    alertTypeId = x.TypeEnvoieId,
+                    status = x.Statut != null ? x.Statut.Description : null,
                     statutId = x.StatutId,
-                    etatAlerteId = x.EtatAlerteId,
+                    etatId = x.EtatId,
                     createdAt = x.DateCreationAlerte,
                     readAt = x.DateLecture,
-                    platform = x.PlateformeEnvoie != null ? x.PlateformeEnvoie.Plateforme : null
+                    platform = x.PlateformeEnvoie != null ? x.PlateformeEnvoie.Description : null
                 })
                 .FirstOrDefaultAsync();
 
@@ -117,34 +117,16 @@ namespace AlertSystem.WEB.Controllers
         {
             try
             {
-                // Load the target alert to get group and user
-                var target = await _db.Alerte.AsNoTracking()
-                    .Where(a => a.AlertRecordId == alertRecipientId)
-                    .Select(a => new { a.AlertGroupId, a.DestinataireUserId, a.ExpediteurId })
-                    .FirstOrDefaultAsync();
-                if (target == null)
+                var row = await _db.Alerte.FirstOrDefaultAsync(a => a.AlertRecordId == alertRecipientId);
+                if (row == null)
                 {
                     return NotFound(new { success = false, message = "Alerte introuvable" });
                 }
 
-                // Update all rows in the same group for this recipient user (per-user confirmation)
-                var rows = await _db.Alerte
-                    .Where(a => a.AlertGroupId == target.AlertGroupId && a.DestinataireUserId == target.DestinataireUserId)
-                    .ToListAsync();
-
-                if (!rows.Any())
-                {
-                    return NotFound(new { success = false, message = "Aucune ligne destinataire pour cette alerte" });
-                }
-
-                foreach (var r in rows)
-                {
-                    r.EtatAlerteId = 2; // Lu
-                    r.DateLecture = DateTime.UtcNow;
-                }
+                row.EtatId = 2; // Lu
+                row.DateLecture = DateTime.UtcNow;
                 await _db.SaveChangesAsync();
 
-                // Real-time updates: KPIs and status change to both recipient and sender
                 var currentUserId = _currentUserAccessor.GetUserId();
                 if (currentUserId.HasValue)
                 {
@@ -156,16 +138,8 @@ namespace AlertSystem.WEB.Controllers
                     var hub = HttpContext.RequestServices.GetService<IHubContext<AlertSystem.Infrastructure.Hubs.NotificationHub>>();
                     if (hub != null)
                     {
-                        if (target.DestinataireUserId.HasValue)
-                        {
-                            await hub.Clients.Group($"user_{target.DestinataireUserId.Value}").SendAsync("ReceiveNotification", "UpdateKpis", null);
-                            await hub.Clients.Group($"user_{target.DestinataireUserId.Value}").SendAsync("ReceiveNotification", "AlertStatusUpdated", new { groupId = target.AlertGroupId, userId = target.DestinataireUserId.Value, status = "Lu", readAt = DateTime.UtcNow });
-                        }
-                        if (target.ExpediteurId.HasValue)
-                        {
-                            await hub.Clients.Group($"user_{target.ExpediteurId.Value}").SendAsync("ReceiveNotification", "UpdateKpis", null);
-                            await hub.Clients.Group($"user_{target.ExpediteurId.Value}").SendAsync("ReceiveNotification", "AlertStatusUpdated", new { groupId = target.AlertGroupId, userId = target.DestinataireUserId, status = "Lu", readAt = DateTime.UtcNow });
-                        }
+                        await hub.Clients.All.SendAsync("ReceiveNotification", "UpdateKpis", null);
+                        await hub.Clients.All.SendAsync("ReceiveNotification", "AlertStatusUpdated", new { groupId = row.AlertGroupId, status = "Lu", readAt = DateTime.UtcNow });
                     }
                 }
                 catch { }
