@@ -1,7 +1,7 @@
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
-using AlertSystem.Service;
+using AlertSystem.Utils.Abstractions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 using AlertSystem.Utils.Email;
@@ -9,7 +9,7 @@ using AlertSystem.Utils.Logging;
 
 namespace AlertSystem.Services
 {
-    public sealed class SmtpEmailSender : IEmailSender
+    public sealed class SmtpEmailSender : AlertSystem.Utils.Abstractions.IEmailSender
     {
         private readonly IConfiguration _cfg;
         private readonly ILogger<SmtpEmailSender> _logger;

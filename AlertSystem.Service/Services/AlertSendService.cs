@@ -2,6 +2,7 @@ using AlertSystem.Data;
 using AlertSystem.Entities.Entities;
 using AlertSystem.Service.Interfaces;
 using AlertSystem.Services;
+using AlertSystem.Utils.Abstractions;
 using AlertSystem.Utils.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -16,25 +17,27 @@ namespace AlertSystem.Service.Services
         private readonly ApplicationDbContext _db;
         private readonly ILogger<AlertSendService> _logger;
         private readonly IConfiguration _cfg;
-        private readonly INotificationService _notificationService;
-        private readonly IWhatsAppService _whatsAppService;
+        private readonly AlertSystem.Utils.Abstractions.INotificationService _notificationService;
+        private readonly AlertSystem.Utils.Abstractions.IWhatsAppService _whatsAppService;
         private readonly IEmailTemplateService _emailTemplateService;
         private readonly IWhatsAppTemplateService _whatsAppTemplateService;
         private readonly ConfirmationTokenService _confirmationTokenService;
         private readonly IKpiUpdateService _kpiUpdateService;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly AlertSystem.Services.IWebPushService _webPushService;
 
         public AlertSendService(
             ApplicationDbContext db,
             ILogger<AlertSendService> logger,
             IConfiguration cfg,
-            INotificationService notificationService,
-            IWhatsAppService whatsAppService,
+            AlertSystem.Utils.Abstractions.INotificationService notificationService,
+            AlertSystem.Utils.Abstractions.IWhatsAppService whatsAppService,
             IEmailTemplateService emailTemplateService,
             IWhatsAppTemplateService whatsAppTemplateService,
             ConfirmationTokenService confirmationTokenService,
             IKpiUpdateService kpiUpdateService,
-            IHttpContextAccessor httpContextAccessor)
+            IHttpContextAccessor httpContextAccessor,
+            AlertSystem.Services.IWebPushService webPushService)
         {
             _db = db;
             _logger = logger;
@@ -46,6 +49,7 @@ namespace AlertSystem.Service.Services
             _confirmationTokenService = confirmationTokenService;
             _kpiUpdateService = kpiUpdateService;
             _httpContextAccessor = httpContextAccessor;
+            _webPushService = webPushService;
         }
 
         public async Task<bool> SendExistingAlertAsync(int alertRecordId, string[] emails, string[] phones, string[] desktop)
@@ -93,6 +97,21 @@ namespace AlertSystem.Service.Services
                             confirmationUrl,
                             confirmLabel);
                         success = await _notificationService.SendHtmlEmailAsync(alert.Destinataire, alert.TitreAlerte, htmlContent);
+
+                        // Send Web Push to recipient if subscription exists (match by email)
+                        try
+                        {
+                            var targetUser = await _db.DefUtilisateur.AsNoTracking().FirstOrDefaultAsync(u => (u.Email ?? "").ToLower() == (alert.Destinataire ?? "").ToLower());
+                            if (targetUser != null)
+                            {
+                                var tokens = await _webPushService.GetUserDeviceTokensAsync(targetUser.UtilisateurId);
+                                foreach (var t in tokens)
+                                {
+                                    _ = _webPushService.SendNotificationAsync(t, alert.TitreAlerte, alert.DescriptionAlerte ?? "", null, new { url = "/Dashboard/Inbox" });
+                                }
+                            }
+                        }
+                        catch { /* non-blocking */ }
                     }
                 }
                 else if (alert.PlateformeEnvoieId == 2) // WhatsApp
@@ -115,6 +134,24 @@ namespace AlertSystem.Service.Services
                             senderDisplay,
                             confirmationUrl,
                             alert.TypeEnvoieId == 2);
+
+                        // Send Web Push to recipient if subscription exists (match by phone)
+                        try
+                        {
+                            string onlyDigits(string s) => new string((s ?? "").Where(char.IsDigit).ToArray());
+                            var targetUsers = await _db.DefUtilisateur.AsNoTracking().Where(u => (u.WhatsAppNumber ?? "") != "").ToListAsync();
+                            var tgt = onlyDigits(alert.Destinataire ?? "");
+                            var match = targetUsers.FirstOrDefault(u => onlyDigits(u.WhatsAppNumber!).EndsWith(tgt) || tgt.EndsWith(onlyDigits(u.WhatsAppNumber!)));
+                            if (match != null)
+                            {
+                                var tokens = await _webPushService.GetUserDeviceTokensAsync(match.UtilisateurId);
+                                foreach (var t in tokens)
+                                {
+                                    _ = _webPushService.SendNotificationAsync(t, alert.TitreAlerte, alert.DescriptionAlerte ?? "", null, new { url = "/Dashboard/Inbox" });
+                                }
+                            }
+                        }
+                        catch { /* non-blocking */ }
                     }
                 }
                 else

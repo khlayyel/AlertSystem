@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
-using AlertSystem.Services;
+using AlertSystem.Utils.Abstractions;
 
 namespace AlertSystem.Service.Services
 {
@@ -12,11 +12,11 @@ namespace AlertSystem.Service.Services
 
     public class WhatsAppTemplateService : IWhatsAppTemplateService
     {
-        private readonly IWhatsAppService? _whatsAppService;
+        private readonly AlertSystem.Utils.Abstractions.IWhatsAppService? _whatsAppService;
         private readonly ILogger<WhatsAppTemplateService> _logger;
         private readonly IConfiguration _configuration;
 
-        public WhatsAppTemplateService(IWhatsAppService whatsAppService, ILogger<WhatsAppTemplateService> logger, IConfiguration configuration)
+        public WhatsAppTemplateService(AlertSystem.Utils.Abstractions.IWhatsAppService whatsAppService, ILogger<WhatsAppTemplateService> logger, IConfiguration configuration)
         {
             _whatsAppService = whatsAppService;
             _logger = logger;

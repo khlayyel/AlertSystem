@@ -1,12 +1,12 @@
 using System.Text;
 using System.Text.Json;
-using AlertSystem.Service;
+using AlertSystem.Utils.Abstractions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 
 namespace AlertSystem.Services
 {
-    public class WhatsAppService : IWhatsAppService
+    public class WhatsAppService : AlertSystem.Utils.Abstractions.IWhatsAppService
     {
         private readonly HttpClient _httpClient;
         private readonly ILogger<WhatsAppService> _logger;

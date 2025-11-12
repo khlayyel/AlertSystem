@@ -118,14 +118,7 @@ export async function loadUsers() {
         const resolvedId = tryResolveId();
         const label = user.name || (resolvedId ? `ID ${resolvedId}` : 'Utilisateur');
         if (window.addUserTag) window.addUserTag(resolvedId, label); else addTagTo('destUsers', resolvedId? String(resolvedId) : label);
-        // Ensure Desktop platform is enabled when adding a dashboard user via "+"
-        const desk = document.getElementById('platformDesktop');
-        if (desk && !desk.checked) {
-          desk.checked = true;
-          // trigger visibility update / listeners bound elsewhere
-          const evt = new Event('change', { bubbles: true });
-          desk.dispatchEvent(evt);
-        }
+        // Desktop platform removed; keep only email/whatsapp enrichment
         const emailOnNow = document.getElementById('platformEmail')?.checked || false;
         const waOnNow = document.getElementById('platformWhatsApp')?.checked || false;
         if (emailOnNow && user.email) addTagTo('destEmails', user.email);
@@ -193,8 +186,7 @@ export function setupComposeHandlers() {
       const userTags = getTagValues('destUsers').map(x=>parseInt(x,10)).filter(n=>!isNaN(n));
       const platforms = {
         Email: document.getElementById('platformEmail')?.checked || false,
-        WhatsApp: document.getElementById('platformWhatsApp')?.checked || false,
-        Desktop: document.getElementById('platformDesktop')?.checked || false
+        WhatsApp: document.getElementById('platformWhatsApp')?.checked || false
       };
       const norm = (s)=> (s||'').toString().trim().toLowerCase().replace(/\s+/g,' ');
       const allDef = (Array.isArray(window.usersState?.usersDefList)?window.usersState.usersDefList:[]);
@@ -235,31 +227,22 @@ export function setupComposeHandlers() {
       if (platforms.WhatsApp) {
         selectedUsers.forEach(user=>{ if(user.phoneNumber && !combinedPhones.includes(user.phoneNumber)) combinedPhones.push(user.phoneNumber); });
       }
-      // Desktop platform: récupère userIds cochés
-      let desktopUserIds = platforms.Desktop ? selectedUsers.map(u => parseInt(u.userId ?? u.id, 10)).filter(n=>!isNaN(n) && n>0 && n<=9999) : [];
-      // Merge with user tags (destUsers) to always include explicit user ids
-      if (userTags.length) {
-        if (!platforms.Desktop) { // ensure platform Desktop if user ids provided
-          platforms.Desktop = true;
-        }
-        // keep only util_id range (numeric(4,0))
-        desktopUserIds = Array.from(new Set([ ...desktopUserIds, ...userTags.filter(n=>n>0 && n<=9999) ]));
-      }
-      dbg('SendButton: Collected form data', { title, message, emails:combinedEmails, phones:combinedPhones, desktopUserIds, platforms, selectedUsersCount:selectedUsers.length });
+      // Desktop platform removed
+      dbg('SendButton: Collected form data', { title, message, emails:combinedEmails, phones:combinedPhones, platforms, selectedUsersCount:selectedUsers.length });
       // Validation complète legacy :
       if (!title.trim()) {
         logError('SendButton: Validation failed', new Error('Title is required'));
         alert('Le titre de l\'alerte est obligatoire');
         isSending = false; sendBtn.disabled = false; sendBtn.classList.remove('disabled'); return;
       }
-      if (!platforms.Email && !platforms.WhatsApp && !platforms.Desktop) {
+      if (!platforms.Email && !platforms.WhatsApp) {
         logError('SendButton: Validation failed', new Error('No platform selected'));
         alert('Veuillez sélectionner au moins une plateforme d\'envoi');
         isSending = false; sendBtn.disabled = false; sendBtn.classList.remove('disabled'); return;
       }
-      if (combinedEmails.length === 0 && combinedPhones.length === 0 && desktopUserIds.length === 0) {
+      if (combinedEmails.length === 0 && combinedPhones.length === 0) {
         logError('SendButton: Validation failed', new Error('No recipients'));
-        alert('Veuillez ajouter au moins un destinataire (email, téléphone ou utilisateur)');
+        alert('Veuillez ajouter au moins un destinataire (email ou téléphone)');
         isSending = false; sendBtn.disabled = false; sendBtn.classList.remove('disabled'); return;
       }
       if (platforms.WhatsApp && combinedPhones.length === 0) {
@@ -268,7 +251,7 @@ export function setupComposeHandlers() {
         isSending = false; sendBtn.disabled = false; sendBtn.classList.remove('disabled'); return;
       }
       try {
-        dbg('SendButton: Starting API request', { combinedEmails, combinedPhones, desktopUserIds, platforms });
+        dbg('SendButton: Starting API request', { combinedEmails, combinedPhones, platforms });
         sendBtn.disabled = true; sendBtn.classList.add('disabled');
         const typeVal = document.getElementById('composeType')?.value || 'acquittementNonNecessaire';
         const payload = {
@@ -276,13 +259,13 @@ export function setupComposeHandlers() {
           message,
           emails: combinedEmails,
           phones: combinedPhones,
-          userIds: desktopUserIds,
+          userIds: [],
           emailUserMap,
           phoneUserMap,
           platforms: {
             Email: !!platforms.Email,
             WhatsApp: !!platforms.WhatsApp,
-            Desktop: !!platforms.Desktop
+            Desktop: false
           },
           alertTypeId: (typeVal === 'acquittementNecessaire' ? 2 : 1)
         };
@@ -328,19 +311,17 @@ export function getSelectedUsersData(){
 export function setupDynamicPlatforms(){
   const emailChk = document.getElementById('platformEmail');
   const waChk = document.getElementById('platformWhatsApp');
-  const deskChk = document.getElementById('platformDesktop');
   const emailInput = document.getElementById('destEmails')?.closest('.col-12');
   const phoneInput = document.getElementById('destPhones')?.closest('.col-12');
   const usersInput = document.getElementById('destUsers')?.closest('.col-12');
   const updateVis = () => {
     if (emailInput) emailInput.style.display = emailChk?.checked ? '' : 'none';
     if (phoneInput) phoneInput.style.display = waChk?.checked ? '' : 'none';
-    if (usersInput) usersInput.style.display = deskChk?.checked ? '' : '';
+    if (usersInput) usersInput.style.display = 'none'; // desktop removed
     dbg('platforms:toggle', { email: !!emailChk?.checked, whatsapp: !!waChk?.checked });
   };
   emailChk?.addEventListener('change', updateVis);
   waChk?.addEventListener('change', updateVis);
-  deskChk?.addEventListener('change', updateVis);
   updateVis();
 }
 // Expose helpers to window
@@ -363,7 +344,7 @@ if (typeof window !== "undefined") {
     });
   }
   // On platform switch, reload user list + update/tab synchronisation
-  ['platformEmail','platformWhatsApp','platformDesktop'].forEach(id=>{
+  ['platformEmail','platformWhatsApp'].forEach(id=>{
     const inp = document.getElementById(id);
     if(inp) inp.addEventListener('change', ()=>{
       dbg('compose.js: Platform switch, reloading users/table/tags', {id});

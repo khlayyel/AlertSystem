@@ -46,10 +46,11 @@
             </div>
             
             <div class="mb-3">
-                <div class="form-check">
-                    <input asp-for="IsActive" class="form-check-input" type="checkbox" />
+                <div class="form-check form-switch">
+                    <input asp-for="IsActive" class="form-check-input" type="checkbox" role="switch"
+                           onchange="this.nextElementSibling.querySelector('.state').textContent = this.checked ? 'ON' : 'OFF'; this.nextElementSibling.querySelector('.state').className = this.checked ? 'state badge bg-success' : 'state badge bg-danger';" />
                     <label asp-for="IsActive" class="form-check-label">
-                        Actif (le worker utilisera cette alerte pour poller et créer des alertes)
+                        Activation <span class="state badge @(Model?.IsActive == true ? "bg-success" : "bg-danger")">@(Model?.IsActive == true ? "ON" : "OFF")</span>
                     </label>
                 </div>
             </div>

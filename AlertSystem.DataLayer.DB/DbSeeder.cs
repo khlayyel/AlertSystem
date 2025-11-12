@@ -65,6 +65,28 @@ BEGIN
 END
 ");
 
+            // Ensure system roles table exists and seeded, and users have RoleId
+            await context.Database.ExecuteSqlRawAsync(@"
+IF OBJECT_ID(N'dbo.def_system_roles', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.def_system_roles(
+        RoleId int NOT NULL PRIMARY KEY,
+        [Description] nvarchar(100) NOT NULL
+    );
+END;
+
+IF NOT EXISTS (SELECT 1 FROM dbo.def_system_roles WHERE RoleId = 1)
+    INSERT INTO dbo.def_system_roles(RoleId, [Description]) VALUES (1, N'Admin');
+IF NOT EXISTS (SELECT 1 FROM dbo.def_system_roles WHERE RoleId = 2)
+    INSERT INTO dbo.def_system_roles(RoleId, [Description]) VALUES (2, N'User');
+
+IF COL_LENGTH('dbo.def_Utilisateur','RoleId') IS NULL
+BEGIN
+    ALTER TABLE dbo.def_Utilisateur ADD RoleId int NOT NULL CONSTRAINT DF_def_Utilisateur_RoleId DEFAULT(2);
+    ALTER TABLE dbo.def_Utilisateur WITH CHECK ADD CONSTRAINT FK_def_Utilisateur_Role FOREIGN KEY(RoleId) REFERENCES dbo.def_system_roles(RoleId);
+END
+");
+
             // Seed DefTypeEnvoie
             if (!await context.DefTypeEnvoie.AnyAsync())
             {

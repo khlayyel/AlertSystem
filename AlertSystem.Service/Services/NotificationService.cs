@@ -2,9 +2,11 @@ using WebPush;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 using AlertSystem.Data;
-using AlertSystem.Services;
+using AlertSystem.Utils.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
+
+using AlertSystem.Utils.Abstractions;
 
 namespace AlertSystem.Service.Services
 {

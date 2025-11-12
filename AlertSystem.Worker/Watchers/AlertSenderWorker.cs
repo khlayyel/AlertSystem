@@ -4,7 +4,7 @@ using AlertSystem.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Data.Common;
 using Microsoft.Data.SqlClient;
-using AlertSystem.Services;
+using AlertSystem.Utils.Abstractions;
 using Microsoft.Extensions.Configuration;
 using AlertSystem.Service.Services;
 
@@ -14,7 +14,7 @@ namespace AlertSystem.Worker.Watchers
     {
         private readonly ILogger<AlertSenderWorker> _logger;
         private readonly ApplicationDbContext _db;
-        private readonly INotificationService _notificationService;
+        private readonly AlertSystem.Utils.Abstractions.INotificationService _notificationService;
         private readonly AlertSystem.Service.Services.IEmailTemplateService _emailTemplateService;
         private readonly AlertSystem.Service.Services.IWhatsAppTemplateService _whatsAppTemplateService;
         private readonly IConfiguration _configuration;
@@ -22,7 +22,7 @@ namespace AlertSystem.Worker.Watchers
 
         public AlertSenderWorker(ILogger<AlertSenderWorker> logger,
                                  ApplicationDbContext db,
-                                 INotificationService notificationService,
+                                 AlertSystem.Utils.Abstractions.INotificationService notificationService,
                                  AlertSystem.Service.Services.IEmailTemplateService emailTemplateService,
                                  AlertSystem.Service.Services.IWhatsAppTemplateService whatsAppTemplateService,
                                  IConfiguration configuration,

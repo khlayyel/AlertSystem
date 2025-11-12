@@ -18,7 +18,7 @@ export async function initWebPushSubscriptionFlow() {
       return;
     }
     // Fetch VAPID key
-    const pk = await fetchJson('/Push/VapidPublicKey');
+    const pk = await fetchJson('/webpush/vapid');
     const vapidPublicKey = (pk && pk.publicKey) ? pk.publicKey : '';
     if (!vapidPublicKey){ dbg('WebPush: Missing VAPID key'); return; }
     // Convert base64 URL key to Uint8Array
@@ -37,7 +37,7 @@ export async function initWebPushSubscriptionFlow() {
     const p256dh = btoa(String.fromCharCode.apply(null, new Uint8Array(sub.getKey('p256dh'))));
     const auth = btoa(String.fromCharCode.apply(null, new Uint8Array(sub.getKey('auth'))));
     // Send to backend
-    const resp = await fetch('/Push/Subscribe', {
+    const resp = await fetch('/webpush/subscribe', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ endpoint: endpoint, p256dh: p256dh, auth: auth })
@@ -78,6 +78,18 @@ export function initializeSignalR() {
           break;
         case 'UpdateKpis':
           if(typeof window.refreshAllKpis==='function') window.refreshAllKpis();
+          break;
+        case 'AdminConfigUpdated':
+          // Admin pages (DefApp, DefTypeAlerte, DefAlerte, DefUtilisateur) should refresh their lists
+          try {
+            if (typeof window.reloadAdminList === 'function') {
+              window.reloadAdminList();
+            } else {
+              // Fallback: refresh sidebar KPIs and reload page to reflect changes
+              if (typeof window.updateSidebarCounts === 'function') window.updateSidebarCounts();
+              location.reload();
+            }
+          } catch {}
           break;
       }
     });

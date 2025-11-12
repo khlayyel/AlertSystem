@@ -6,28 +6,40 @@ export function updateActiveNavigation() {
   dbg('updateActiveNavigation: Starting');
   try {
     // Remove active class from all nav links
-    const navLinks = document.querySelectorAll('.nav-link');
+    const navLinks = document.querySelectorAll('.nav-link, #sidebar a');
     navLinks.forEach(link => {
       link.classList.remove('active');
       dbg('updateActiveNavigation: Removed active class from', link.href);
     });
     // Get current path
-    const currentPath = window.location.pathname;
+    const currentPath = (window.location.pathname || '').toLowerCase();
     dbg('updateActiveNavigation: Current path', currentPath);
     // Add active class to matching nav link
-    let activeLink = null;
-    if (currentPath.includes('/Dashboard/Inbox') || currentPath === '/Dashboard' || currentPath === '/') {
-      activeLink = document.querySelector('a[href="/Dashboard/Inbox"]');
-    } else if (currentPath.includes('/Dashboard/Sent')) {
-      activeLink = document.querySelector('a[href="/Dashboard/Sent"]');
-    } else if (currentPath.includes('/AlertsCrud')) {
-      activeLink = document.querySelector('a[href="/AlertsCrud"]');
+    const routes = [
+      { sel: 'a[href="/Dashboard/Inbox"]',  match: ['/dashboard/inbox','/','/home/index','/dashboard'] },
+      { sel: 'a[href="/Dashboard/Sent"]',   match: ['/dashboard/sent'] },
+      { sel: 'a[href="/DefUtilisateur"]',   match: ['/defutilisateur'] },
+      { sel: 'a[href="/DefAlerte"]',        match: ['/defalerte'] },
+      { sel: 'a[href="/DefApp"]',           match: ['/defapp'] },
+      { sel: 'a[href="/DefTypeAlerte"]',    match: ['/deftypealerte'] },
+      { sel: 'a[href="/AlertsCrud"]',       match: ['/alertscrud'] }
+    ];
+
+    let matched = false;
+    for (const r of routes){
+      if (r.match.some(m => currentPath === m || currentPath.startsWith(m + '/'))) {
+        const el = document.querySelector(r.sel);
+        if (el) {
+          el.classList.add('active');
+          matched = true;
+          dbg('updateActiveNavigation: Added active class to', el.href || r.sel);
+        }
+        break;
+      }
     }
-    if (activeLink) {
-      activeLink.classList.add('active');
-      dbg('updateActiveNavigation: Added active class to', activeLink.href);
-    } else {
-      dbg('updateActiveNavigation: No matching nav link found for path', currentPath);
+    if (!matched && (currentPath === '/' || currentPath === '')) {
+      const home = document.querySelector('a[href="/Dashboard/Inbox"]');
+      if (home) home.classList.add('active');
     }
   } catch (error) {
     dbg('updateActiveNavigation: Failed', error);

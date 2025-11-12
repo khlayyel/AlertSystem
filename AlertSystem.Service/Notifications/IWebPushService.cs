@@ -1,8 +1,6 @@
 namespace AlertSystem.Services
 {
-    /// <summary>
-    /// Interface pour le service Web Push - respecte le principe ISP
-    /// </summary>
+    // Web Push interface lives in Service to avoid circular deps. Implemented in Infrastructure.
     public interface IWebPushService
     {
         Task<bool> SendNotificationAsync(string deviceToken, string title, string message, string? iconUrl = null, object? data = null);
@@ -11,3 +9,5 @@ namespace AlertSystem.Services
         Task<List<string>> GetUserDeviceTokensAsync(int userId);
     }
 }
+
+

@@ -1,4 +1,4 @@
-namespace AlertSystem.Services
+namespace AlertSystem.Utils.Abstractions
 {
     public interface IWhatsAppService
     {
@@ -8,3 +8,5 @@ namespace AlertSystem.Services
         Task<bool> SendTemplateAsync(string phoneNumber, string templateName, string languageCode, IDictionary<string, string>? variables = null);
     }
 }
+
+

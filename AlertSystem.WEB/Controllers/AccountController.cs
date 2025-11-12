@@ -55,10 +55,35 @@ namespace AlertSystem.WEB.Controllers
                 return View(model);
             }
             
-            // Determine role: Admin for khalilouerghemmi@gmail.com and zied.soltani11@gmail.com
-            var isAdmin = model.Email.Equals("khalilouerghemmi@gmail.com", StringComparison.OrdinalIgnoreCase) ||
-                         model.Email.Equals("zied.soltani11@gmail.com", StringComparison.OrdinalIgnoreCase);
-            var role = isAdmin ? "Admin" : "User";
+            // Determine role: prefer RoleId column if present, fallback to email list
+            string role = "User";
+            try
+            {
+                // Try to read RoleId via direct SQL to avoid requiring entity changes
+                var conn = _db.Database.GetDbConnection();
+                await conn.OpenAsync();
+                using (var cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = "SELECT TOP 1 RoleId FROM dbo.def_Utilisateur WHERE UtilisateurId = @p0";
+                    var p = cmd.CreateParameter();
+                    p.ParameterName = "@p0";
+                    p.Value = user.UtilisateurId;
+                    cmd.Parameters.Add(p);
+                    var obj = await cmd.ExecuteScalarAsync();
+                    if (obj != null && int.TryParse(obj.ToString(), out var roleId))
+                    {
+                        role = (roleId == 1) ? "Admin" : "User";
+                    }
+                }
+                await conn.CloseAsync();
+            }
+            catch
+            {
+                // Fallback to legacy email-based admin list
+                var isAdmin = model.Email.Equals("khalilouerghemmi@gmail.com", StringComparison.OrdinalIgnoreCase) ||
+                              model.Email.Equals("zied.soltani11@gmail.com", StringComparison.OrdinalIgnoreCase);
+                role = isAdmin ? "Admin" : "User";
+            }
             
             // Create claims
             var claims = new List<Claim>

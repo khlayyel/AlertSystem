@@ -1,0 +1,13 @@
+namespace AlertSystem.Utils.Abstractions
+{
+    public interface INotificationService
+    {
+        Task<bool> SendEmailAsync(string toEmail, string subject, string message);
+        Task<bool> SendHtmlEmailAsync(string toEmail, string subject, string htmlContent);
+        Task<bool> SendWhatsAppAsync(string phoneNumber, string message);
+        Task<bool> SendPushNotificationAsync(int userId, string title, string message, string? url = null);
+        Task<List<string>> SendToAllPlatformsAsync(int userId, string title, string message, string? url = null);
+    }
+}
+
+

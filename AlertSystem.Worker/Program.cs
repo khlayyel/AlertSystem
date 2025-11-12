@@ -82,16 +82,16 @@ try
     builder.Services.AddScoped<AlertSystem.DataLayer.Interfaces.IHotelUserRepository, AlertSystem.Repository.Implementations.HotelUserRepository>();
     
     // Register interface dependencies
-    builder.Services.AddScoped<AlertSystem.Service.IEmailSender, AlertSystem.Services.SmtpEmailSender>();
+    builder.Services.AddScoped<AlertSystem.Utils.Abstractions.IEmailSender, AlertSystem.Services.SmtpEmailSender>();
     builder.Services.AddScoped<AlertSystem.Service.IAlertReadService>(sp => sp.GetRequiredService<AlertReadService>());
     builder.Services.AddScoped<AlertSystem.Service.IAlertCrudService>(sp => sp.GetRequiredService<AlertCrudService>());
     builder.Services.AddScoped<AlertSystem.Service.IKpiUpdateService, KpiUpdateService>();
     
     // Register notification services
-    builder.Services.AddScoped<AlertSystem.Services.INotificationService, AlertSystem.Service.Services.NotificationService>();
+    builder.Services.AddScoped<AlertSystem.Utils.Abstractions.INotificationService, AlertSystem.Service.Services.NotificationService>();
     builder.Services.AddScoped<AlertSystem.Service.Services.IEmailTemplateService, EmailTemplateService>();
     builder.Services.AddScoped<AlertSystem.Service.Services.IWhatsAppTemplateService, WhatsAppTemplateService>();
-    builder.Services.AddScoped<AlertSystem.Services.IWhatsAppService, AlertSystem.Services.WhatsAppService>();
+    builder.Services.AddScoped<AlertSystem.Utils.Abstractions.IWhatsAppService, AlertSystem.Services.WhatsAppService>();
     builder.Services.AddScoped<AlertSystem.Services.IWebPushService, AlertSystem.Services.WebPushService>();
     
     // Register IHttpContextAccessor (needed by AlertSendService)

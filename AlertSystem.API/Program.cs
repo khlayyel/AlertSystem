@@ -60,12 +60,12 @@ builder.Services.AddScoped<AlertSystem.Service.Services.KpiUpdateService>();
 builder.Services.AddScoped<AlertSystem.Service.Services.ConfirmationTokenService>(provider => 
     new AlertSystem.Service.Services.ConfirmationTokenService("your-secret-key-here"));
 builder.Services.AddScoped<AlertSystem.Service.Services.NotificationService>();
-builder.Services.AddScoped<AlertSystem.Services.INotificationService, AlertSystem.Service.Services.NotificationService>();
+builder.Services.AddScoped<AlertSystem.Utils.Abstractions.INotificationService, AlertSystem.Service.Services.NotificationService>();
 builder.Services.AddScoped<AlertSystem.Service.IAlertReadService, AlertSystem.Service.Services.AlertReadService>();
 builder.Services.AddScoped<AlertSystem.Service.IAlertCrudService, AlertSystem.Service.Services.AlertCrudService>();
 builder.Services.AddScoped<AlertSystem.Service.IKpiUpdateService, AlertSystem.Service.Services.KpiUpdateService>();
-builder.Services.AddScoped<AlertSystem.Services.IWhatsAppService, AlertSystem.Services.WhatsAppService>();
-builder.Services.AddScoped<AlertSystem.Service.IEmailSender, AlertSystem.Services.SmtpEmailSender>();
+builder.Services.AddScoped<AlertSystem.Utils.Abstractions.IWhatsAppService, AlertSystem.Services.WhatsAppService>();
+builder.Services.AddScoped<AlertSystem.Utils.Abstractions.IEmailSender, AlertSystem.Services.SmtpEmailSender>();
 builder.Services.AddScoped<AlertSystem.Service.Services.IEmailTemplateService, AlertSystem.Service.Services.EmailTemplateService>();
 builder.Services.AddScoped<AlertSystem.Service.Services.IWhatsAppTemplateService, AlertSystem.Service.Services.WhatsAppTemplateService>();
 builder.Services.AddScoped<AlertSystem.Services.IWebPushService, AlertSystem.Services.WebPushService>();

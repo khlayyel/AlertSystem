@@ -61,18 +61,17 @@ builder.Services.AddScoped<ICurrentUserAccessor, CurrentUserAccessor>();
 builder.Services.AddScoped<AlertSystem.Service.IAlertReadService, AlertSystem.Service.Services.AlertReadService>();
 builder.Services.AddScoped<AlertSystem.Service.IAlertCrudService, AlertSystem.Service.Services.AlertCrudService>();
 builder.Services.AddScoped<AlertSystem.Service.IKpiUpdateService, AlertSystem.Service.Services.KpiUpdateService>();
-builder.Services.AddScoped<AlertSystem.Services.INotificationService, AlertSystem.Service.Services.NotificationService>();
+builder.Services.AddScoped<AlertSystem.Utils.Abstractions.INotificationService, AlertSystem.Service.Services.NotificationService>();
 
 // Add all required services for AlertSendService
-builder.Services.AddScoped<INotificationService, NotificationService>();
-builder.Services.AddScoped<IWhatsAppService, WhatsAppService>();
+builder.Services.AddScoped<AlertSystem.Utils.Abstractions.IWhatsAppService, WhatsAppService>();
 builder.Services.AddScoped<IEmailTemplateService, EmailTemplateService>();
 builder.Services.AddScoped<IWhatsAppTemplateService, WhatsAppTemplateService>();
 builder.Services.AddScoped<AlertSystem.Services.IWebPushService, AlertSystem.Services.WebPushService>();
 builder.Services.AddHttpContextAccessor();
 
 // Add missing dependencies
-builder.Services.AddScoped<AlertSystem.Service.IEmailSender, AlertSystem.Services.SmtpEmailSender>();
+builder.Services.AddScoped<AlertSystem.Utils.Abstractions.IEmailSender, AlertSystem.Services.SmtpEmailSender>();
 builder.Services.AddHttpClient(); // For WhatsApp services
 builder.Services.AddScoped<ConfirmationTokenService>(provider => 
     new ConfirmationTokenService("your-secret-key-here"));
