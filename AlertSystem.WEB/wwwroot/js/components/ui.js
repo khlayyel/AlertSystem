@@ -20,8 +20,6 @@ export function updateActiveNavigation() {
       { sel: 'a[href="/Dashboard/Sent"]',   match: ['/dashboard/sent'] },
       { sel: 'a[href="/DefUtilisateur"]',   match: ['/defutilisateur'] },
       { sel: 'a[href="/DefAlerte"]',        match: ['/defalerte'] },
-      { sel: 'a[href="/DefApp"]',           match: ['/defapp'] },
-      { sel: 'a[href="/DefTypeAlerte"]',    match: ['/deftypealerte'] },
       { sel: 'a[href="/AlertsCrud"]',       match: ['/alertscrud'] }
     ];
 

@@ -1,4 +1,32 @@
-﻿<!DOCTYPE html>
+﻿@{
+    var currentController = (ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty);
+    var currentAction = (ViewContext.RouteData.Values["action"]?.ToString() ?? string.Empty);
+
+    Func<string, string[]?, string> navActiveClass = (controller, actions) =>
+    {
+        if (!string.Equals(currentController, controller, StringComparison.OrdinalIgnoreCase))
+        {
+            return string.Empty;
+        }
+
+        if (actions == null || actions.Length == 0)
+        {
+            return " active";
+        }
+
+        foreach (var action in actions)
+        {
+            if (string.Equals(currentAction, action, StringComparison.OrdinalIgnoreCase))
+            {
+                return " active";
+            }
+        }
+
+        return string.Empty;
+    };
+}
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -50,35 +78,25 @@
                 <div class="position-sticky pt-3">
                     <ul class="nav flex-column">
                         <li class="nav-item">
-                            <a class="nav-link active" href="/Dashboard/Inbox">
+                            <a class="nav-link@(navActiveClass("Dashboard", new[] { "Inbox" }))" href="/Dashboard/Inbox">
                                 <i class="bi bi-inbox me-2"></i>Boîte de réception
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="/Dashboard/Sent">
+                            <a class="nav-link@(navActiveClass("Dashboard", new[] { "Sent" }))" href="/Dashboard/Sent">
                                 <i class="bi bi-send me-2"></i>Boîte d'envoi
                             </a>
                         </li>
                         @if (User.IsInRole("Admin"))
                         {
-                            <li class="nav-item mt-4 text-uppercase text-muted small fw-semibold px-3">Configuration</li>
+                            <li class="nav-item sidebar-section-label px-3 mt-4">Configuration</li>
                             <li class="nav-item">
-                                <a class="nav-link" href="/DefApp">
-                                    <i class="bi bi-app-indicator me-2"></i>Applications
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="/DefTypeAlerte">
-                                    <i class="bi bi-tags me-2"></i>Types d'alertes
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="/DefAlerte">
+                                <a class="nav-link@(navActiveClass("DefAlerte", null))" href="/DefAlerte">
                                     <i class="bi bi-bell me-2"></i>Alertes définies
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="/DefUtilisateur">
+                                <a class="nav-link@(navActiveClass("DefUtilisateur", null))" href="/DefUtilisateur">
                                     <i class="bi bi-people me-2"></i>Utilisateurs
                                 </a>
                             </li>

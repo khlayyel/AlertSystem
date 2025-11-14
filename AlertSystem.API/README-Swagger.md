@@ -10,8 +10,8 @@ dotnet run --project AlertSystem.API
 
 ### 2. Accéder à Swagger UI
 Une fois l'API démarrée, ouvrez votre navigateur et allez à :
-- **Swagger UI** : http://localhost:5002/
-- **JSON Swagger** : http://localhost:5002/swagger/v1/swagger.json
+- **Swagger UI** : http://localhost:5050/
+- **JSON Swagger** : http://localhost:5050/swagger/v1/swagger.json
 
 ## 🔧 Configuration Swagger
 
@@ -25,7 +25,7 @@ Une fois l'API démarrée, ouvrez votre navigateur et allez à :
 ✅ **Codes d'erreur documentés**  
 
 ### Profils de Lancement
-- **http** : Lance sur http://localhost:5002 avec navigateur
+- **http** : Lance sur http://localhost:5050 avec navigateur
 - **https** : Lance sur https://localhost:7002 avec navigateur  
 - **swagger** : Lance directement sur l'interface Swagger
 

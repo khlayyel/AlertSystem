@@ -91,10 +91,16 @@ namespace AlertSystem.Utils.Logging
         {
             var level = success ? LogLevel.Information : LogLevel.Error;
             var icon = success ? "✅" : "❌";
-            var durationText = duration.HasValue ? $" | Duration: {duration.Value.TotalMilliseconds}ms" : "";
+            var resultText = success ? "Success" : "Failed";
+            var durationText = duration.HasValue ? $"{duration.Value.TotalMilliseconds}ms" : null;
 
-            logger.Log(level, "{Icon} Database {Operation} on {EntityType} (ID: {EntityId}) - {(success ? \"Success\" : \"Failed\")}{DurationText}", 
-                icon, operation, entityType, entityId, durationText);
+            logger.Log(level, "{Icon} Database {Operation} on {EntityType} (ID: {EntityId}) - {Result}{DurationSuffix}",
+                icon,
+                operation,
+                entityType,
+                entityId,
+                resultText,
+                durationText != null ? $" | Duration: {durationText}" : string.Empty);
         }
 
         /// <summary>

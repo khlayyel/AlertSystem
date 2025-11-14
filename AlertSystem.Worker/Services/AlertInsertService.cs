@@ -16,11 +16,14 @@ namespace AlertSystem.Worker.Services
             var groupId = Guid.NewGuid();
             foreach (var (platform, recipient) in intent.Deliveries)
             {
-                var desc = string.IsNullOrWhiteSpace(intent.Description) ? (object?)DBNull.Value : intent.Description;
+                var desc = string.IsNullOrWhiteSpace(intent.Description) ? (object)DBNull.Value : intent.Description;
+                var title = string.IsNullOrWhiteSpace(intent.Title) ? "Alerte" : intent.Title;
+                var safeRecipient = string.IsNullOrWhiteSpace(recipient) ? string.Empty : recipient;
+
                 await _db.Database.ExecuteSqlRawAsync(@"INSERT INTO dbo.Alerte
                     (AlertGroupId, AppId, TypeEnvoieId, TitreAlerte, DescriptionAlerte, DateCreationAlerte, StatutId, EtatId, PlateformeEnvoieId, Destinataire, ProcessedByWorker, AttemptCount)
                     VALUES (@p0, @p1, @p2, @p3, @p4, SYSUTCDATETIME(), 1, 1, @p5, @p6, 0, 0)",
-                    groupId, intent.AppId, intent.TypeEnvoieId, intent.Title, desc, platform, recipient);
+                    new object[] { groupId, intent.AppId, intent.TypeEnvoieId, title, desc, platform, safeRecipient });
             }
         }
     }

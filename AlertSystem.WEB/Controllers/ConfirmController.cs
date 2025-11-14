@@ -5,6 +5,7 @@ using AlertSystem.Service.Interfaces;
 using AlertSystem.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.SignalR;
+using AlertSystem.WEB.Models;
 
 namespace AlertSystem.WEB.Controllers
 {
@@ -26,12 +27,20 @@ namespace AlertSystem.WEB.Controllers
         {
             if (string.IsNullOrWhiteSpace(t)) 
             {
-                return View("Error", new { Message = "Token manquant", Title = "Erreur de confirmation" });
+                return View("Error", new ConfirmResultViewModel
+                {
+                    Title = "Erreur de confirmation",
+                    Message = "Token manquant"
+                });
             }
             
             if (!_tokens.TryValidate(t, out var payload)) 
             {
-                return View("Error", new { Message = "Token invalide ou expiré", Title = "Erreur de confirmation" });
+                return View("Error", new ConfirmResultViewModel
+                {
+                    Title = "Erreur de confirmation",
+                    Message = "Token invalide ou expiré"
+                });
             }
 
             var alerte = await _db.Alerte
@@ -40,7 +49,11 @@ namespace AlertSystem.WEB.Controllers
                 
             if (alerte == null) 
             {
-                return View("Error", new { Message = "Alerte introuvable", Title = "Erreur de confirmation" });
+                return View("Error", new ConfirmResultViewModel
+                {
+                    Title = "Erreur de confirmation",
+                    Message = "Alerte introuvable"
+                });
             }
 
             // Résoudre le groupe et marquer toutes les lignes de ce groupe comme lues
@@ -51,7 +64,11 @@ namespace AlertSystem.WEB.Controllers
 
             if (baseRow == null)
             {
-                return View("Error", new { Message = "Alerte introuvable (groupe)", Title = "Erreur de confirmation" });
+                return View("Error", new ConfirmResultViewModel
+                {
+                    Title = "Erreur de confirmation",
+                    Message = "Alerte introuvable (groupe)"
+                });
             }
 
             var rows = await _db.Alerte
@@ -86,10 +103,13 @@ namespace AlertSystem.WEB.Controllers
             catch { }
 
             // Return success view with alert details
-            return View("Success", new { 
-                Alert = alerte, 
+            return View("Success", new ConfirmResultViewModel
+            {
+                Alert = alerte,
                 ConfirmedCount = confirmedCount,
-                ConfirmationTime = DateTime.Now.ToString("dd/MM/yyyy HH:mm")
+                ConfirmationTime = DateTime.Now.ToString("dd/MM/yyyy HH:mm"),
+                Title = "Confirmation enregistrée",
+                Message = "Votre alerte a été confirmée avec succès"
             });
         }
     }

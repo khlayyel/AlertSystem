@@ -27,7 +27,7 @@ Ce dépôt contient une refonte complète d'AlertSystem pour supporter un modèl
 2) API
    - `cd AlertSystem.API`
    - `set ASPNETCORE_ENVIRONMENT=Development`
-   - `dotnet run --urls http://localhost:5002`
+   - `dotnet run --urls http://localhost:5050`
 3) WEB
    - `cd AlertSystem.WEB`
    - `set ASPNETCORE_ENVIRONMENT=Development`
@@ -40,8 +40,8 @@ Ce dépôt contient une refonte complète d'AlertSystem pour supporter un modèl
 Assurez-vous que la chaîne de connexion pointe vers `AlertDB` et que l’API écoute l’URL configurée dans le Worker (`Polling:Alerts:Endpoint` si utilisé).
 
 ## Tests rapides
-- GET `http://localhost:5002/swagger` (uniquement endpoints nécessaires).
-- GET `http://localhost:5002/api/v1/stock-alerts` (structure `stock_alerts`).
+- GET `http://localhost:5050/swagger` (uniquement endpoints nécessaires).
+- GET `http://localhost:5050/api/v1/stock-alerts` (structure `stock_alerts`).
 - Dashboard WEB (http://localhost:5000), authentification via `def_Utilisateur`.
 - Confirmation `/confirm?t=...`.
 

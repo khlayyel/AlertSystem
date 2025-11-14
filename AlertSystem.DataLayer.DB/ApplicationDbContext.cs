@@ -139,6 +139,7 @@ namespace AlertSystem.Data
                 b.Property(x => x.AlertGroupId).IsRequired();
                 b.Property(x => x.AppId).IsRequired();
                 b.Property(x => x.TypeEnvoieId).IsRequired();
+                b.Property(x => x.ExpediteurId).HasPrecision(18, 0);
                 b.Property(x => x.TitreAlerte).IsRequired().HasMaxLength(255);
                 b.Property(x => x.Destinataire).IsRequired().HasMaxLength(255);
                 b.Property(x => x.PlateformeEnvoieId).IsRequired();
@@ -173,7 +174,9 @@ namespace AlertSystem.Data
             {
                 b.ToTable("def_utilisateur");
                 b.HasKey(x => x.util_id);
-                b.Property(x => x.util_id).HasColumnType("numeric(4,0)");
+                b.Property(x => x.util_id).ValueGeneratedNever();
+                b.Property(x => x.tpv_plan_touche_id).HasColumnName("tpv_plan_touche_id");
+                b.Property(x => x.grh_emp_id).HasColumnName("grh_emp_id");
                 b.Property(x => x.util_nom).HasColumnName("util_nom");
                 b.Property(x => x.util_prenom).HasColumnName("util_prenom");
                 b.Property(x => x.util_login).HasColumnName("util_login");

@@ -6,11 +6,11 @@ namespace AlertSystem.Entities.Entities
     /// </summary>
     public sealed class HotelDefUtilisateur
     {
-        public decimal util_id { get; set; }
+        public int util_id { get; set; }
         public short profile_id { get; set; }
-        public decimal? tpv_plan_touche_id { get; set; }
+        public int? tpv_plan_touche_id { get; set; }
         public short? hotel_id { get; set; }
-        public decimal? grh_emp_id { get; set; }
+        public int? grh_emp_id { get; set; }
         public string util_nom { get; set; } = string.Empty;
         public string util_prenom { get; set; } = string.Empty;
         public string util_login { get; set; } = string.Empty;

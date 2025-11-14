@@ -60,19 +60,27 @@ DELETE FROM dbo.def_PlateformeEnvoi WHERE PlateformeId = 3;
 -- def_TypeAlerte
 IF NOT EXISTS (SELECT 1 FROM dbo.def_TypeAlerte WHERE TypeAlertId = 1)
   INSERT INTO dbo.def_TypeAlerte (TypeAlertId, AppId, Description) VALUES (1, 1, N'Rupture');
+IF NOT EXISTS (SELECT 1 FROM dbo.def_TypeAlerte WHERE TypeAlertId = 2)
+  INSERT INTO dbo.def_TypeAlerte (TypeAlertId, AppId, Description) VALUES (2, 1, N'Seuil Maximum Dépassé');
+IF NOT EXISTS (SELECT 1 FROM dbo.def_TypeAlerte WHERE TypeAlertId = 3)
+  INSERT INTO dbo.def_TypeAlerte (TypeAlertId, AppId, Description) VALUES (3, 1, N'Seuil minimum atteint');
+IF NOT EXISTS (SELECT 1 FROM dbo.def_TypeAlerte WHERE TypeAlertId = 4)
+  INSERT INTO dbo.def_TypeAlerte (TypeAlertId, AppId, Description) VALUES (4, 1, N'Seuil maximum atteint');
 
--- def_Utilisateur (with WhatsAppNumber)
+-- def_Utilisateur (with WhatsAppNumber and RoleId)
 IF NOT EXISTS (SELECT 1 FROM dbo.def_Utilisateur WHERE UtilisateurId = 1)
-  INSERT INTO dbo.def_Utilisateur (Username, Password, AppId, Email, WhatsAppNumber) 
-  VALUES (N'khalil ouerghemmi', N'123456', 1, N'khalilouerghemmi@gmail.com', N'99414008');
+  INSERT INTO dbo.def_Utilisateur (Username, Password, AppId, Email, WhatsAppNumber, RoleId) 
+  VALUES (N'khalil ouerghemmi', N'123456', 1, N'khalilouerghemmi@gmail.com', N'99414008', 1);
 IF NOT EXISTS (SELECT 1 FROM dbo.def_Utilisateur WHERE UtilisateurId = 2)
-  INSERT INTO dbo.def_Utilisateur (Username, Password, AppId, Email, WhatsAppNumber) 
-  VALUES (N'zied soltani', N'123456', 1, N'zied.soltani11@gmail.com', N'21494064');
+  INSERT INTO dbo.def_Utilisateur (Username, Password, AppId, Email, WhatsAppNumber, RoleId) 
+  VALUES (N'zied soltani', N'123456', 1, N'zied.soltani11@gmail.com', N'21494064', 1);
+-- Update existing users to Admin if they don't have RoleId set
+UPDATE dbo.def_Utilisateur SET RoleId = 1 WHERE Email IN (N'khalilouerghemmi@gmail.com', N'zied.soltani11@gmail.com') AND (RoleId IS NULL OR RoleId = 2);
 
 -- def_Alerte
 IF NOT EXISTS (SELECT 1 FROM dbo.def_Alerte WHERE DefAlerteId = 1)
   INSERT INTO dbo.def_Alerte (DefTypeAlerte, ListDestinatairesId, URL, IsActive) 
-  VALUES (1, N'[1,2]', N'http://localhost:5002/api/v1/stock-alerts', 1);
+  VALUES (1, N'[1,2]', N'http://localhost:5050/api/v1/stock-alerts', 1);
 
 PRINT 'Seed completed.';
 GO

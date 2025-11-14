@@ -10,7 +10,7 @@
       "Nom produit": "tomates",
       "qte_min": 5,
       "qte_max": 40,
-      "qte": 1
+      "qte": 50
     }
   ]
 }

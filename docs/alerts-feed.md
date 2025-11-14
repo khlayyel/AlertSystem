@@ -27,7 +27,7 @@
 ## Test rapide
 1. API: lancer `AlertSystem.API`.
 2. Optionnel: créer `AlertSystem.API/App_Data/alerts.json` avec le format ci-dessus; sinon un échantillon est renvoyé.
-3. Vérifier le feed: `GET http://localhost:5002/api/v1/alerts-feed`.
+3. Vérifier le feed: `GET http://localhost:5050/api/v1/alerts-feed`.
 4. Worker: lancer `AlertSystem.Worker`.
    - Le worker lit `Polling:Alerts:Endpoint` et insère les alertes dans `dbo.Alerte`.
    - `AlertSenderWorker` envoie email/WhatsApp/desktop et met à jour `StatutId`, `AttemptCount`, `ProcessedByWorker`.
@@ -40,7 +40,7 @@
   "Alerts": {
     "Enabled": true,
     "IntervalSeconds": 10,
-    "Endpoint": "http://localhost:5002/api/v1/alerts-feed"
+    "Endpoint": "http://localhost:5050/api/v1/alerts-feed"
   }
 }
 ```

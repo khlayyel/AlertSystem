@@ -80,7 +80,7 @@ namespace AlertSystem.Worker.Watchers
                                     case 1: // Email
                                         if (!string.IsNullOrWhiteSpace(a.dest))
                                         {
-                                            var baseUrl = _configuration["App:PublicBaseUrl"] ?? "http://localhost:5002";
+                                            var baseUrl = _configuration["App:PublicBaseUrl"] ?? "http://localhost:5050";
                                             var token = _confirmationTokenService.Generate(new ConfirmPayload { AlerteId = (int)a.id, Kind = "email", Value = a.dest });
                                             var confirmUrl = baseUrl.TrimEnd('/') + "/confirm?t=" + token + "&id=" + a.id;
                                             var confirmLabel = a.typeEnvoieId == 2 ? "✅ Confirmer la réception" : "👁️ Marquer comme lu";
@@ -101,7 +101,7 @@ namespace AlertSystem.Worker.Watchers
                                     case 2: // WhatsApp
                                         if (!string.IsNullOrWhiteSpace(a.dest))
                                         {
-                                            var baseUrl = _configuration["App:PublicBaseUrl"] ?? "http://localhost:5002";
+                                            var baseUrl = _configuration["App:PublicBaseUrl"] ?? "http://localhost:5050";
                                             var token = _confirmationTokenService.Generate(new ConfirmPayload { AlerteId = (int)a.id, Kind = "wa", Value = a.dest });
                                             var confirmUrl = baseUrl.TrimEnd('/') + "/confirm?t=" + token + "&id=" + a.id;
                                             ok = await _whatsAppTemplateService.SendAlertTemplateAsync(

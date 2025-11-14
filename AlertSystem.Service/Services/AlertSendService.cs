@@ -91,12 +91,13 @@ namespace AlertSystem.Service.Services
                         var confirmLabel = (alert.TypeEnvoieId == 2) ? "✅ Confirmer la réception" : "👁️ Marquer comme lu";
                         var htmlContent = _emailTemplateService.CreateAlertEmailTemplate(
                             alert.TitreAlerte,
-                            alert.DescriptionAlerte,
+                            alert.DescriptionAlerte ?? string.Empty,
                             senderDisplay,
                             DateTime.Now,
                             confirmationUrl,
                             confirmLabel);
-                        success = await _notificationService.SendHtmlEmailAsync(alert.Destinataire, alert.TitreAlerte, htmlContent);
+                        var emailSubject = string.IsNullOrWhiteSpace(alert.TitreAlerte) ? "Alerte" : alert.TitreAlerte;
+                        success = await _notificationService.SendHtmlEmailAsync(alert.Destinataire, emailSubject, htmlContent);
 
                         // Send Web Push to recipient if subscription exists (match by email)
                         try
@@ -107,7 +108,7 @@ namespace AlertSystem.Service.Services
                                 var tokens = await _webPushService.GetUserDeviceTokensAsync(targetUser.UtilisateurId);
                                 foreach (var t in tokens)
                                 {
-                                    _ = _webPushService.SendNotificationAsync(t, alert.TitreAlerte, alert.DescriptionAlerte ?? "", null, new { url = "/Dashboard/Inbox" });
+                                    _ = _webPushService.SendNotificationAsync(t, alert.TitreAlerte, alert.DescriptionAlerte ?? string.Empty, null, new { url = "/Dashboard/Inbox" });
                                 }
                             }
                         }
@@ -127,10 +128,11 @@ namespace AlertSystem.Service.Services
                         });
                         var baseUrl = ResolveBaseUrl();
                         var confirmationUrl = $"{baseUrl.TrimEnd('/')}/confirm?t={tokenWa}&id={alert.AlertRecordId}";
+                        var waTitle = string.IsNullOrWhiteSpace(alert.TitreAlerte) ? "Alerte" : alert.TitreAlerte;
                         success = await _whatsAppTemplateService.SendAlertTemplateAsync(
                             alert.Destinataire,
-                            alert.TitreAlerte,
-                            alert.DescriptionAlerte,
+                            waTitle,
+                            alert.DescriptionAlerte ?? string.Empty,
                             senderDisplay,
                             confirmationUrl,
                             alert.TypeEnvoieId == 2);
@@ -147,7 +149,7 @@ namespace AlertSystem.Service.Services
                                 var tokens = await _webPushService.GetUserDeviceTokensAsync(match.UtilisateurId);
                                 foreach (var t in tokens)
                                 {
-                                    _ = _webPushService.SendNotificationAsync(t, alert.TitreAlerte, alert.DescriptionAlerte ?? "", null, new { url = "/Dashboard/Inbox" });
+                                    _ = _webPushService.SendNotificationAsync(t, alert.TitreAlerte, alert.DescriptionAlerte ?? string.Empty, null, new { url = "/Dashboard/Inbox" });
                                 }
                             }
                         }
@@ -245,7 +247,7 @@ namespace AlertSystem.Service.Services
                 }
                 else
                 {
-                    baseUrl = "http://localhost:5002";
+                    baseUrl = "http://localhost:5050";
                 }
             }
             return baseUrl;

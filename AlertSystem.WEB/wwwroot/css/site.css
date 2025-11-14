@@ -73,6 +73,15 @@ body {
   text-align: center;
 }
 
+.sidebar .sidebar-section-label {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #d1d9e6;
+  opacity: 0.95;
+}
+
 .sidebar-heading {
   font-size: 0.75rem;
   text-transform: uppercase;

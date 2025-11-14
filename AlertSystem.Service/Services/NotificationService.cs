@@ -6,8 +6,6 @@ using AlertSystem.Utils.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 
-using AlertSystem.Utils.Abstractions;
-
 namespace AlertSystem.Service.Services
 {
     public sealed class NotificationService : INotificationService

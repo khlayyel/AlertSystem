@@ -64,7 +64,7 @@ namespace AlertSystem.Service.Services
             );
         }
 
-        public async Task SendOutboxModalUpdateAsync(int userId, int alerteId, object recipientData)
+        public Task SendOutboxModalUpdateAsync(int userId, int alerteId, object recipientData)
         {
             try
             {
@@ -74,9 +74,11 @@ namespace AlertSystem.Service.Services
             {
                 _logger.LogError(ex, "Failed to process outbox modal update for user {UserId}, alert {AlerteId}", userId, alerteId);
             }
+
+            return Task.CompletedTask;
         }
 
-        public async Task SendNewAlertToOutboxAsync(int userId, object alertData)
+        public Task SendNewAlertToOutboxAsync(int userId, object alertData)
         {
             try
             {
@@ -86,9 +88,11 @@ namespace AlertSystem.Service.Services
             {
                 _logger.LogError(ex, "Failed to process new alert to outbox for user {UserId}", userId);
             }
+
+            return Task.CompletedTask;
         }
 
-        public async Task SendNewAlertToInboxAsync(int userId, object alertData)
+        public Task SendNewAlertToInboxAsync(int userId, object alertData)
         {
             try
             {
@@ -98,9 +102,11 @@ namespace AlertSystem.Service.Services
             {
                 _logger.LogError(ex, "Failed to process new alert to inbox for user {UserId}", userId);
             }
+
+            return Task.CompletedTask;
         }
 
-        public async Task SendTestOutboxKpiUpdateAsync(int userId, object testData)
+        public Task SendTestOutboxKpiUpdateAsync(int userId, object testData)
         {
             try
             {
@@ -110,6 +116,8 @@ namespace AlertSystem.Service.Services
             {
                 _logger.LogError(ex, "Failed to process test outbox KPI update for user {UserId}", userId);
             }
+
+            return Task.CompletedTask;
         }
     }
 }

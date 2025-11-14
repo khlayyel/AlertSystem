@@ -39,7 +39,7 @@
 
         // Base URL Configuration
         public const string BASE_URL_KEY = "BASE_URL";
-        public const string DEFAULT_BASE_URL = "http://localhost:5185";
+        public const string DEFAULT_BASE_URL = "http://localhost:5285";
 
         // Hangfire Configuration
         public const string HANGFIRE_CONNECTION_STRING_KEY = "HANGFIRE_CONNECTION_STRING";

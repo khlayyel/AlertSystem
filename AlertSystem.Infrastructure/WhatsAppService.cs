@@ -284,7 +284,7 @@ namespace AlertSystem.Services
             }
         }
 
-        private async Task LogWhatsAppError(string phoneNumber, System.Net.HttpStatusCode statusCode, string responseContent)
+        private Task LogWhatsAppError(string phoneNumber, System.Net.HttpStatusCode statusCode, string responseContent)
         {
             try
             {
@@ -328,6 +328,8 @@ namespace AlertSystem.Services
                 _logger.LogError(ex, "Error parsing WhatsApp API error response for {PhoneNumber}", phoneNumber);
                 _logger.LogError("Raw response was: {Response}", responseContent);
             }
+
+            return Task.CompletedTask;
         }
 
         public async Task<bool> SendAlertAsync(string phoneNumber, string title, string message, string senderName)

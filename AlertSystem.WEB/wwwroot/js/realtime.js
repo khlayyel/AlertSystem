@@ -80,7 +80,7 @@ export function initializeSignalR() {
           if(typeof window.refreshAllKpis==='function') window.refreshAllKpis();
           break;
         case 'AdminConfigUpdated':
-          // Admin pages (DefApp, DefTypeAlerte, DefAlerte, DefUtilisateur) should refresh their lists
+          // Admin pages (DefAlerte, DefUtilisateur) should refresh their lists
           try {
             if (typeof window.reloadAdminList === 'function') {
               window.reloadAdminList();

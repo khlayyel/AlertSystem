@@ -9,7 +9,7 @@
    ```
 
 2. **Ouvrez Swagger UI** :
-   - Allez à : http://localhost:5002/
+   - Allez à : http://localhost:5050/
    - L'interface Swagger s'affiche automatiquement
 
 3. **Créez un client API** :
@@ -54,7 +54,7 @@ $body = @{
 } | ConvertTo-Json
 
 # Envoyer la requête
-$response = Invoke-RestMethod -Uri "http://localhost:5002/api/v1/clients" -Method POST -Body $body -ContentType "application/json"
+$response = Invoke-RestMethod -Uri "http://localhost:5050/api/v1/clients" -Method POST -Body $body -ContentType "application/json"
 
 # Afficher la clé API
 Write-Host "Votre clé API : $($response.apiKey)" -ForegroundColor Green
@@ -91,7 +91,7 @@ X-API-KEY: c3d721829c9f418dbed23a025a43eece2ae7584a84cd404783290a919674bf16
 ```bash
 curl -H "X-API-KEY: votre-clé-ici" \
      -H "Content-Type: application/json" \
-     http://localhost:5002/api/v1/alerts
+     http://localhost:5050/api/v1/alerts
 ```
 
 ### Dans PowerShell :
@@ -101,7 +101,7 @@ $headers = @{
     "Content-Type" = "application/json"
 }
 
-Invoke-RestMethod -Uri "http://localhost:5002/api/v1/alerts" -Headers $headers
+Invoke-RestMethod -Uri "http://localhost:5050/api/v1/alerts" -Headers $headers
 ```
 
 ---
@@ -117,13 +117,13 @@ Invoke-RestMethod -Uri "http://localhost:5002/api/v1/alerts" -Headers $headers
 ### Via curl :
 ```bash
 curl -H "X-API-KEY: votre-clé-ici" \
-     http://localhost:5002/api/v1/keys/validate
+     http://localhost:5050/api/v1/keys/validate
 ```
 
 ### Via PowerShell :
 ```powershell
 $headers = @{ "X-API-KEY" = "votre-clé-ici" }
-Invoke-RestMethod -Uri "http://localhost:5002/api/v1/keys/validate" -Headers $headers
+Invoke-RestMethod -Uri "http://localhost:5050/api/v1/keys/validate" -Headers $headers
 ```
 
 ---
@@ -133,7 +133,7 @@ Invoke-RestMethod -Uri "http://localhost:5002/api/v1/keys/validate" -Headers $he
 ### Lister vos clients :
 ```bash
 curl -H "X-API-KEY: votre-clé-ici" \
-     http://localhost:5002/api/v1/clients
+     http://localhost:5050/api/v1/clients
 ```
 
 ### Désactiver une clé :
@@ -141,7 +141,7 @@ curl -H "X-API-KEY: votre-clé-ici" \
 curl -X PATCH \
      -H "X-API-KEY: votre-clé-ici" \
      -H "Content-Type: application/json" \
-     http://localhost:5002/api/v1/clients/1/deactivate
+     http://localhost:5050/api/v1/clients/1/deactivate
 ```
 
 ### Modifier la limite de taux :
@@ -150,7 +150,7 @@ curl -X PATCH \
      -H "X-API-KEY: votre-clé-ici" \
      -H "Content-Type: application/json" \
      -d '{"rateLimitPerMinute": 1200}' \
-     http://localhost:5002/api/v1/clients/1/rate-limit
+     http://localhost:5050/api/v1/clients/1/rate-limit
 ```
 
 ---
@@ -208,7 +208,7 @@ curl -X POST \
          {"recipientId": "test@example.com"}
        ]
      }' \
-     http://localhost:5002/api/v1/alerts
+     http://localhost:5050/api/v1/alerts
 ```
 
 ---

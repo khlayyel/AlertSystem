@@ -1,3 +1,4 @@
+@using System.Linq
 @model IEnumerable<dynamic>
 @{
     ViewData["Title"] = "Alertes Définies";
@@ -29,16 +30,32 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach (var item in Model)
+                @foreach (var item in Model ?? Enumerable.Empty<dynamic>())
                 {
-                    var defAlerte = item.DefAlerte as AlertSystem.Entities.Entities.DefAlerte;
-                    var emails = item.DestinatairesEmails as string;
+                    var defAlerte = item?.DefAlerte as AlertSystem.Entities.Entities.DefAlerte;
+                    if (defAlerte is null)
+                    {
+                        continue;
+                    }
+
+                    var emails = item?.DestinatairesEmails as string ?? string.Empty;
+                    var url = defAlerte.URL ?? string.Empty;
+
                     <tr>
                         <td>@defAlerte.DefAlerteId</td>
                         <td>@(defAlerte.TypeAlerte?.Description ?? "N/A")</td>
                         <td>@(defAlerte.TypeAlerte?.App?.Description ?? "N/A")</td>
                         <td>@emails</td>
-                        <td><a href="@defAlerte.URL" target="_blank">@defAlerte.URL</a></td>
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(url))
+                            {
+                                <a href="@url" target="_blank">@url</a>
+                            }
+                            else
+                            {
+                                <span class="text-muted">N/A</span>
+                            }
+                        </td>
                         <td>
                             @if (defAlerte.IsActive)
                             {

@@ -24,12 +24,14 @@ namespace AlertSystem.Service.Services
                 Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "AlertSystem.WEB", "EmailTemplates", "AlertNotification.html")
             };
 
-            _templatePath = possiblePaths.FirstOrDefault(File.Exists);
-            
-            if (string.IsNullOrEmpty(_templatePath))
+            var resolvedPath = possiblePaths.FirstOrDefault(File.Exists);
+
+            if (string.IsNullOrEmpty(resolvedPath))
             {
                 throw new FileNotFoundException("AlertNotification.html template not found in any of the expected locations.");
             }
+
+            _templatePath = resolvedPath;
         }
 
         public string CreateAlertEmailTemplate(string title, string message, string senderName, DateTime timestamp, string confirmationUrl, string confirmLabel)
